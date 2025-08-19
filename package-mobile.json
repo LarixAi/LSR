@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "build:driver": "vite build --config vite.config.mobile.ts --mode driver",
+    "build:parent": "vite build --config vite.config.mobile.ts --mode parent",
+    "cap:init": "npx cap init",
+    "cap:add:ios": "npx cap add ios",
+    "cap:add:android": "npx cap add android", 
+    "cap:sync:driver": "npm run build:driver && npx cap sync --config capacitor.config.driver.ts",
+    "cap:sync:parent": "npm run build:parent && npx cap sync --config capacitor.config.parent.ts",
+    "cap:run:driver:ios": "npx cap run ios --config capacitor.config.driver.ts",
+    "cap:run:driver:android": "npx cap run android --config capacitor.config.driver.ts",
+    "cap:run:parent:ios": "npx cap run ios --config capacitor.config.parent.ts",
+    "cap:run:parent:android": "npx cap run android --config capacitor.config.parent.ts"
+  }
+}

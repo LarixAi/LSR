@@ -1,0 +1,21 @@
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const BrandingSection = () => {
+  return (
+    <Link to="/" className="flex items-center space-x-2 sm:space-x-3">
+      <img 
+        src="/lovable-uploads/c7fc78b4-c136-43b3-b47e-00e97017921c.png" 
+        alt="LSR Logistics Logo" 
+        className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+      />
+      <div className="hidden sm:block">
+        <span className="text-xl sm:text-2xl font-bold text-gray-900">LSR</span>
+        <p className="text-xs text-gray-500 hidden md:block">Logistics Solution Resources</p>
+      </div>
+    </Link>
+  );
+};
+
+export default BrandingSection;
