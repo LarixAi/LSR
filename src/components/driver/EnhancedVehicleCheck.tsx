@@ -77,15 +77,113 @@ import { useCreateVehicleCheck } from '@/hooks/useVehicleChecks';
 import { uploadFileToStorage } from '@/utils/fileUpload';
 import { useVehicles } from '@/hooks/useVehicles';
 
+// Default vehicle check questions (fallback when database table doesn't exist)
+const getDefaultVehicleCheckQuestions = (): VehicleCheckQuestion[] => {
+  return [
+    // Basic safety questions - these will be replaced with real data from database
+    {
+      id: '1',
+      question_text: 'Are there any fuel, oil, or fluid leaks under the vehicle?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 1,
+      category: 'exterior'
+    },
+    {
+      id: '2',
+      question_text: 'Is the windscreen clean and free from cracks or damage?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 2,
+      category: 'exterior'
+    },
+    {
+      id: '3',
+      question_text: 'Are the windscreen wipers and washers working correctly?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 3,
+      category: 'exterior'
+    },
+    {
+      id: '4',
+      question_text: 'Are the headlights (main/dip) working and lenses clean?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 4,
+      category: 'exterior'
+    },
+    {
+      id: '5',
+      question_text: 'Are the front indicators including side repeaters working?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 5,
+      category: 'exterior'
+    },
+    {
+      id: '6',
+      question_text: 'Is the horn working clearly?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 6,
+      category: 'exterior'
+    },
+    {
+      id: '7',
+      question_text: 'Are mirrors fitted, secure, adjusted, and not cracked?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 7,
+      category: 'exterior'
+    },
+    {
+      id: '8',
+      question_text: 'Is the front registration plate present, clean, and secure?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 8,
+      category: 'exterior'
+    },
+    {
+      id: '9',
+      question_text: 'Are the tyres in good condition with adequate tread depth and proper inflation?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 9,
+      category: 'exterior'
+    },
+    {
+      id: '10',
+      question_text: 'Are the wheel nuts secure with no cracks, rust marks, or missing nuts?',
+      question_type: 'yes_no',
+      is_required: true,
+      is_critical: true,
+      order_index: 10,
+      category: 'exterior'
+    }
+  ];
+};
+
 interface VehicleCheckQuestion {
   id: string;
   question_text: string;
-  question_type: 'yes_no' | 'multiple_choice' | 'text' | 'number';
+  question_type: 'yes_no' | 'multiple_choice' | 'text' | 'number' | 'photo';
   is_required: boolean;
   is_critical: boolean;
   order_index: number;
-  category: string;
+  category: 'exterior' | 'interior' | 'engine' | 'safety' | 'documentation';
   options?: string[];
+  guidance?: string;
 }
 
 interface GPSLocation {
@@ -121,6 +219,8 @@ const EnhancedVehicleCheck: React.FC = () => {
   const { toast } = useToast();
   const createVehicleCheck = useCreateVehicleCheck();
   const { data: vehicles = [], isLoading: vehiclesLoading } = useVehicles();
+  // Use default questions for now - will be replaced with real data when vehicle_check_questions table is created
+  const questions = getDefaultVehicleCheckQuestions();
   const [currentStep, setCurrentStep] = useState<'vehicle-selection' | 'registration-photo' | 'mileage' | 'questions' | 'signature' | 'review'>('vehicle-selection');
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [registrationPhoto, setRegistrationPhoto] = useState<string>('');
@@ -144,7 +244,7 @@ const EnhancedVehicleCheck: React.FC = () => {
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Use real vehicles from database
-  const availableVehicles = vehicles.filter(v => v.is_active);
+  const availableVehicles = vehicles.filter(v => v.is_active !== false); // Consider undefined/null as active
 
   // Helper functions for category display
   const getCategoryDisplayName = (category: string): string => {
@@ -256,532 +356,6 @@ const EnhancedVehicleCheck: React.FC = () => {
     };
     return guidanceMap[questionId] || 'Please inspect this item thoroughly and ensure it meets safety standards.';
   };
-
-  const mockQuestions: VehicleCheckQuestion[] = [
-    // 🔹 Front of Vehicle (Left to Right)
-    {
-      id: '1',
-      question_text: 'Fuel / Oil / Fluid Leaks under the vehicle?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 1,
-      category: 'exterior'
-    },
-    {
-      id: '2',
-      question_text: 'Windscreen – clean, free from cracks/damage?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 2,
-      category: 'exterior'
-    },
-    {
-      id: '3',
-      question_text: 'Windscreen wipers & washers working correctly?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 3,
-      category: 'exterior'
-    },
-    {
-      id: '4',
-      question_text: 'Headlights (main/dip) working & lenses clean?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 4,
-      category: 'exterior'
-    },
-    {
-      id: '5',
-      question_text: 'Front indicators including side repeaters working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 5,
-      category: 'exterior'
-    },
-    {
-      id: '6',
-      question_text: 'Horn working clearly?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 6,
-      category: 'exterior'
-    },
-    {
-      id: '7',
-      question_text: 'Mirrors fitted, secure, adjusted, and not cracked?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 7,
-      category: 'exterior'
-    },
-    {
-      id: '8',
-      question_text: 'Front registration plate present, clean, & secure?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 8,
-      category: 'exterior'
-    },
-
-    // 🔹 Nearside (Passenger Side) - Left Side
-    {
-      id: '9',
-      question_text: 'Tyres (condition, tread depth, inflation, cuts, bulges)?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 9,
-      category: 'exterior'
-    },
-    {
-      id: '10',
-      question_text: 'Wheel nuts secure (no cracks, rust marks, missing nuts)?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 10,
-      category: 'exterior'
-    },
-    {
-      id: '11',
-      question_text: 'Spray suppression/mudguards fitted & secure?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: false,
-      order_index: 11,
-      category: 'exterior'
-    },
-    {
-      id: '12',
-      question_text: 'Bodywork free from damage/sharp edges?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: false,
-      order_index: 12,
-      category: 'exterior'
-    },
-    {
-      id: '13',
-      question_text: 'Reflectors clean & secure?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: false,
-      order_index: 13,
-      category: 'exterior'
-    },
-
-    // 🔹 Rear of Vehicle
-    {
-      id: '14',
-      question_text: 'Rear lights, brake lights & indicators working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 14,
-      category: 'exterior'
-    },
-    {
-      id: '15',
-      question_text: 'Number plate light working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 15,
-      category: 'exterior'
-    },
-    {
-      id: '16',
-      question_text: 'Rear registration plate clean & secure?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 16,
-      category: 'exterior'
-    },
-    {
-      id: '17',
-      question_text: 'Rear reflectors clean & secure?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: false,
-      order_index: 17,
-      category: 'exterior'
-    },
-    {
-      id: '18',
-      question_text: 'Tail lift fitted? If yes, does it operate safely & securely?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 18,
-      category: 'exterior'
-    },
-    {
-      id: '19',
-      question_text: 'Side & rear under-run protection bars secure (if fitted)?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 19,
-      category: 'exterior'
-    },
-    {
-      id: '20',
-      question_text: 'Rear doors or tailgate secure, hinges & locks working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 20,
-      category: 'exterior'
-    },
-
-    // 🔹 Offside (Driver\'s Side) - Right Side
-    {
-      id: '21',
-      question_text: 'Tyres & wheels condition (as per nearside)?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 21,
-      category: 'exterior'
-    },
-    {
-      id: '22',
-      question_text: 'Exhaust system secure, no leaks, no excessive smoke?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 22,
-      category: 'exterior'
-    },
-    {
-      id: '23',
-      question_text: 'Side marker lamps working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 23,
-      category: 'exterior'
-    },
-    {
-      id: '24',
-      question_text: 'Fuel filler cap secure, no leaks?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 24,
-      category: 'exterior'
-    },
-
-    // 🔹 Inside Cab
-    {
-      id: '25',
-      question_text: 'Driver\'s seat secure, belts working properly?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 25,
-      category: 'interior'
-    },
-    {
-      id: '26',
-      question_text: 'Steering wheel – no excessive play?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 26,
-      category: 'interior'
-    },
-    {
-      id: '27',
-      question_text: 'Brakes – firm pedal, no leaks, warning lights off?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 27,
-      category: 'interior'
-    },
-    {
-      id: '28',
-      question_text: 'Dashboard warning lights – all checked, no unresolved warnings?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 28,
-      category: 'interior'
-    },
-    {
-      id: '29',
-      question_text: 'Tachograph working, calibrated, and paper roll available?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 29,
-      category: 'interior'
-    },
-    {
-      id: '30',
-      question_text: 'Odometer/speed limiter functioning?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 30,
-      category: 'interior'
-    },
-    {
-      id: '31',
-      question_text: 'Handbrake/parking brake working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 31,
-      category: 'interior'
-    },
-    {
-      id: '32',
-      question_text: 'Heating & ventilation working?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: false,
-      order_index: 32,
-      category: 'interior'
-    },
-    {
-      id: '33',
-      question_text: 'Saloon lighting/flooring safe (PSV)?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: false,
-      order_index: 33,
-      category: 'interior'
-    },
-    {
-      id: '34',
-      question_text: 'Fire extinguisher present, secure, in date?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 34,
-      category: 'safety'
-    },
-    {
-      id: '35',
-      question_text: 'First aid kit present, stocked, in date?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 35,
-      category: 'safety'
-    },
-
-    // 🔹 Doors, Accessibility & Safety
-    {
-      id: '36',
-      question_text: 'Passenger doors open/close properly, emergency exits working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 36,
-      category: 'safety'
-    },
-    {
-      id: '37',
-      question_text: 'Emergency hammer(s) present and secure (PSV)?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 37,
-      category: 'safety'
-    },
-    {
-      id: '38',
-      question_text: 'Wheelchair ramp/lift works correctly (PSV)?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 38,
-      category: 'safety'
-    },
-    {
-      id: '39',
-      question_text: 'Seat belts for passengers working where fitted?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 39,
-      category: 'safety'
-    },
-    {
-      id: '40',
-      question_text: 'Accessibility signage fitted and visible (PSV/FORS)?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: false,
-      order_index: 40,
-      category: 'safety'
-    },
-    {
-      id: '41',
-      question_text: 'Camera or detection systems clean & working (FORS)?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: false,
-      order_index: 41,
-      category: 'safety'
-    },
-    {
-      id: '42',
-      question_text: 'Fresnel lens (blind spot lens) fitted & visible (FORS)?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: false,
-      order_index: 42,
-      category: 'safety'
-    },
-
-    // 🔹 Load & Trailer (if applicable)
-    {
-      id: '43',
-      question_text: 'Load properly secured, curtains/straps tight?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 43,
-      category: 'load'
-    },
-    {
-      id: '44',
-      question_text: 'Load height correct & not exceeding legal limits?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 44,
-      category: 'load'
-    },
-    {
-      id: '45',
-      question_text: 'Trailer brake lines secure, no leaks?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 45,
-      category: 'load'
-    },
-    {
-      id: '46',
-      question_text: 'Trailer coupling secure, clip in place, electrical lines safe?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 46,
-      category: 'load'
-    },
-    {
-      id: '47',
-      question_text: 'Trailer landing legs up & secure?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 47,
-      category: 'load'
-    },
-
-    // 🔹 General & Emergency Equipment
-    {
-      id: '48',
-      question_text: 'AdBlue level checked & cap secure?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: false,
-      order_index: 48,
-      category: 'general'
-    },
-    {
-      id: '49',
-      question_text: 'Reflective triangles / warning devices on board?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 49,
-      category: 'safety'
-    },
-    {
-      id: '50',
-      question_text: 'Emergency contact numbers carried in cab?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: false,
-      order_index: 50,
-      category: 'general'
-    },
-    {
-      id: '51',
-      question_text: 'Fire suppression system (if fitted) operational?',
-      question_type: 'yes_no',
-      is_required: false,
-      is_critical: true,
-      order_index: 51,
-      category: 'safety'
-    },
-    {
-      id: '52',
-      question_text: 'Vehicle cleanliness – cab free from loose items causing hazard?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: false,
-      order_index: 52,
-      category: 'general'
-    },
-
-    // 🔹 Final Check
-    {
-      id: '53',
-      question_text: 'Nil Defects (tick if no issues found)',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 53,
-      category: 'final'
-    },
-    {
-      id: '54',
-      question_text: 'All defects reported to transport manager immediately?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 54,
-      category: 'final'
-    },
-
-    // Additional Documentation Questions
-    {
-      id: '55',
-      question_text: 'What is the current mileage?',
-      question_type: 'number',
-      is_required: true,
-      is_critical: false,
-      order_index: 55,
-      category: 'documentation'
-    },
-    {
-      id: '56',
-      question_text: 'Are you fit to drive?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 56,
-      category: 'driver'
-    }
-  ];
 
   // Generate sequential reference number
   useEffect(() => {
@@ -1125,11 +699,11 @@ const EnhancedVehicleCheck: React.FC = () => {
     } else if (currentStep === 'questions') {
       console.log('=== QUESTION PROGRESSION DEBUG ===');
       console.log('Current question index:', currentQuestionIndex);
-      console.log('Total questions:', mockQuestions.length);
-      console.log('Should move to next question:', currentQuestionIndex < mockQuestions.length - 1);
+             console.log('Total questions:', questions.length);
+       console.log('Should move to next question:', currentQuestionIndex < questions.length - 1);
       console.log('=====================================');
       
-      if (currentQuestionIndex < mockQuestions.length - 1) {
+      if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(prev => {
           console.log('Moving from question', prev, 'to', prev + 1);
           return prev + 1;
@@ -1174,7 +748,7 @@ const EnhancedVehicleCheck: React.FC = () => {
       }
     } else if (currentStep === 'signature') {
       setCurrentStep('questions');
-      setCurrentQuestionIndex(mockQuestions.length - 1);
+      setCurrentQuestionIndex(questions.length - 1);
     } else if (currentStep === 'review') {
       setCurrentStep('signature');
     }
@@ -1237,12 +811,12 @@ const EnhancedVehicleCheck: React.FC = () => {
       }
 
       // Calculate overall score based on answers
-      const totalQuestions = mockQuestions.length;
+      const totalQuestions = questions.length;
       const answeredQuestions = Object.keys(answers).length;
       const score = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
 
       // Determine pass/fail status
-      const criticalQuestions = mockQuestions.filter(q => q.is_critical);
+      const criticalQuestions = questions.filter(q => q.is_critical);
       const criticalFailures = criticalQuestions.filter(q => answers[q.id] === false).length;
       const passFail = criticalFailures === 0;
 
@@ -1348,10 +922,10 @@ const EnhancedVehicleCheck: React.FC = () => {
   };
 
   const getCurrentQuestion = () => {
-    const question = mockQuestions[currentQuestionIndex];
+    const question = questions[currentQuestionIndex];
     console.log('=== QUESTION DEBUG ===');
     console.log('Current question index:', currentQuestionIndex);
-    console.log('Total questions:', mockQuestions.length);
+    console.log('Total questions:', questions.length);
     console.log('Current question:', question);
     console.log('Question ID:', question?.id);
     console.log('Question text:', question?.question_text);
@@ -1628,7 +1202,7 @@ const EnhancedVehicleCheck: React.FC = () => {
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-lg sm:text-xl text-gray-900">Vehicle Check Questions</CardTitle>
               <CardDescription className="text-sm sm:text-base text-gray-600">
-                Question {currentQuestionIndex + 1} of {mockQuestions.length}
+                Question {currentQuestionIndex + 1} of {questions.length}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4">
@@ -1639,16 +1213,16 @@ const EnhancedVehicleCheck: React.FC = () => {
                     <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
                       <Badge variant="outline" className="text-xs sm:text-sm font-semibold bg-blue-100 text-blue-800 border-blue-300 w-fit">
                         {getCategoryDisplayName(question.category)}
-                      </Badge>
-                      {question.is_critical && (
+                  </Badge>
+                  {question.is_critical && (
                         <Badge variant="destructive" className="text-xs sm:text-sm w-fit">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          Critical
-                        </Badge>
-                      )}
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      Critical
+                    </Badge>
+                  )}
                     </div>
                     <div className="text-xs sm:text-sm text-blue-600 font-medium">
-                      Step {currentQuestionIndex + 1} of {mockQuestions.length}
+                      Step {currentQuestionIndex + 1} of {questions.length}
                     </div>
                   </div>
                   <div className="mt-2 text-xs sm:text-sm text-blue-700 leading-relaxed">
@@ -1879,7 +1453,7 @@ const EnhancedVehicleCheck: React.FC = () => {
               <div className="space-y-3">
                 <Label className="text-base font-medium">Answers Summary</Label>
                 <div className="space-y-2 max-h-80 overflow-y-auto">
-                  {mockQuestions.map((question) => (
+                  {questions.map((question) => (
                     <div key={question.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
                       <span className="text-sm flex-1 mr-4">{question.question_text}</span>
                       <Badge variant={answers[question.id] ? "default" : "secondary"} className="text-xs">
@@ -1916,34 +1490,34 @@ const EnhancedVehicleCheck: React.FC = () => {
       {/* Scrollable Content Area */}
       <div className="h-full overflow-y-auto pb-28 sm:pb-24">
         <div className="space-y-3 p-3 sm:space-y-4 sm:p-4 lg:space-y-6 lg:p-6 max-w-4xl mx-auto">
-          {/* Header */}
+      {/* Header */}
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border mobile-card">
             <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-              <div className="flex-1">
+        <div className="flex-1">
                 <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight text-gray-900">Enhanced Vehicle Check</h1>
                 <p className="text-muted-foreground text-xs sm:text-sm lg:text-base mt-1">
-                  Complete vehicle inspection with GPS tracking and photo capture
-                </p>
-              </div>
+            Complete vehicle inspection with GPS tracking and photo capture
+          </p>
+        </div>
               <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
                 <Badge variant="outline" className="text-xs w-fit">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {new Date().toLocaleTimeString()}
-                </Badge>
+            <Clock className="w-3 h-3 mr-1" />
+            {new Date().toLocaleTimeString()}
+          </Badge>
                 <Badge variant="outline" className="text-xs w-fit">
-                  <User className="w-3 h-3 mr-1" />
+            <User className="w-3 h-3 mr-1" />
                   {profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : profile?.email}
-                </Badge>
+          </Badge>
               </div>
-            </div>
-          </div>
+        </div>
+      </div>
 
-          {/* Progress Bar */}
+      {/* Progress Bar */}
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border space-y-3 mobile-card">
             <div className="flex items-center justify-between text-xs sm:text-sm">
               <span className="font-medium text-gray-700">Progress</span>
               <span className="text-muted-foreground font-semibold">{Math.round(getStepProgress())}%</span>
-            </div>
+        </div>
             <Progress value={getStepProgress()} className="w-full h-2 sm:h-3" />
             
             {/* Step Indicator */}
@@ -1961,7 +1535,7 @@ const EnhancedVehicleCheck: React.FC = () => {
                   </Badge>
                 </div>
                 <div className="text-xs text-gray-500 font-medium">
-                  {currentStep === 'questions' && `Question ${currentQuestionIndex + 1} of ${mockQuestions.length}`}
+                  {currentStep === 'questions' && `Question ${currentQuestionIndex + 1} of ${questions.length}`}
                   {currentStep !== 'questions' && 'Step Complete'}
                 </div>
               </div>
@@ -1971,11 +1545,11 @@ const EnhancedVehicleCheck: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
+      </div>
 
-          {/* Step Content */}
+      {/* Step Content */}
           <div>
-            {renderStepContent()}
+        {renderStepContent()}
           </div>
         </div>
       </div>
@@ -1984,50 +1558,50 @@ const EnhancedVehicleCheck: React.FC = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-3 sm:p-4 z-10 safe-area-bottom">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentStep === 'vehicle-selection'}
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 'vehicle-selection'}
               className="flex-1 sm:flex-none h-12 text-sm sm:text-base mobile-button"
-            >
+          >
               <ArrowLeft className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Previous</span>
               <span className="sm:hidden">Back</span>
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={resetCheck}
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={resetCheck}
               className="flex-1 sm:flex-none h-12 text-sm sm:text-base mobile-button"
-            >
+          >
               <RotateCcw className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Reset</span>
               <span className="sm:hidden">Reset</span>
-            </Button>
-          </div>
+          </Button>
+        </div>
 
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
-            {currentStep === 'review' ? (
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          {currentStep === 'review' ? (
               <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full sm:w-auto h-12 text-sm sm:text-base mobile-button">
                 <Save className="w-4 h-4 mr-1 sm:mr-2" />
-                {isSubmitting ? 'Submitting...' : 'Complete Check'}
-              </Button>
-            ) : currentStep === 'signature' ? (
-              <div className="w-full sm:w-auto">
-                {/* Submit button is now inside the signature step */}
-              </div>
-            ) : (
+              {isSubmitting ? 'Submitting...' : 'Complete Check'}
+            </Button>
+          ) : currentStep === 'signature' ? (
+            <div className="w-full sm:w-auto">
+              {/* Submit button is now inside the signature step */}
+            </div>
+          ) : (
               <Button onClick={handleNext} className="w-full sm:w-auto h-12 text-sm sm:text-base mobile-button">
                 <ArrowRight className="w-4 h-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Next</span>
                 <span className="sm:hidden">Next</span>
-              </Button>
-            )}
+            </Button>
+          )}
           </div>
         </div>
+        </div>
       </div>
-    </div>
 
       {/* Information Modal */}
       <Dialog open={infoModalOpen} onOpenChange={setInfoModalOpen}>
@@ -2102,7 +1676,7 @@ const EnhancedVehicleCheck: React.FC = () => {
                 </div>
                 <div>
                   <Label>Questions Answered</Label>
-                  <p>{Object.keys(checkSession.answers).length} of {mockQuestions.length}</p>
+                  <p>{Object.keys(checkSession.answers).length} of {questions.length}</p>
                 </div>
               </div>
               

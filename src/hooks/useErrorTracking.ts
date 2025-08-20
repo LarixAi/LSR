@@ -53,14 +53,36 @@ export const useErrorTracking = () => {
       // Log to console for development
       console.error('Error logged:', errorLog);
 
-      // In production, this would send to error tracking service
-      // For now, just add to local state since table doesn't exist
-      const mockData: ErrorLog = {
-        ...errorLog,
-        id: Math.random().toString(36).substring(7)
-      };
+      // Store error in database if table exists, otherwise use local state
+      try {
+        const { data, error } = await supabase
+          .from('error_logs')
+          .insert([errorLog])
+          .select()
+          .single();
 
-      setErrors(prev => [mockData, ...prev]);
+        if (error && error.code !== '42P01') { // 42P01 = table doesn't exist
+          throw error;
+        }
+
+        // If table doesn't exist, use local state
+        if (error && error.code === '42P01') {
+          const localError: ErrorLog = {
+            ...errorLog,
+            id: `local_${Date.now()}_${Math.random().toString(36).substring(7)}`
+          };
+          setErrors(prev => [localError, ...prev]);
+        } else if (data) {
+          setErrors(prev => [data, ...prev]);
+        }
+      } catch (dbError) {
+        console.warn('Error logs table not available, using local state:', dbError);
+        const localError: ErrorLog = {
+          ...errorLog,
+          id: `local_${Date.now()}_${Math.random().toString(36).substring(7)}`
+        };
+        setErrors(prev => [localError, ...prev]);
+      }
       updateStats();
 
       // Send critical errors to monitoring service immediately
@@ -92,24 +114,22 @@ export const useErrorTracking = () => {
   const updateStats = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Mock stats since error_logs table doesn't exist
-      const mockStats: ErrorStats = {
+      // Calculate real stats from actual error data
+      const realStats: ErrorStats = {
         totalErrors: errors.length,
         unresolvedErrors: errors.filter(e => !e.resolved).length,
         errorsByType: errors.reduce((acc, error) => {
           acc[error.error_type] = (acc[error.error_type] || 0) + 1;
           return acc;
         }, {} as Record<string, number>),
-        errorsByDay: [
-          { date: '2024-01-01', count: 5 },
-          { date: '2024-01-02', count: 3 },
-          { date: '2024-01-03', count: 8 },
-          { date: '2024-01-04', count: 2 },
-          { date: '2024-01-05', count: 6 }
-        ]
+        errorsByDay: errors.reduce((acc, error) => {
+          const date = new Date(error.timestamp).toISOString().split('T')[0];
+          acc[date] = (acc[date] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>)
       };
       
-      setStats(mockStats);
+      setStats(realStats);
     } catch (error) {
       console.error('Failed to update error stats:', error);
     } finally {

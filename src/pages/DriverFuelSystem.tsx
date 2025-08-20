@@ -34,8 +34,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { format } from 'date-fns';
 import { useFuelPurchases, useCreateFuelPurchase, useUpdateFuelPurchase, useDeleteFuelPurchase, useFuelStatistics, type FuelPurchaseWithDetails, type CreateFuelPurchaseData } from '@/hooks/useFuelPurchases';
 import { useVehicles } from '@/hooks/useVehicles';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileFuelSystem from '@/components/driver/MobileFuelSystem';
 
 const DriverFuelSystem: React.FC = () => {
+  // ALL HOOKS MUST BE DECLARED FIRST - before any conditional returns
+  const isMobile = useIsMobile();
   const { profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('new-purchase');
@@ -65,6 +69,11 @@ const DriverFuelSystem: React.FC = () => {
     purchase_date: new Date().toISOString().split('T')[0],
     notes: ''
   });
+  
+  // NOW we can have conditional returns after all hooks are declared
+  if (isMobile) {
+    return <MobileFuelSystem />;
+  }
 
   if (authLoading || fuelLoading) {
     return (
@@ -175,12 +184,12 @@ const DriverFuelSystem: React.FC = () => {
   const handleSubmitPurchase = async () => {
     try {
       if (editingPurchase) {
-        await updateFuelPurchase.mutateAsync({
+        await (updateFuelPurchase.mutateAsync as any)({
           id: editingPurchase.id,
           updates: formData
         });
       } else {
-        await createFuelPurchase.mutateAsync(formData);
+        await (createFuelPurchase.mutateAsync as any)(formData);
       }
       setShowAddDialog(false);
       setEditingPurchase(null);
@@ -191,7 +200,7 @@ const DriverFuelSystem: React.FC = () => {
 
   const handleFormChange = (field: keyof CreateFuelPurchaseData, value: any) => {
     setFormData(prev => {
-      const updated = { ...prev, [field]: value };
+      const updated = { ...prev, [field]: value } as CreateFuelPurchaseData;
       
       // Auto-calculate total cost
       if (field === 'quantity' || field === 'unit_price') {
@@ -750,7 +759,7 @@ const DriverFuelSystem: React.FC = () => {
       </Dialog>
 
       {/* View Purchase Dialog */}
-      <Dialog open={!!viewingPurchase} onOpenChange={setViewingPurchase}>
+      <Dialog open={!!viewingPurchase} onOpenChange={(open) => !open && setViewingPurchase(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>View Fuel Purchase</DialogTitle>

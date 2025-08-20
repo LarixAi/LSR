@@ -136,7 +136,7 @@ const MobileVehicleCheck: React.FC = () => {
   const [currentQuestionInfo, setCurrentQuestionInfo] = useState<string>('');
 
   // Use real vehicles from database
-  const availableVehicles = vehicles.filter(v => v.is_active);
+  const availableVehicles = vehicles.filter(v => v.is_active !== false); // Consider undefined/null as active
 
   const handleAnswerChange = useCallback((questionId: string, answer: any) => {
     setAnswers(prev => ({

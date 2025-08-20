@@ -1,72 +1,48 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface SubscriptionPlan {
+export interface SubscriptionPlan {
   id: string;
   name: string;
   tier: 'basic' | 'premium' | 'enterprise';
   max_drivers: number;
   monthly_price: number;
-  annual_price?: number;
-  description?: string;
+  annual_price: number;
+  description: string;
   features: string[];
   is_active: boolean;
+  created_at: string;
 }
 
-interface CompanySubscription {
+export interface CompanySubscription {
   id: string;
   organization_id: string;
   plan_id: string;
-  status: string;
+  status: 'active' | 'inactive' | 'cancelled' | 'past_due';
   current_period_start: string;
   current_period_end: string;
   subscription_plans: SubscriptionPlan;
+  created_at: string;
 }
 
 export const useSubscriptionPlans = () => {
   return useQuery({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
-      console.log('Mock: Fetching subscription plans');
-      
-      const mockPlans: SubscriptionPlan[] = [
-        {
-          id: 'basic',
-          name: 'Basic Plan',
-          tier: 'basic',
-          max_drivers: 5,
-          monthly_price: 99,
-          annual_price: 990,
-          description: 'Perfect for small transport companies',
-          features: ['Up to 5 drivers', 'Basic reporting', 'Email support'],
-          is_active: true
-        },
-        {
-          id: 'pro',
-          name: 'Premium Plan',
-          tier: 'premium',
-          max_drivers: 15,
-          monthly_price: 199,
-          annual_price: 1990,
-          description: 'Ideal for growing transport businesses',
-          features: ['Up to 15 drivers', 'Advanced reporting', 'Priority support', 'API access'],
-          is_active: true
-        },
-        {
-          id: 'enterprise',
-          name: 'Enterprise Plan',
-          tier: 'enterprise',
-          max_drivers: 50,
-          monthly_price: 499,
-          annual_price: 4990,
-          description: 'For large-scale transport operations',
-          features: ['Up to 50 drivers', 'Custom reporting', '24/7 support', 'Full API access', 'Custom integrations'],
-          is_active: true
-        }
-      ];
-      
-      return mockPlans;
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('monthly_price', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching subscription plans:', error);
+        return [];
+      }
+
+      return data || [];
     }
   });
 };
@@ -77,29 +53,23 @@ export const useCompanySubscription = (organizationId?: string) => {
     queryFn: async () => {
       if (!organizationId) return null;
       
-      console.log('Mock: Fetching company subscription for:', organizationId);
-      
-      const mockSubscription: CompanySubscription = {
-        id: 'sub-1',
-        organization_id: organizationId,
-        plan_id: 'basic',
-        status: 'active',
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        subscription_plans: {
-          id: 'basic',
-          name: 'Basic Plan',
-          tier: 'basic',
-          max_drivers: 5,
-          monthly_price: 99,
-          annual_price: 990,
-          description: 'Perfect for small transport companies',
-          features: ['Up to 5 drivers', 'Basic reporting', 'Email support'],
-          is_active: true
-        }
-      };
-      
-      return mockSubscription;
+      const { data, error } = await supabase
+        .from('company_subscriptions')
+        .select(`
+          *,
+          subscription_plans (*)
+        `)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Error fetching company subscription:', error);
+        return null;
+      }
+
+      return data;
     },
     enabled: !!organizationId
   });
@@ -111,14 +81,42 @@ export const useCheckSubscription = () => {
 
   return useMutation({
     mutationFn: async () => {
-      console.log('Mock: Checking subscription status');
-      return { status: 'active' };
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        throw new Error('No organization found');
+      }
+
+      const { data, error } = await supabase
+        .from('company_subscriptions')
+        .select('status')
+        .eq('organization_id', profile.organization_id)
+        .eq('status', 'active')
+        .single();
+
+      if (error) {
+        throw new Error('Failed to check subscription status');
+      }
+
+      return { status: data?.status || 'inactive' };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['company-subscription'] });
     },
     onError: (error: any) => {
       console.error('Failed to check subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check subscription status",
+        variant: "destructive"
+      });
     }
   });
 };

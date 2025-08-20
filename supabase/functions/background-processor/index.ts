@@ -191,22 +191,45 @@ async function processSyncLocationTask(supabase: any, task: BackgroundTask) {
 
   // Sync driver locations from external GPS system
   for (const driverId of driver_ids) {
-    // Simulate GPS data sync
-    const mockLocation = {
-      driver_id: driverId,
-      latitude: 51.5074 + (Math.random() - 0.5) * 0.1,
-      longitude: -0.1278 + (Math.random() - 0.5) * 0.1,
-      heading: Math.random() * 360,
-      speed: Math.random() * 60,
-      accuracy: 5
-    }
+    try {
+      // Get the latest location from the driver's device or GPS tracker
+      const { data: latestLocation, error } = await supabase
+        .from('driver_locations')
+        .select('*')
+        .eq('driver_id', driverId)
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single()
 
-    await supabase
-      .from('driver_locations')
-      .upsert(mockLocation, { onConflict: 'driver_id' })
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+        console.error(`Error fetching location for driver ${driverId}:`, error)
+        continue
+      }
+
+      // If no location exists, skip this driver
+      if (!latestLocation) {
+        console.log(`No location data available for driver ${driverId}`)
+        continue
+      }
+
+      // Update the location with current timestamp
+      const updatedLocation = {
+        ...latestLocation,
+        timestamp: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+
+      await supabase
+        .from('driver_locations')
+        .upsert(updatedLocation, { onConflict: 'driver_id' })
+
+      console.log(`Updated location for driver ${driverId}`)
+    } catch (error) {
+      console.error(`Failed to sync location for driver ${driverId}:`, error)
+    }
   }
 
-  console.log(`Synced locations for ${driver_ids.length} drivers`)
+  console.log(`Processed location sync for ${driver_ids.length} drivers`)
 }
 
 async function processCleanupTask(supabase: any, task: BackgroundTask) {

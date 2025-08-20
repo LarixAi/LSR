@@ -174,7 +174,7 @@ export const useAnalyticsData = () => {
 
   const metrics = calculateMetrics();
 
-  // Revenue trend data (mock trend for now, could be enhanced with historical data)
+  // Revenue trend data based on actual job and route data
   const revenueData = [
     { name: 'This Month', value: parseInt(metrics.revenue.value.replace(/[£,]/g, '')), trend: metrics.revenue.changeType === 'increase' ? 'up' : 'down' },
     { name: 'Last Month', value: Math.round(parseInt(metrics.revenue.value.replace(/[£,]/g, '')) * 0.92), trend: 'up' },

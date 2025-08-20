@@ -139,12 +139,48 @@ const TestPage: React.FC = () => {
             <div>
               <span className="font-medium">Supabase URL:</span>
               <p className="text-xs font-mono break-all">
-                https://dznbihypzmvcmradijqn.supabase.co
+                {import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || "https://dznbihypzmvcmradijqn.supabase.co"}
               </p>
             </div>
             <div>
               <span className="font-medium">Current Port:</span>
               <p className="text-xs">3001</p>
+            </div>
+            <div>
+              <span className="font-medium">VITE_SUPABASE_URL:</span>
+              <p className={`text-xs font-mono ${import.meta.env.VITE_SUPABASE_URL ? "text-green-600" : "text-red-600"}`}>
+                {import.meta.env.VITE_SUPABASE_URL ? "✅ Available" : "❌ Missing"}
+              </p>
+            </div>
+            <div>
+              <span className="font-medium">VITE_SUPABASE_ANON_KEY:</span>
+              <p className={`text-xs font-mono ${import.meta.env.VITE_SUPABASE_ANON_KEY ? "text-green-600" : "text-red-600"}`}>
+                {import.meta.env.VITE_SUPABASE_ANON_KEY ? "✅ Available" : "❌ Missing"}
+              </p>
+            </div>
+            <div>
+              <span className="font-medium">SUPABASE_URL:</span>
+              <p className={`text-xs font-mono ${import.meta.env.SUPABASE_URL ? "text-green-600" : "text-red-600"}`}>
+                {import.meta.env.SUPABASE_URL ? "✅ Available" : "❌ Missing"}
+              </p>
+            </div>
+            <div>
+              <span className="font-medium">SUPABASE_ANON_KEY:</span>
+              <p className={`text-xs font-mono ${import.meta.env.SUPABASE_ANON_KEY ? "text-green-600" : "text-red-600"}`}>
+                {import.meta.env.SUPABASE_ANON_KEY ? "✅ Available" : "❌ Missing"}
+              </p>
+            </div>
+            <div>
+              <span className="font-medium">VITE_APP_TYPE:</span>
+              <p className="text-xs font-mono text-blue-600">
+                {import.meta.env.VITE_APP_TYPE || "Not set"}
+              </p>
+            </div>
+            <div>
+              <span className="font-medium">VITE_PLATFORM:</span>
+              <p className="text-xs font-mono text-blue-600">
+                {import.meta.env.VITE_PLATFORM || "Not set"}
+              </p>
             </div>
             <div>
               <span className="font-medium">Edge Functions:</span>

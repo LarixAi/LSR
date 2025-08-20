@@ -23,9 +23,13 @@ import {
 } from 'lucide-react';
 import { useDriverCompliance } from '@/hooks/useDriverCompliance';
 import { format } from 'date-fns';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileOptimizedLayout from '@/components/mobile/MobileOptimizedLayout';
+import { toast } from 'sonner';
 
 const DriverCompliance = () => {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, session, loading: authLoading } = useAuth();
+  const isMobile = useIsMobile();
   const { 
     complianceData, 
     trainingModules, 
@@ -37,6 +41,69 @@ const DriverCompliance = () => {
     error, 
     refreshData 
   } = useDriverCompliance();
+
+  const updateTrainingProgress = async (trainingId: string, progress: number) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-training-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+        },
+        body: JSON.stringify({
+          training_id: trainingId,
+          progress,
+          status: progress === 100 ? 'completed' : 'in_progress'
+        }),
+        mode: 'cors',
+        credentials: 'omit',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      toast.success('Training progress updated!');
+      refreshData();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update training progress');
+    }
+  };
+
+  const completeTraining = async (trainingId: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-training-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+        },
+        body: JSON.stringify({
+          training_id: trainingId,
+          progress: 100,
+          status: 'completed',
+          completion_date: new Date().toISOString()
+        }),
+        mode: 'cors',
+        credentials: 'omit',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      toast.success('Training completed successfully!');
+      refreshData();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to complete training');
+    }
+  };
 
   if (authLoading || complianceLoading) {
     return (
@@ -151,47 +218,83 @@ const DriverCompliance = () => {
     doc.status === 'valid' && doc.daysUntilExpiry <= 30 && doc.daysUntilExpiry > 0
   );
 
-  return (
-    <div className="space-y-6">
+  // Check if we have any data to display
+  const hasAnyData = documents.length > 0 || trainingModules.length > 0 || violations.length > 0 || complianceHistory.length > 0;
+
+  const content = (
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className={`${isMobile ? 'space-y-3' : 'flex justify-between items-center'}`}>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Shield className="w-8 h-8 text-green-600" />
+          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 flex items-center gap-2 sm:gap-3`}>
+            <Shield className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
             Driver Compliance
           </h1>
-          <p className="text-gray-600 mt-1">Track your compliance status and certifications</p>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Track your compliance status and certifications</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button onClick={refreshData} variant="outline" disabled={complianceLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${complianceLoading ? 'animate-spin' : ''}`} />
-            Refresh Data
+        <div className={`flex items-center gap-2 ${isMobile ? 'w-full' : 'space-x-2'}`}>
+          <Button 
+            onClick={refreshData} 
+            variant="outline" 
+            disabled={complianceLoading}
+            size={isMobile ? "sm" : "default"}
+            className={isMobile ? 'flex-1' : ''}
+          >
+            <RefreshCw className={`w-4 h-4 ${isMobile ? 'mr-1' : 'mr-2'} ${complianceLoading ? 'animate-spin' : ''}`} />
+            {isMobile ? 'Refresh' : 'Refresh Data'}
           </Button>
-          <Button className="bg-green-600 hover:bg-green-700">
-            <Upload className="w-4 h-4 mr-2" />
-            Update Documents
+          <Button 
+            className={`bg-green-600 hover:bg-green-700 ${isMobile ? 'flex-1' : ''}`}
+            size={isMobile ? "sm" : "default"}
+          >
+            <Upload className={`w-4 h-4 ${isMobile ? 'mr-1' : 'mr-2'}`} />
+            {isMobile ? 'Update' : 'Update Documents'}
           </Button>
         </div>
       </div>
 
+      {/* Empty State */}
+      {!hasAnyData && !complianceLoading && (
+        <Card className="bg-gradient-to-r from-blue-50 to-green-50">
+          <CardContent className={`${isMobile ? 'p-6' : 'p-8'} text-center`}>
+            <Shield className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Welcome to Your Compliance Dashboard</h2>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              Your compliance dashboard is ready! Once you have licenses, training records, or compliance data, 
+              it will appear here for easy tracking and management.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Documents
+              </Button>
+              <Button variant="outline">
+                <Award className="w-4 h-4 mr-2" />
+                View Training
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Compliance Score */}
       <Card className="bg-gradient-to-r from-green-50 to-blue-50">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold mb-2">Overall Compliance Score</h2>
-              <div className={`text-4xl font-bold ${getComplianceColor(complianceData.overallScore)}`}>
+        <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
+          <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex items-center justify-between'}`}>
+            <div className={isMobile ? 'text-center' : ''}>
+              <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold mb-2`}>Overall Compliance Score</h2>
+              <div className={`${isMobile ? 'text-3xl' : 'text-4xl'} font-bold ${getComplianceColor(complianceData.overallScore)}`}>
                 {complianceData.overallScore}%
               </div>
-              <p className="text-gray-600 mt-2">
+              <p className={`text-gray-600 mt-2 ${isMobile ? 'text-sm' : ''}`}>
                 {complianceData.overallScore >= 90 ? 'Excellent compliance status' :
                  complianceData.overallScore >= 75 ? 'Good compliance status' :
                  'Compliance attention needed'}
               </p>
             </div>
-            <div className="text-right">
-              <div className="w-32 h-32 relative">
-                <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+            <div className={`${isMobile ? 'flex justify-center' : 'text-right'}`}>
+              <div className={`${isMobile ? 'w-24 h-24' : 'w-32 h-32'} relative`}>
+                <svg className={`${isMobile ? 'w-24 h-24' : 'w-32 h-32'} transform -rotate-90`} viewBox="0 0 36 36">
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
@@ -207,7 +310,7 @@ const DriverCompliance = () => {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+                  <CheckCircle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
                 </div>
               </div>
             </div>
@@ -216,47 +319,47 @@ const DriverCompliance = () => {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-6'}`}>
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+          <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+            <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
+              <CheckCircle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
               <div>
-                <p className="text-sm text-gray-600">Valid Documents</p>
-                <p className="text-2xl font-bold text-green-600">{validDocuments.length}</p>
+                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Valid Documents</p>
+                <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-green-600`}>{validDocuments.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-8 h-8 text-yellow-600" />
+          <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+            <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
+              <AlertTriangle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-yellow-600`} />
               <div>
-                <p className="text-sm text-gray-600">Due Soon</p>
-                <p className="text-2xl font-bold text-yellow-600">{dueSoonDocuments.length}</p>
+                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Due Soon</p>
+                <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-yellow-600`}>{dueSoonDocuments.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+          <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+            <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
+              <AlertTriangle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-red-600`} />
               <div>
-                <p className="text-sm text-gray-600">Expired</p>
-                <p className="text-2xl font-bold text-red-600">{expiredDocuments.length}</p>
+                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Expired</p>
+                <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-red-600`}>{expiredDocuments.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <Award className="w-8 h-8 text-blue-600" />
+          <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+            <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
+              <Award className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-blue-600`} />
               <div>
-                <p className="text-sm text-gray-600">Active Violations</p>
-                <p className="text-2xl font-bold">{violations.filter(v => v.status === 'active' || v.status === 'pending').length}</p>
+                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Active Violations</p>
+                <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{violations.filter(v => v.status === 'active' || v.status === 'pending').length}</p>
               </div>
             </div>
           </CardContent>
@@ -264,12 +367,20 @@ const DriverCompliance = () => {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="documents" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="training">Training</TabsTrigger>
-          <TabsTrigger value="driving-record">Driving Record</TabsTrigger>
-          <TabsTrigger value="reminders">Reminders</TabsTrigger>
+      <Tabs defaultValue="documents" className={`${isMobile ? 'space-y-4' : 'space-y-6'}`}>
+        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'}`}>
+          <TabsTrigger value="documents" className={isMobile ? 'text-xs px-2' : ''}>
+            {isMobile ? 'Docs' : 'Documents'}
+          </TabsTrigger>
+          <TabsTrigger value="training" className={isMobile ? 'text-xs px-2' : ''}>
+            Training
+          </TabsTrigger>
+          <TabsTrigger value="driving-record" className={isMobile ? 'text-xs px-2' : ''}>
+            {isMobile ? 'Record' : 'Driving Record'}
+          </TabsTrigger>
+          <TabsTrigger value="reminders" className={isMobile ? 'text-xs px-2' : ''}>
+            Reminders
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="documents" className="space-y-4">
@@ -281,8 +392,19 @@ const DriverCompliance = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {documents.map((doc) => (
+              {documents.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Documents Found</h3>
+                  <p className="text-gray-600 mb-4">Upload your licenses and certifications to track compliance</p>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Documents
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {documents.map((doc) => (
                   <div key={doc.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
@@ -376,6 +498,7 @@ const DriverCompliance = () => {
                   </div>
                 ))}
               </div>
+                )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -389,8 +512,19 @@ const DriverCompliance = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {trainingModules.map((training) => (
+              {trainingModules.length === 0 ? (
+                <div className="text-center py-8">
+                  <Award className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Training Records</h3>
+                  <p className="text-gray-600 mb-4">Complete training modules to improve your compliance score</p>
+                  <Button className="bg-purple-600 hover:bg-purple-700">
+                    <Award className="w-4 h-4 mr-2" />
+                    Start Training
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {trainingModules.map((training) => (
                   <div key={training.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -417,6 +551,24 @@ const DriverCompliance = () => {
                           <p>Due: {training.dueDate ? format(new Date(training.dueDate), 'MM/dd/yyyy') : 'No due date'}</p>
                           <Progress value={training.progress} className="mt-2" />
                           <p className="text-xs mt-1">{training.progress}% complete</p>
+                          <div className="flex gap-2 mt-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => updateTrainingProgress(training.id, Math.min(training.progress + 25, 100))}
+                            >
+                              Update Progress
+                            </Button>
+                            {training.progress >= 100 && (
+                              <Button 
+                                size="sm" 
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => completeTraining(training.id)}
+                              >
+                                Mark Complete
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       )}
                       {training.status === 'not_started' && (
@@ -426,6 +578,7 @@ const DriverCompliance = () => {
                   </div>
                 ))}
               </div>
+                )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -562,6 +715,12 @@ const DriverCompliance = () => {
       </Tabs>
     </div>
   );
+
+  return isMobile ? (
+    <MobileOptimizedLayout>
+      {content}
+    </MobileOptimizedLayout>
+  ) : content;
 };
 
 export default DriverCompliance;

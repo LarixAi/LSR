@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -67,38 +67,12 @@ export const useDriverCompliance = () => {
   const [driverLicenses, setDriverLicenses] = useState<DriverLicense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
+  const lastProfileIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    console.log('🔄 useDriverCompliance effect triggered, user:', user);
-    
-    // Set a timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        console.log('⚠️ Compliance data fetch timeout, setting loading to false');
-        setLoading(false);
-        setError('Failed to load compliance data: timeout');
-      }
-    }, 10000); // 10 second timeout
-
-    if (user && profile) {
-      fetchComplianceData();
-    } else {
-      // If no user after a short delay, stop loading
-      const noUserTimeoutId = setTimeout(() => {
-        if (!user) {
-          console.log('❌ No user found after delay, stopping loading');
-          setLoading(false);
-        }
-      }, 2000);
-      
-      return () => clearTimeout(noUserTimeoutId);
-    }
-
-    return () => clearTimeout(timeoutId);
-  }, [user, profile]);
-
-  const fetchComplianceData = async () => {
-    if (!user || !profile) {
+  const fetchComplianceData = useCallback(async () => {
+    if (!user?.id || !profile?.id) {
       console.log('❌ No user or profile found, skipping compliance data fetch');
       setLoading(false);
       return;
@@ -130,23 +104,68 @@ export const useDriverCompliance = () => {
         licensesData = [];
       }
 
-      // Skip training_completions fetch - table doesn't exist
-      const trainingData: any[] = [];
+      // Fetch training completions (table may not exist)
+      let trainingData: any[] = [];
+      try {
+        const { data, error: trainingError } = await supabase
+          .from('training_completions' as any)
+          .select('*')
+          .eq('driver_id', user.id)
+          .eq('organization_id', profile.organization_id)
+          .order('completion_date', { ascending: false });
 
-      // Fetch compliance violations
-      const { data: violationsData, error: violationsError } = await supabase
-        .from('compliance_violations')
-        .select('*')
-        .eq('driver_id', user.id)
-        .eq('organization_id', profile.organization_id)
-        .order('violation_date', { ascending: false });
-
-      if (violationsError) {
-        console.error('Error fetching compliance violations:', violationsError);
+        if (trainingError) {
+          console.warn('training_completions table not found, using empty data');
+          trainingData = [];
+        } else {
+          trainingData = data || [];
+        }
+      } catch (error) {
+        console.warn('training_completions table not accessible, using empty data');
+        trainingData = [];
       }
 
-      // Skip driver_compliance_scores fetch - table doesn't exist
-      const complianceScoresData: any[] = [];
+      // Fetch compliance violations (table may not exist)
+      let violationsData: any[] = [];
+      try {
+        const { data, error: violationsError } = await supabase
+          .from('compliance_violations')
+          .select('*')
+          .eq('driver_id', user.id)
+          .eq('organization_id', profile.organization_id)
+          .order('violation_date', { ascending: false });
+
+        if (violationsError) {
+          console.warn('compliance_violations table not found, using empty data');
+          violationsData = [];
+        } else {
+          violationsData = data || [];
+        }
+      } catch (error) {
+        console.warn('compliance_violations table not accessible, using empty data');
+        violationsData = [];
+      }
+
+      // Fetch driver compliance scores (table may not exist)
+      let complianceScoresData: any[] = [];
+      try {
+        const { data, error: scoresError } = await supabase
+          .from('driver_compliance_scores' as any)
+          .select('*')
+          .eq('driver_id', user.id)
+          .eq('organization_id', profile.organization_id)
+          .order('last_assessment_date', { ascending: false });
+
+        if (scoresError) {
+          console.warn('driver_compliance_scores table not found, using empty data');
+          complianceScoresData = [];
+        } else {
+          complianceScoresData = data || [];
+        }
+      } catch (error) {
+        console.warn('driver_compliance_scores table not accessible, using empty data');
+        complianceScoresData = [];
+      }
 
       // Process driver licenses
       const validLicenses = licensesData?.filter((license: any) => 
@@ -355,11 +374,52 @@ export const useDriverCompliance = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, profile?.id]); // Only depend on the IDs, not the full objects
 
-  const refreshData = () => {
+  useEffect(() => {
+    console.log('🔄 useDriverCompliance effect triggered, user ID:', user?.id, 'profile ID:', profile?.id);
+    
+    // Check if user or profile has actually changed
+    const currentUserId = user?.id;
+    const currentProfileId = profile?.id;
+    
+    if (currentUserId !== lastUserIdRef.current || currentProfileId !== lastProfileIdRef.current) {
+      console.log('🔄 User or profile changed, updating refs and fetching data');
+      lastUserIdRef.current = currentUserId;
+      lastProfileIdRef.current = currentProfileId;
+      hasFetchedRef.current = false;
+    }
+    
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.log('⚠️ Compliance data fetch timeout, setting loading to false');
+        setLoading(false);
+        setError('Failed to load compliance data: timeout');
+      }
+    }, 5000); // 5 second timeout - reduced from 10 seconds
+
+    if (currentUserId && currentProfileId && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchComplianceData();
+    } else if (!currentUserId) {
+      // If no user after a short delay, stop loading
+      const noUserTimeoutId = setTimeout(() => {
+        if (!user?.id) {
+          console.log('❌ No user found after delay, stopping loading');
+          setLoading(false);
+        }
+      }, 2000);
+      
+      return () => clearTimeout(noUserTimeoutId);
+    }
+
+    return () => clearTimeout(timeoutId);
+  }, [user?.id, profile?.id]); // Only depend on the IDs
+
+  const refreshData = useCallback(() => {
     fetchComplianceData();
-  };
+  }, [fetchComplianceData]);
 
   return {
     complianceData,

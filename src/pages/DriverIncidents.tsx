@@ -22,97 +22,42 @@ import {
   Search,
   Filter
 } from 'lucide-react';
+import { useIncidents, useCreateIncident } from '@/hooks/useIncidents';
+import { useOrganizationContext } from '@/hooks/useOrganizationContext';
+import { format, parseISO } from 'date-fns';
 
 const DriverIncidents = () => {
   const { user, profile, loading } = useAuth();
+  const { organizationId } = useOrganizationContext();
+  const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
-  const [selectedIncident, setSelectedIncident] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-          <p className="text-lg">Loading incidents...</p>
-        </div>
-      </div>
-    );
-  }
+  // Use real data from database
+  const { data: incidents = [], isLoading, error } = useIncidents();
+  const createIncidentMutation = useCreateIncident();
 
-  if (!user || !profile) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Only drivers can access
-  if (profile.role !== 'driver') {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Mock data for demonstration
-  const incidents = [
-    {
-      id: '1',
-      type: 'Vehicle Breakdown',
-      severity: 'medium',
-      status: 'resolved',
-      date: '2024-01-10',
-      time: '14:30',
-      location: 'M25 Junction 15',
-      vehicleNumber: 'LSR-001',
-      description: 'Engine overheating warning light appeared during route. Pulled over safely and contacted control.',
-      passengerCount: 18,
-      injuryReported: false,
-      damageReported: true,
-      reportedBy: 'John Smith',
-      followUpRequired: false,
-      resolution: 'Vehicle towed to depot. Coolant leak repaired. Vehicle back in service.'
-    },
-    {
-      id: '2',
-      type: 'Traffic Accident',
-      severity: 'high',
-      status: 'under_investigation',
-      date: '2024-01-08',
-      time: '08:15',
-      location: 'High Street, Elmwood',
-      vehicleNumber: 'LSR-001',
-      description: 'Minor collision with parked car while maneuvering in tight space. No passengers on board.',
-      passengerCount: 0,
-      injuryReported: false,
-      damageReported: true,
-      reportedBy: 'John Smith',
-      followUpRequired: true,
-      policeReference: 'POL2024010801',
-      insuranceClaim: 'INS2024010802'
-    },
-    {
-      id: '3',
-      type: 'Passenger Incident',
-      severity: 'low',
-      status: 'resolved',
-      date: '2024-01-05',
-      time: '16:45',
-      location: 'Oakwood Primary School',
-      vehicleNumber: 'LSR-001',
-      description: 'Child complained of feeling unwell during journey. Administered first aid and contacted parent.',
-      passengerCount: 22,
-      injuryReported: false,
-      damageReported: false,
-      reportedBy: 'John Smith',
-      followUpRequired: false,
-      resolution: 'Parent collected child. Child recovered fully. No further action required.'
-    }
-  ];
+  // Filter incidents based on search and filters
+  const filteredIncidents = incidents.filter(incident => {
+    const matchesSearch = incident.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         incident.location_address?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || incident.status === statusFilter;
+    const matchesSeverity = severityFilter === 'all' || incident.severity === severityFilter;
+    
+    return matchesSearch && matchesStatus && matchesSeverity;
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'resolved':
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Resolved</Badge>;
-      case 'under_investigation':
+      case 'investigating':
         return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Under Investigation</Badge>;
-      case 'pending':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Pending</Badge>;
+      case 'open':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Open</Badge>;
       case 'closed':
         return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Closed</Badge>;
       default:
@@ -138,9 +83,33 @@ const DriverIncidents = () => {
   const stats = {
     totalIncidents: incidents.length,
     resolvedIncidents: incidents.filter(i => i.status === 'resolved').length,
-    pendingIncidents: incidents.filter(i => i.status === 'under_investigation' || i.status === 'pending').length,
-    thisMonthIncidents: incidents.filter(i => new Date(i.date).getMonth() === new Date().getMonth()).length
+    pendingIncidents: incidents.filter(i => i.status === 'open' || i.status === 'investigating').length,
+    thisMonthIncidents: incidents.filter(i => {
+      const incidentDate = new Date(i.incident_date || i.created_at);
+      return incidentDate.getMonth() === new Date().getMonth() && 
+             incidentDate.getFullYear() === new Date().getFullYear();
+    }).length
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+          <p className="text-lg">Loading incidents...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Only drivers can access
+  if (profile.role !== 'driver') {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="space-y-6">
@@ -153,7 +122,7 @@ const DriverIncidents = () => {
           </h1>
           <p className="text-gray-600 mt-1">Report and track safety incidents</p>
         </div>
-        <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
             <Button className="bg-red-600 hover:bg-red-700">
               <Plus className="w-4 h-4 mr-2" />
@@ -364,27 +333,27 @@ const DriverIncidents = () => {
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="under_investigation">Under Investigation</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="investigating">Under Investigation</SelectItem>
+                    <SelectItem value="open">Open</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {incidents.map((incident) => (
+                {filteredIncidents.map((incident) => (
                   <div key={incident.id} className="border rounded-lg p-4 hover:bg-gray-50">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-semibold text-lg">{incident.type}</h3>
+                        <h3 className="font-semibold text-lg">{incident.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                           <span className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
-                            {incident.date} at {incident.time}
+                            {incident.incident_date ? format(parseISO(incident.incident_date), 'MM/dd/yyyy HH:mm') : format(parseISO(incident.created_at), 'MM/dd/yyyy HH:mm')}
                           </span>
                           <span className="flex items-center gap-1">
                             <MapPin className="w-4 h-4" />
-                            {incident.location}
+                            {incident.location_address}
                           </span>
                         </div>
                       </div>
@@ -398,14 +367,14 @@ const DriverIncidents = () => {
                     
                     <div className="flex items-center justify-between">
                       <div className="flex gap-4 text-sm text-gray-500">
-                        <span>Vehicle: {incident.vehicleNumber}</span>
-                        <span>Passengers: {incident.passengerCount}</span>
-                        {incident.injuryReported && (
-                          <span className="text-red-600 font-medium">Injury Reported</span>
-                        )}
-                        {incident.damageReported && (
-                          <span className="text-orange-600 font-medium">Damage Reported</span>
-                        )}
+                                                 <span>Vehicle: {incident.vehicles?.vehicle_number || 'Not specified'}</span>
+                         <span>Passengers: {incident.people_involved?.length || 0}</span>
+                         {incident.additional_data?.injury_reported && (
+                           <span className="text-red-600 font-medium">Injury Reported</span>
+                         )}
+                         {incident.additional_data?.damage_reported && (
+                           <span className="text-orange-600 font-medium">Damage Reported</span>
+                         )}
                       </div>
                       
                       <Dialog>
@@ -413,7 +382,6 @@ const DriverIncidents = () => {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => setSelectedIncident(incident)}
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             View Details
@@ -421,9 +389,9 @@ const DriverIncidents = () => {
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl">
                           <DialogHeader>
-                            <DialogTitle>Incident Details - {selectedIncident?.type}</DialogTitle>
+                            <DialogTitle>Incident Details - {incident.title}</DialogTitle>
                           </DialogHeader>
-                          {selectedIncident && (
+                          {incident && (
                             <div className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -431,20 +399,20 @@ const DriverIncidents = () => {
                                   <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">Date & Time:</span>
-                                      <span>{selectedIncident.date} at {selectedIncident.time}</span>
+                                      <span>{incident.incident_date ? format(parseISO(incident.incident_date), 'MM/dd/yyyy HH:mm') : format(parseISO(incident.created_at), 'MM/dd/yyyy HH:mm')}</span>
                                     </div>
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">Location:</span>
-                                      <span>{selectedIncident.location}</span>
+                                      <span>{incident.location_address}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Vehicle:</span>
-                                      <span>{selectedIncident.vehicleNumber}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Passengers:</span>
-                                      <span>{selectedIncident.passengerCount}</span>
-                                    </div>
+                                                                          <div className="flex justify-between">
+                                        <span className="text-gray-600">Vehicle:</span>
+                                        <span>{incident.vehicles?.vehicle_number || 'Not specified'}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Passengers:</span>
+                                        <span>{incident.people_involved?.length || 0}</span>
+                                      </div>
                                   </div>
                                 </div>
                                 <div>
@@ -452,20 +420,20 @@ const DriverIncidents = () => {
                                   <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">Severity:</span>
-                                      <span>{getSeverityBadge(selectedIncident.severity)}</span>
+                                      <span>{getSeverityBadge(incident.severity)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">Status:</span>
-                                      <span>{getStatusBadge(selectedIncident.status)}</span>
+                                      <span>{getStatusBadge(incident.status)}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Injury:</span>
-                                      <span>{selectedIncident.injuryReported ? 'Yes' : 'No'}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Damage:</span>
-                                      <span>{selectedIncident.damageReported ? 'Yes' : 'No'}</span>
-                                    </div>
+                                                                          <div className="flex justify-between">
+                                        <span className="text-gray-600">Injury:</span>
+                                        <span>{incident.additional_data?.injury_reported ? 'Yes' : 'No'}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Damage:</span>
+                                        <span>{incident.additional_data?.damage_reported ? 'Yes' : 'No'}</span>
+                                      </div>
                                   </div>
                                 </div>
                               </div>
@@ -473,32 +441,32 @@ const DriverIncidents = () => {
                               <div>
                                 <h4 className="font-medium mb-2">Description</h4>
                                 <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                                  {selectedIncident.description}
+                                  {incident.description}
                                 </p>
                               </div>
 
-                              {selectedIncident.resolution && (
-                                <div>
-                                  <h4 className="font-medium mb-2">Resolution</h4>
-                                  <p className="text-sm text-gray-600 bg-green-50 p-3 rounded">
-                                    {selectedIncident.resolution}
-                                  </p>
-                                </div>
-                              )}
+                                                             {incident.additional_data?.resolution && (
+                                 <div>
+                                   <h4 className="font-medium mb-2">Resolution</h4>
+                                   <p className="text-sm text-gray-600 bg-green-50 p-3 rounded">
+                                     {incident.additional_data.resolution}
+                                   </p>
+                                 </div>
+                               )}
 
-                              {(selectedIncident.policeReference || selectedIncident.insuranceClaim) && (
-                                <div>
-                                  <h4 className="font-medium mb-2">References</h4>
-                                  <div className="text-sm space-y-1">
-                                    {selectedIncident.policeReference && (
-                                      <div>Police Ref: {selectedIncident.policeReference}</div>
-                                    )}
-                                    {selectedIncident.insuranceClaim && (
-                                      <div>Insurance Claim: {selectedIncident.insuranceClaim}</div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
+                               {(incident.additional_data?.police_reference || incident.additional_data?.insurance_claim) && (
+                                 <div>
+                                   <h4 className="font-medium mb-2">References</h4>
+                                   <div className="text-sm space-y-1">
+                                     {incident.additional_data.police_reference && (
+                                       <div>Police Ref: {incident.additional_data.police_reference}</div>
+                                     )}
+                                     {incident.additional_data.insurance_claim && (
+                                       <div>Insurance Claim: {incident.additional_data.insurance_claim}</div>
+                                     )}
+                                   </div>
+                                 </div>
+                               )}
                             </div>
                           )}
                         </DialogContent>

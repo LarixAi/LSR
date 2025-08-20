@@ -82,18 +82,22 @@ const MechanicDashboard = () => {
         // Calculate stats from available data
         const totalVehicles = vehicles?.length || 0;
         const activeDrivers = drivers?.length || 0;
-        const activeWorkOrders = Math.floor(Math.random() * 10) + 2; // Mock data
-        const completedToday = Math.floor(Math.random() * 5) + 1; // Mock data
-        const totalDefects = Math.floor(Math.random() * 20) + 5; // Mock data
-        const pendingRepairs = Math.floor(Math.random() * 8) + 2; // Mock data
-        const urgentIssues = Math.floor(Math.random() * 3) + 1; // Mock data
+        
+        // For now, use realistic defaults since work_orders and defect_reports tables don't exist yet
+        // These will be replaced with real data when the tables are created
+        const activeWorkOrders = 0;
+        const completedToday = 0;
+        const totalDefects = 0;
+        const pendingRepairs = 0;
+        const urgentIssues = 0;
+        const partsNeeded = 0;
 
         return {
           activeWorkOrders,
           completedToday,
           totalDefects,
           pendingRepairs,
-          partsNeeded: Math.floor(Math.random() * 20) + 5, // Mock data
+          partsNeeded,
           urgentIssues,
           totalVehicles,
           activeDrivers
@@ -116,42 +120,14 @@ const MechanicDashboard = () => {
     enabled: !!selectedOrganizationId
   });
 
-  // Safe query for recent work orders (mock data for now)
-  const { data: recentWorkOrders, isLoading: workOrdersLoading } = useQuery({
+  // Query for recent work orders (empty for now since work_orders table doesn't exist yet)
+  const { data: recentWorkOrders = [], isLoading: workOrdersLoading } = useQuery({
     queryKey: ['mechanic-recent-work-orders', selectedOrganizationId],
     queryFn: async () => {
       if (!selectedOrganizationId) return [];
 
-      // Return mock work order data since defect_reports table might not exist
-      return [
-        {
-          id: '1',
-          title: 'Brake System Repair',
-          status: 'in_progress',
-          priority: 'urgent',
-          created_at: new Date().toISOString(),
-          vehicle_id: 'BUS001',
-          estimated_cost: 450
-        },
-        {
-          id: '2',
-          title: 'Oil Change & Inspection',
-          status: 'completed',
-          priority: 'medium',
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          vehicle_id: 'BUS002',
-          estimated_cost: 120
-        },
-        {
-          id: '3',
-          title: 'Tire Replacement',
-          status: 'pending',
-          priority: 'high',
-          created_at: new Date(Date.now() - 172800000).toISOString(),
-          vehicle_id: 'VAN001',
-          estimated_cost: 280
-        }
-      ];
+      // TODO: Replace with real work_orders table query when table is created
+      return [];
     },
     enabled: !!selectedOrganizationId
   });

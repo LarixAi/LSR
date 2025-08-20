@@ -13,7 +13,7 @@ export interface Vehicle {
   capacity: number;
   fuel_type?: string;
   mileage?: number;
-  is_active: boolean;
+  is_active?: boolean; // Made optional since it's computed from status
   status?: string;
   organization_id: string;
   created_at: string;
@@ -72,7 +72,7 @@ export const useVehicles = () => {
             // Map database fields to interface
             status: vehicle.status || 'active',
             capacity: 0, // Not in current schema
-            is_active: vehicle.status === 'active',
+            is_active: vehicle.status === 'active' || vehicle.status === null, // Consider null as active
             fuel_type: vehicle.fuel_type || 'unknown',
             mileage: 0, // Not in current schema
             // Compatibility fields with defaults

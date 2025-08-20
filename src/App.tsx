@@ -59,6 +59,7 @@ const InfringementManagement = lazy(() => import("./pages/InfringementManagement
 const AdminSchedule = lazy(() => import("./pages/AdminSchedule"));
 const AdminInventoryDashboard = lazy(() => import("./pages/AdminInventoryDashboard"));
 const AdminMechanicRequests = lazy(() => import("./pages/AdminMechanicRequests"));
+const AdminTrainingManagement = lazy(() => import("./pages/AdminTrainingManagement"));
 
 // New pages - Driver specific
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
@@ -501,6 +502,11 @@ const App = () => {
                         <Route path="/admin/inventory" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <AdminInventoryDashboard />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/training-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AdminTrainingManagement />
                           </ProtectedRoute>
                         } />
 

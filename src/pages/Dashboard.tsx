@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Database,
   Trash2,
-  UserCheck
+  UserCheck,
+  Award
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -24,10 +25,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { TrialBanner, TrialExpiredBanner, DriverLimitBanner } from "@/components/subscription/TrialBanner";
 import { Navigate } from "react-router-dom";
+import { useIsMobile } from '@/hooks/use-mobile';
 // import { TrialTestComponent } from "@/components/subscription/TrialTestComponent"; // Removed - no longer needed
 
 export default function Dashboard() {
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
 
   // Redirect drivers to their specific dashboard
@@ -393,7 +396,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className={`${isMobile ? 'space-y-4' : 'space-y-6'}`}>
       {/* Trial Status Banners */}
       <TrialBanner />
       <TrialExpiredBanner />
@@ -403,23 +406,24 @@ export default function Dashboard() {
               {/* TrialTestComponent removed - no longer needed */}
       
       {/* Welcome Header */}
-      <div className="flex items-center justify-between">
+      <div className={`${isMobile ? 'space-y-3' : 'flex items-center justify-between'}`}>
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold`}>Dashboard</h1>
+          <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>
             Welcome back, {profile?.first_name || 'User'}! Here's your fleet overview.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'gap-2'}`}>
           {(vehicles.length === 0 && incidents.length === 0 && maintenanceRequests.length === 0) && (
             <Button 
               onClick={handleAddSampleData} 
               variant="outline" 
               className="inline-flex items-center"
               disabled={addSampleDataMutation.isPending}
+              size={isMobile ? "sm" : "default"}
             >
-              <Database className="mr-2 h-4 w-4" />
-              {addSampleDataMutation.isPending ? 'Adding...' : 'Add Sample Data'}
+              <Database className={`${isMobile ? 'mr-1' : 'mr-2'} h-4 w-4`} />
+              {addSampleDataMutation.isPending ? 'Adding...' : (isMobile ? 'Add Sample' : 'Add Sample Data')}
             </Button>
           )}
           {(vehicles.length > 0 || incidents.length > 0 || maintenanceRequests.length > 0) && (
@@ -428,51 +432,81 @@ export default function Dashboard() {
               variant="destructive" 
               className="inline-flex items-center"
               disabled={clearAllDataMutation.isPending}
+              size={isMobile ? "sm" : "default"}
             >
-              <Database className="mr-2 h-4 w-4" />
-              {clearAllDataMutation.isPending ? 'Clearing...' : 'Clear All Data'}
+              <Database className={`${isMobile ? 'mr-1' : 'mr-2'} h-4 w-4`} />
+              {clearAllDataMutation.isPending ? 'Clearing...' : (isMobile ? 'Clear Data' : 'Clear All Data')}
             </Button>
           )}
         </div>
       </div>
 
-      {/* Admin Mechanic Request Notification */}
+      {/* Admin Management Cards */}
       {profile?.role === 'admin' && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <UserCheck className="h-5 w-5 text-blue-600" />
-                <div>
-                  <h3 className="font-medium text-blue-900">Mechanic Request Management</h3>
-                  <p className="text-sm text-blue-700">
-                    Manage mechanic requests and working relationships for your organization.
-                  </p>
+        <div className="space-y-4">
+          {/* Training Management */}
+          <Card className="border-purple-200 bg-purple-50">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
+              <div className={`${isMobile ? 'space-y-3' : 'flex items-center justify-between'}`}>
+                <div className={`flex items-center ${isMobile ? 'space-x-2' : 'space-x-3'}`}>
+                  <Award className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-600`} />
+                  <div>
+                    <h3 className={`font-medium text-purple-900 ${isMobile ? 'text-sm' : ''}`}>Driver Training Management</h3>
+                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-purple-700`}>
+                      Assign training modules to drivers and track their completion progress.
+                    </p>
+                  </div>
                 </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.href = '/admin/training-management'}
+                  className={`border-purple-300 text-purple-700 hover:bg-purple-100 ${isMobile ? 'w-full' : ''}`}
+                >
+                  <Award className={`${isMobile ? 'mr-1' : 'mr-2'} h-4 w-4`} />
+                  {isMobile ? 'Manage' : 'Manage Training'}
+                </Button>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => window.location.href = '/admin/mechanic-requests'}
-                className="border-blue-300 text-blue-700 hover:bg-blue-100"
-              >
-                <UserCheck className="mr-2 h-4 w-4" />
-                Manage Requests
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Mechanic Request Management */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
+              <div className={`${isMobile ? 'space-y-3' : 'flex items-center justify-between'}`}>
+                <div className={`flex items-center ${isMobile ? 'space-x-2' : 'space-x-3'}`}>
+                  <UserCheck className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600`} />
+                  <div>
+                    <h3 className={`font-medium text-blue-900 ${isMobile ? 'text-sm' : ''}`}>Mechanic Request Management</h3>
+                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-blue-700`}>
+                      Manage mechanic requests and working relationships for your organization.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.href = '/admin/mechanic-requests'}
+                  className={`border-blue-300 text-blue-700 hover:bg-blue-100 ${isMobile ? 'w-full' : ''}`}
+                >
+                  <UserCheck className={`${isMobile ? 'mr-1' : 'mr-2'} h-4 w-4`} />
+                  {isMobile ? 'Manage' : 'Manage Requests'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'gap-4 md:grid-cols-2 lg:grid-cols-4'}`}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Vehicles</CardTitle>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? 'pb-1' : 'pb-2'}`}>
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Total Vehicles</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vehicles.length}</div>
+          <CardContent className={isMobile ? 'pt-1' : ''}>
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{vehicles.length}</div>
             <p className="text-xs text-muted-foreground">
               {activeVehicles} active
             </p>
@@ -480,12 +514,12 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Drivers</CardTitle>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? 'pb-1' : 'pb-2'}`}>
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Active Drivers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeDrivers}</div>
+          <CardContent className={isMobile ? 'pt-1' : ''}>
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{activeDrivers}</div>
             <p className="text-xs text-muted-foreground">
               of {drivers.length} total drivers
             </p>
@@ -493,12 +527,12 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Maintenance</CardTitle>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? 'pb-1' : 'pb-2'}`}>
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Pending Maintenance</CardTitle>
             <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingMaintenance}</div>
+          <CardContent className={isMobile ? 'pt-1' : ''}>
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{pendingMaintenance}</div>
             <p className="text-xs text-muted-foreground">
               requests awaiting attention
             </p>
@@ -506,12 +540,12 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Incidents</CardTitle>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? 'pb-1' : 'pb-2'}`}>
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Recent Incidents</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{recentIncidents}</div>
+          <CardContent className={isMobile ? 'pt-1' : ''}>
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{recentIncidents}</div>
             <p className="text-xs text-muted-foreground">
               in the last 7 days
             </p>
@@ -520,12 +554,12 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+      <div className={`grid ${isMobile ? 'gap-4' : 'gap-6 md:grid-cols-2 lg:grid-cols-7'}`}>
         {/* Recent Activity */}
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Activity className="w-5 h-5" />
+        <Card className={isMobile ? '' : 'col-span-4'}>
+          <CardHeader className={isMobile ? 'pb-3' : ''}>
+            <CardTitle className={`flex items-center space-x-2 ${isMobile ? 'text-lg' : ''}`}>
+              <Activity className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
               <span>Recent Activity</span>
             </CardTitle>
           </CardHeader>

@@ -36,8 +36,8 @@ const MobileOptimizedLayout: React.FC<MobileOptimizedLayoutProps> = ({
       )}
       style={{
         // Ensure proper mobile viewport
-        minHeight: '100dvh', // Use dynamic viewport height
-        maxHeight: '100dvh',
+        minHeight: '100dvh',
+        height: '100dvh',
         WebkitOverflowScrolling: 'touch',
         // Prevent zoom on double tap
         touchAction: enableSwipeGestures ? 'pan-x pan-y' : 'manipulation'
@@ -51,7 +51,7 @@ const MobileOptimizedLayout: React.FC<MobileOptimizedLayoutProps> = ({
         </div>
       )}
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto min-h-0">
         <div className="mobile-content-wrapper p-3 pb-safe">
           {children}
         </div>

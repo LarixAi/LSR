@@ -22,7 +22,9 @@ const ParentWelcomeCard = () => {
       "Your trust in us drives everything we do.",
       "Safe travels start with caring parents like you."
     ];
-    return messages[Math.floor(Math.random() * messages.length)];
+    // Use time-based selection for consistent experience
+    const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    return messages[dayOfYear % messages.length];
   };
 
   return (

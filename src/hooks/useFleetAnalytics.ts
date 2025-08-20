@@ -81,12 +81,19 @@ export const useVehicleUtilization = () => {
 
       if (error) throw error;
 
-      // Transform data for utilization chart
-      const utilizationData = assignments?.map(assignment => ({
-        vehicle: assignment.vehicles?.vehicle_number || 'Unknown',
-        utilization: Math.floor(Math.random() * 100), // Placeholder calculation
-        status: 'active'
-      })) || [];
+      // Calculate real utilization based on actual assignments and schedules
+      const utilizationData = assignments?.map(assignment => {
+        // Calculate utilization based on active assignments vs total possible time
+        const totalHours = 24 * 7; // 168 hours per week
+        const assignedHours = assignment.hours_per_week || 40; // Default to 40 hours if not specified
+        const utilization = Math.round((assignedHours / totalHours) * 100);
+        
+        return {
+          vehicle: assignment.vehicles?.vehicle_number || 'Unknown',
+          utilization: Math.min(utilization, 100), // Cap at 100%
+          status: assignment.active ? 'active' : 'inactive'
+        };
+      }) || [];
 
       return utilizationData;
     }

@@ -1,26 +1,17 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  Copy,
-  Settings,
-  FileText,
-  AlertTriangle,
-  CheckCircle
-} from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Edit, Trash2, Eye, Settings, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VehicleCheckTemplate {
   id: string;
@@ -33,90 +24,88 @@ interface VehicleCheckTemplate {
 
 interface VehicleCheckQuestion {
   id: string;
+  template_id: string;
   question_text: string;
-  question_type: 'yes_no' | 'multiple_choice' | 'text' | 'number';
+  question_type: 'yes_no' | 'number' | 'text' | 'multiple_choice';
   is_required: boolean;
   is_critical: boolean;
   order_index: number;
   category: string;
+  options?: string[];
 }
 
-const VehicleCheckTemplates: React.FC = () => {
-  const { profile } = useAuth();
+export default function VehicleCheckTemplates() {
   const { toast } = useToast();
-  const [templates, setTemplates] = useState<VehicleCheckTemplate[]>([]);
+  const queryClient = useQueryClient();
   const [selectedTemplate, setSelectedTemplate] = useState<VehicleCheckTemplate | null>(null);
-  const [questions, setQuestions] = useState<VehicleCheckQuestion[]>([]);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showQuestionDialog, setShowQuestionDialog] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<VehicleCheckQuestion | null>(null);
 
-  // Mock data - replace with actual API calls
-  const mockTemplates: VehicleCheckTemplate[] = [
-    {
-      id: '1',
-      name: 'Standard Vehicle Check',
-      description: 'Comprehensive daily vehicle inspection checklist',
-      is_active: true,
-      question_count: 14,
-      created_at: '2025-08-15T10:00:00Z'
-    },
-    {
-      id: '2',
-      name: 'Quick Daily Check',
-      description: 'Basic safety inspection for daily use',
-      is_active: true,
-      question_count: 8,
-      created_at: '2025-08-14T09:00:00Z'
-    },
-    {
-      id: '3',
-      name: 'Comprehensive Weekly Check',
-      description: 'Detailed weekly inspection with additional checks',
-      is_active: false,
-      question_count: 25,
-      created_at: '2025-08-13T14:00:00Z'
+  // TODO: Replace with real database queries when vehicle_check_templates and vehicle_check_questions tables are created
+  const { data: templates = [], isLoading: templatesLoading } = useQuery({
+    queryKey: ['vehicle-check-templates'],
+    queryFn: async () => {
+      // Placeholder for when tables are created
+      return [];
     }
-  ];
+  });
 
-  const mockQuestions: VehicleCheckQuestion[] = [
-    {
-      id: '1',
-      question_text: 'Are all lights working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 1,
-      category: 'exterior'
+  // TODO: Replace with real database queries when vehicle_check_questions table is created
+  const { data: questions = [], isLoading: questionsLoading } = useQuery({
+    queryKey: ['vehicle-check-questions', selectedTemplate?.id],
+    queryFn: async () => {
+      if (!selectedTemplate?.id) return [];
+      // Placeholder for when table is created
+      return [];
     },
-    {
-      id: '2',
-      question_text: 'Are tires in good condition with adequate tread?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 2,
-      category: 'exterior'
+    enabled: !!selectedTemplate?.id
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: async (templateData: Omit<VehicleCheckTemplate, 'id' | 'created_at'>) => {
+      // TODO: Implement when vehicle_check_templates table is created
+      throw new Error('Vehicle check templates table not yet implemented');
     },
-    {
-      id: '3',
-      question_text: 'What is the current mileage?',
-      question_type: 'number',
-      is_required: true,
-      is_critical: false,
-      order_index: 3,
-      category: 'documentation'
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-templates'] });
+      setShowTemplateDialog(false);
+      toast({
+        title: "Template Created",
+        description: "Vehicle check template has been created successfully.",
+      });
     },
-    {
-      id: '4',
-      question_text: 'Are you fit to drive?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 14,
-      category: 'driver'
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to create template: ${error.message}`,
+        variant: "destructive"
+      });
     }
-  ];
+  });
+
+  const createQuestionMutation = useMutation({
+    mutationFn: async (questionData: Omit<VehicleCheckQuestion, 'id'>) => {
+      // TODO: Implement when vehicle_check_questions table is created
+      throw new Error('Vehicle check questions table not yet implemented');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      setShowQuestionDialog(false);
+      setEditingQuestion(null);
+      toast({
+        title: "Question Added",
+        description: "Question has been added to the template.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to add question: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  });
 
   const handleCreateTemplate = () => {
     setShowTemplateDialog(true);
@@ -124,7 +113,6 @@ const VehicleCheckTemplates: React.FC = () => {
 
   const handleEditTemplate = (template: VehicleCheckTemplate) => {
     setSelectedTemplate(template);
-    setQuestions(mockQuestions);
     setShowTemplateDialog(true);
   };
 
@@ -139,6 +127,7 @@ const VehicleCheckTemplates: React.FC = () => {
   };
 
   const handleDeleteQuestion = (questionId: string) => {
+    // TODO: Implement delete mutation
     toast({
       title: "Question Deleted",
       description: "The question has been removed from the template.",
@@ -185,7 +174,7 @@ const VehicleCheckTemplates: React.FC = () => {
 
       {/* Templates Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockTemplates.map((template) => (
+        {templates.map((template) => (
           <Card key={template.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -194,7 +183,7 @@ const VehicleCheckTemplates: React.FC = () => {
                   {template.is_active ? "Active" : "Inactive"}
                 </Badge>
               </div>
-              <CardDescription>{template.description}</CardDescription>
+              <p className="text-sm text-muted-foreground">{template.description}</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -239,9 +228,9 @@ const VehicleCheckTemplates: React.FC = () => {
             <DialogTitle>
               {selectedTemplate ? `Edit Template: ${selectedTemplate.name}` : 'Create New Template'}
             </DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-muted-foreground">
               Manage vehicle check questions and settings
-            </DialogDescription>
+            </p>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -289,61 +278,57 @@ const VehicleCheckTemplates: React.FC = () => {
                 </Button>
               </div>
 
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Question</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Required</TableHead>
-                    <TableHead>Critical</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockQuestions.map((question) => (
-                    <TableRow key={question.id}>
-                      <TableCell className="font-medium">{question.order_index}</TableCell>
-                      <TableCell className="max-w-xs truncate">{question.question_text}</TableCell>
-                      <TableCell>{getQuestionTypeBadge(question.question_type)}</TableCell>
-                      <TableCell>{getCategoryBadge(question.category)}</TableCell>
-                      <TableCell>
-                        {question.is_required ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <span className="text-muted-foreground">No</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {question.is_critical ? (
-                          <AlertTriangle className="w-4 h-4 text-red-600" />
-                        ) : (
-                          <span className="text-muted-foreground">No</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleEditQuestion(question)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleDeleteQuestion(question.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+              {questionsLoading ? (
+                <p>Loading questions...</p>
+              ) : questions.length === 0 ? (
+                <p>No questions added to this template yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {questions.map((question) => (
+                    <div key={question.id} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">{question.question_text}</h4>
+                        <Badge variant="outline">{getQuestionTypeBadge(question.question_type)}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Category: {getCategoryBadge(question.category)}
+                      </p>
+                      <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                        Required: <Switch checked={question.is_required} onCheckedChange={(checked) => {
+                          // TODO: Implement update mutation
+                          toast({
+                            title: "Update Question",
+                            description: "Updating question required status is not yet implemented.",
+                          });
+                        }} />
+                        Critical: <Switch checked={question.is_critical} onCheckedChange={(checked) => {
+                          // TODO: Implement update mutation
+                          toast({
+                            title: "Update Question",
+                            description: "Updating question critical status is not yet implemented.",
+                          });
+                        }} />
+                      </div>
+                      <div className="flex items-center justify-end space-x-2 mt-4">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditQuestion(question)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteQuestion(question.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              )}
             </div>
 
             {/* Actions */}
@@ -366,9 +351,9 @@ const VehicleCheckTemplates: React.FC = () => {
             <DialogTitle>
               {editingQuestion ? 'Edit Question' : 'Add New Question'}
             </DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-muted-foreground">
               Configure the question details and settings
-            </DialogDescription>
+            </p>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -463,5 +448,3 @@ const VehicleCheckTemplates: React.FC = () => {
     </div>
   );
 };
-
-export default VehicleCheckTemplates;

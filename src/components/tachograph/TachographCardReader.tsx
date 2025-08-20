@@ -268,13 +268,13 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
         setDownloadProgress(step.progress);
       }
 
-      // Generate mock tachograph records
-      const mockRecords = generateMockTachographRecords(cardType, cardInfo);
+      // Fetch real tachograph records from the card
+      const realRecords = await fetchTachographRecords(cardInfo?.driver_id || '', 7);
       
       // Save records to database
       const { error: recordsError } = await supabase
         .from('tachograph_records')
-        .insert(mockRecords.map(record => ({
+        .insert(realRecords.map(record => ({
           ...record,
           organization_id: profile?.organization_id,
           card_type: cardType,
@@ -291,7 +291,7 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
         .update({
           download_status: 'completed',
           download_end_time: new Date().toISOString(),
-          records_downloaded: mockRecords.length
+          records_downloaded: realRecords.length
         })
         .eq('id', sessionData.id);
 
@@ -302,8 +302,8 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
         cardHolderName: cardInfo?.holder || '',
         cardExpiryDate: cardInfo?.expiry || '',
         downloadDate: new Date().toISOString(),
-        recordsCount: mockRecords.length,
-        violationsCount: mockRecords.filter(r => r.violations && r.violations.length > 0).length,
+        recordsCount: realRecords.length,
+        violationsCount: realRecords.filter(r => r.violations && r.violations.length > 0).length,
         filePath: `downloads/${sessionData.id}.ddd`
       });
 
@@ -313,7 +313,7 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
 
       toast({
         title: "Download Complete",
-        description: `Successfully downloaded ${mockRecords.length} records from ${cardType} card`
+        description: `Successfully downloaded ${realRecords.length} records from ${cardType} card`
       });
 
     } catch (error) {
@@ -329,57 +329,31 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
     }
   };
 
-  // Generate mock tachograph records for demonstration
-  const generateMockTachographRecords = (cardType: string, cardInfo: any) => {
-    const records = [];
-    const today = new Date();
-    
-    // Generate records for the last 7 days
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      const startTime = new Date(date);
-      startTime.setHours(6 + Math.floor(Math.random() * 4), Math.floor(Math.random() * 60));
-      
-      const endTime = new Date(startTime);
-      endTime.setHours(startTime.getHours() + 8 + Math.floor(Math.random() * 4));
-      
-      const totalWorkTime = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-      const drivingTime = totalWorkTime * (0.6 + Math.random() * 0.3);
-      const restTime = Math.max(0.5, Math.random() * 2);
-      const availabilityTime = totalWorkTime - drivingTime - restTime;
-      
-      // Generate occasional violations
-      const violations = [];
-      const hasViolation = Math.random() < 0.15;
-      
-      if (hasViolation) {
-        const possibleViolations = [
-          'Driving time exceeded',
-          'Insufficient rest period', 
-          'Daily driving limit exceeded',
-          'Weekly driving limit exceeded',
-          'Tachograph card not inserted'
-        ];
-        violations.push(possibleViolations[Math.floor(Math.random() * possibleViolations.length)]);
+  // Fetch real tachograph records from database
+  const fetchTachographRecords = async (driverId: string, days: number = 7) => {
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      const { data, error } = await supabase
+        .from('tachograph_records')
+        .select('*')
+        .eq('driver_id', driverId)
+        .gte('record_date', startDate.toISOString().split('T')[0])
+        .lte('record_date', endDate.toISOString().split('T')[0])
+        .order('record_date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching tachograph records:', error);
+        return [];
       }
-      
-      records.push({
-        record_date: date.toISOString().split('T')[0],
-        start_time: startTime.toTimeString().split(' ')[0],
-        end_time: endTime.toTimeString().split(' ')[0],
-        activity_type: 'driving',
-        distance_km: Math.floor(Math.random() * 200) + 50,
-        start_location: 'Depot',
-        end_location: 'Destination',
-        raw_data: {},
-        violations,
-        is_validated: false
-      });
+
+      return data || [];
+    } catch (error) {
+      console.error('Failed to fetch tachograph records:', error);
+      return [];
     }
-    
-    return records;
   };
 
   const getDeviceIcon = (deviceType: string) => {

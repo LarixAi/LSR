@@ -2,23 +2,125 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || "https://dznbihypzmvcmradijqn.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6bmJpaHlwem12Y21yYWRpanFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NTQ1NzQsImV4cCI6MjA3MDUzMDU3NH0.dS4mQBL0q_JhsZQF14KKB0nL2f3H--2hPoxXzitPOgo";
+// Mobile detection and storage
+let isMobile = false;
+let mobileStorage: any = null;
+
+// Check if we're in a mobile environment
+const checkMobileEnvironment = () => {
+  // Check user agent for mobile indicators
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isMobileUA = /iphone|ipad|ipod|android|blackberry|windows phone/g.test(userAgent);
+  
+  // Check if we're in a Capacitor environment
+  const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor;
+  
+  return isMobileUA || isCapacitor;
+};
+
+isMobile = checkMobileEnvironment();
+
+// Initialize mobile storage if needed
+if (isMobile) {
+  // For mobile, we need to handle storage differently
+  // Use a custom storage implementation that works with mobile
+  mobileStorage = {
+    getItem: (key: string) => {
+      try {
+        return localStorage.getItem(key);
+      } catch (error) {
+        console.log('localStorage not available, using sessionStorage');
+        return sessionStorage.getItem(key);
+      }
+    },
+    setItem: (key: string, value: string) => {
+      try {
+        localStorage.setItem(key, value);
+      } catch (error) {
+        console.log('localStorage not available, using sessionStorage');
+        sessionStorage.setItem(key, value);
+      }
+    },
+    removeItem: (key: string) => {
+      try {
+        localStorage.removeItem(key);
+      } catch (error) {
+        console.log('localStorage not available, using sessionStorage');
+        sessionStorage.removeItem(key);
+      }
+    }
+  };
+  console.log('Mobile environment detected with fallback storage');
+} else {
+  console.log('Web environment detected');
+}
+
+// Secure environment configuration
+const getSupabaseConfig = () => {
+  const url = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    console.error('Missing Supabase configuration');
+    console.error('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+    console.error('SUPABASE_URL:', import.meta.env.SUPABASE_URL);
+    console.error('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Present' : 'Missing');
+    console.error('SUPABASE_ANON_KEY:', import.meta.env.SUPABASE_ANON_KEY ? 'Present' : 'Missing');
+    throw new Error('Supabase configuration not found. Please check your environment variables.');
+  }
+  
+  return { url, key };
+};
+
+const { url, key } = getSupabaseConfig();
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(url, key, {
   auth: {
-    storage: localStorage,
+    storage: isMobile && mobileStorage ? mobileStorage : localStorage,
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    detectSessionInUrl: false, // Disable on mobile
     flowType: 'pkce',
+    debug: isMobile, // Enable debug mode on mobile
   },
   global: {
     headers: {
       'X-Client-Info': 'supabase-js/2.55.0',
+      'X-Platform': isMobile ? 'mobile' : 'web',
+      'User-Agent': 'LSR-Mobile-App/1.0',
     },
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+  // Add network configuration for mobile
+  ...(isMobile && {
+    fetch: (url, options = {}) => {
+      // Add mobile-specific headers and CORS handling
+      const mobileOptions = {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, X-Client-Info, X-Platform',
+        },
+        // Increase timeout for mobile networks
+        signal: AbortSignal.timeout(30000), // 30 second timeout
+        // Add mode for CORS
+        mode: 'cors' as RequestMode,
+        credentials: 'omit' as RequestCredentials,
+      };
+      
+      console.log('🔗 Mobile fetch request:', url);
+      return fetch(url, mobileOptions);
+    }
+  }),
 });
