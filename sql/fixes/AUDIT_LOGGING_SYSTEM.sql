@@ -259,3 +259,4 @@ BEGIN
     RAISE NOTICE 'RLS policies applied for secure access';
     RAISE NOTICE 'Cleanup function created for data retention management';
 END $$;
+

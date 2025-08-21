@@ -11,9 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings as SettingsIcon, Shield, Users, Route, Truck, Bell, Database, Globe } from 'lucide-react';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileSettings from '@/components/mobile/MobileSettings';
 
 const Settings = () => {
   const { user, profile, loading: authLoading } = useAuth();
+  const isMobile = useIsMobile();
+  
   const [settings, setSettings] = React.useState({
     organizationName: 'Logistics Solution Resources',
     contactEmail: 'admin@logisticsresources.com',
@@ -43,6 +47,11 @@ const Settings = () => {
     apiRateLimit: '1000',
     debugMode: false
   });
+
+  // Use mobile settings component on mobile devices
+  if (isMobile) {
+    return <MobileSettings />;
+  }
 
   if (authLoading) {
     return (

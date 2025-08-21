@@ -1,89 +1,143 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { Bell, CheckCircle, AlertTriangle, Info, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRealTimeUpdates } from '@/hooks/useRealTimeUpdates';
-import { LoadingState } from '@/components/ui/loading-state';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Notification {
   id: string;
-  type: 'info' | 'warning' | 'success' | 'error';
+  user_id: string;
+  type: 'info' | 'success' | 'warning' | 'error';
   title: string;
   message: string;
   read: boolean;
   created_at: string;
-  action_url?: string;
+  updated_at: string;
 }
 
-const NotificationCenter = () => {
+const LoadingState = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
+
+const NotificationCenter: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  const { data: notifications, isLoading } = useQuery({
+  const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications', user?.id, filter],
     queryFn: async () => {
       if (!user) return [];
 
-      // Mock notifications since table doesn't exist yet
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'info',
-          title: 'Welcome to the platform',
-          message: 'Your account has been successfully set up.',
-          read: false,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          type: 'success',
-          title: 'Profile updated',
-          message: 'Your profile information has been updated successfully.',
-          read: true,
-          created_at: new Date(Date.now() - 86400000).toISOString()
-        }
-      ];
+      let query = supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-      return filter === 'unread' 
-        ? mockNotifications.filter(n => !n.read)
-        : mockNotifications;
+      if (filter === 'unread') {
+        query = query.eq('read', false);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load notifications",
+          variant: "destructive"
+        });
+        return [];
+      }
+
+      return data || [];
     },
     enabled: !!user
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      // Mock implementation
-      console.log('Marking notification as read:', notificationId);
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true, updated_at: new Date().toISOString() })
+        .eq('id', notificationId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast({
+        title: "Success",
+        description: "Notification marked as read"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to mark notification as read",
+        variant: "destructive"
+      });
     }
   });
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      // Mock implementation
-      console.log('Marking all notifications as read');
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true, updated_at: new Date().toISOString() })
+        .eq('user_id', user?.id)
+        .eq('read', false);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast({
+        title: "Success",
+        description: "All notifications marked as read"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to mark all notifications as read",
+        variant: "destructive"
+      });
     }
   });
 
   const deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      // Mock implementation
-      console.log('Deleting notification:', notificationId);
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast({
+        title: "Success",
+        description: "Notification deleted"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete notification",
+        variant: "destructive"
+      });
     }
   });
 
@@ -128,106 +182,66 @@ const NotificationCenter = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all" onClick={() => setFilter('all')}>
-              All ({notifications?.length || 0})
-            </TabsTrigger>
-            <TabsTrigger value="unread" onClick={() => setFilter('unread')}>
-              Unread ({unreadCount})
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="mt-4">
-            <NotificationList 
-              notifications={notifications || []}
-              onMarkAsRead={markAsReadMutation.mutate}
-              onDelete={deleteNotificationMutation.mutate}
-              getIcon={getNotificationIcon}
-            />
-          </TabsContent>
-          
-          <TabsContent value="unread" className="mt-4">
-            <NotificationList 
-              notifications={notifications?.filter(n => !n.read) || []}
-              onMarkAsRead={markAsReadMutation.mutate}
-              onDelete={deleteNotificationMutation.mutate}
-              getIcon={getNotificationIcon}
-            />
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4">
+          {notifications.length === 0 ? (
+            <div className="text-center py-8">
+              <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No notifications found</p>
+            </div>
+          ) : (
+            notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`flex items-start space-x-3 p-4 rounded-lg border ${
+                  notification.read ? 'bg-gray-50' : 'bg-white'
+                }`}
+              >
+                <div className="flex-shrink-0 mt-1">
+                  {getNotificationIcon(notification.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className={`text-sm font-medium ${
+                        notification.read ? 'text-gray-600' : 'text-gray-900'
+                      }`}>
+                        {notification.title}
+                      </h4>
+                      <p className={`text-sm mt-1 ${
+                        notification.read ? 'text-gray-500' : 'text-gray-700'
+                      }`}>
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {new Date(notification.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex space-x-1">
+                      {!notification.read && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markAsReadMutation.mutate(notification.id)}
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </CardContent>
     </Card>
-  );
-};
-
-interface NotificationListProps {
-  notifications: Notification[];
-  onMarkAsRead: (id: string) => void;
-  onDelete: (id: string) => void;
-  getIcon: (type: string) => React.ReactNode;
-}
-
-const NotificationList: React.FC<NotificationListProps> = ({
-  notifications,
-  onMarkAsRead,
-  onDelete,
-  getIcon
-}) => {
-  if (notifications.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No notifications to display
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {notifications.map((notification) => (
-        <div
-          key={notification.id}
-          className={`flex items-start space-x-3 p-4 rounded-lg border ${
-            notification.read ? 'bg-background' : 'bg-muted/50'
-          }`}
-        >
-          <div className="mt-1">
-            {getIcon(notification.type)}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="font-medium">{notification.title}</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {notification.message}
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {new Date(notification.created_at).toLocaleString()}
-                </p>
-              </div>
-              <div className="flex items-center space-x-2 ml-4">
-                {!notification.read && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onMarkAsRead(notification.id)}
-                  >
-                    Mark Read
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(notification.id)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
   );
 };
 

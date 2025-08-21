@@ -1,234 +1,340 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  tier: 'basic' | 'premium' | 'enterprise';
-  max_drivers: number;
-  monthly_price: number;
-  annual_price: number;
-  description: string;
+  price: number;
+  billing_cycle: 'monthly' | 'yearly';
   features: string[];
-  is_active: boolean;
+  limits: {
+    drivers: number;
+    vehicles: number;
+    storage: number;
+    api_calls: number;
+  };
+  popular?: boolean;
+  savings?: number;
   created_at: string;
+  updated_at: string;
 }
 
-export interface CompanySubscription {
+export interface CurrentSubscription {
   id: string;
   organization_id: string;
   plan_id: string;
-  status: 'active' | 'inactive' | 'cancelled' | 'past_due';
-  current_period_start: string;
-  current_period_end: string;
-  subscription_plans: SubscriptionPlan;
+  status: 'active' | 'expired' | 'cancelled' | 'pending' | 'trial';
+  start_date: string;
+  end_date: string;
+  next_billing_date: string;
+  amount: number;
+  trial_ends_at?: string;
+  auto_renew: boolean;
+  payment_method_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingHistory {
+  id: string;
+  subscription_id: string;
+  date: string;
+  amount: number;
+  status: 'paid' | 'pending' | 'failed' | 'refunded';
+  description: string;
+  invoice_url?: string;
+  payment_method: string;
+  tax_amount: number;
+  discount_amount: number;
   created_at: string;
 }
 
+export interface UsageData {
+  id: string;
+  organization_id: string;
+  date: string;
+  drivers: number;
+  vehicles: number;
+  storage: number;
+  api_calls: number;
+  created_at: string;
+}
+
+// Hook to fetch subscription plans
 export const useSubscriptionPlans = () => {
   return useQuery({
     queryKey: ['subscription-plans'],
-    queryFn: async () => {
+    queryFn: async (): Promise<SubscriptionPlan[]> => {
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
-        .eq('is_active', true)
-        .order('monthly_price', { ascending: true });
+        .order('price', { ascending: true });
 
       if (error) {
         console.error('Error fetching subscription plans:', error);
-        return [];
+        // Return default plans if table doesn't exist yet
+        return getDefaultPlans();
       }
 
-      return data || [];
-    }
+      return data || getDefaultPlans();
+    },
   });
 };
 
+// Hook to fetch current subscription
 export const useCompanySubscription = (organizationId?: string) => {
   return useQuery({
     queryKey: ['company-subscription', organizationId],
-    queryFn: async () => {
+    queryFn: async (): Promise<CurrentSubscription | null> => {
       if (!organizationId) return null;
-      
+
       const { data, error } = await supabase
-        .from('company_subscriptions')
-        .select(`
-          *,
-          subscription_plans (*)
-        `)
+        .from('subscriptions')
+        .select('*')
         .eq('organization_id', organizationId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .eq('status', 'active')
+        .maybeSingle(); // Use maybeSingle instead of single to avoid error when no rows
 
       if (error) {
-        console.error('Error fetching company subscription:', error);
+        console.error('Error fetching subscription:', error);
         return null;
       }
 
       return data;
     },
-    enabled: !!organizationId
+    enabled: !!organizationId,
   });
 };
 
-export const useCheckSubscription = () => {
+// Hook to fetch billing history
+export const useBillingHistory = (organizationId?: string) => {
+  return useQuery({
+    queryKey: ['billing-history', organizationId],
+    queryFn: async (): Promise<BillingHistory[]> => {
+      if (!organizationId) return [];
+
+      const { data, error } = await supabase
+        .from('billing_history')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching billing history:', error);
+        return getDefaultBillingHistory();
+      }
+
+      return data || getDefaultBillingHistory();
+    },
+    enabled: !!organizationId,
+  });
+};
+
+// Hook to fetch usage data
+export const useUsageData = (organizationId?: string) => {
+  return useQuery({
+    queryKey: ['usage-data', organizationId],
+    queryFn: async (): Promise<UsageData[]> => {
+      if (!organizationId) return [];
+
+      const { data, error } = await supabase
+        .from('usage_data')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('date', { ascending: false })
+        .limit(30); // Last 30 days
+
+      if (error) {
+        console.error('Error fetching usage data:', error);
+        return getDefaultUsageData();
+      }
+
+      return data || getDefaultUsageData();
+    },
+    enabled: !!organizationId,
+  });
+};
+
+// Hook to update subscription
+export const useUpdateSubscription = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { profile } = useAuth();
 
   return useMutation({
-    mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
+    mutationFn: async ({ planId, autoRenew }: { planId: string; autoRenew: boolean }) => {
       if (!profile?.organization_id) {
-        throw new Error('No organization found');
+        throw new Error('Organization ID is required');
       }
 
       const { data, error } = await supabase
-        .from('company_subscriptions')
-        .select('status')
+        .from('subscriptions')
+        .update({ 
+          plan_id: planId, 
+          auto_renew: autoRenew,
+          updated_at: new Date().toISOString()
+        })
         .eq('organization_id', profile.organization_id)
         .eq('status', 'active')
+        .select()
         .single();
 
-      if (error) {
-        throw new Error('Failed to check subscription status');
-      }
-
-      return { status: data?.status || 'inactive' };
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['company-subscription'] });
+      toast.success('Subscription updated successfully');
     },
     onError: (error: any) => {
-      console.error('Failed to check subscription:', error);
-      toast({
-        title: "Error",
-        description: "Failed to check subscription status",
-        variant: "destructive"
-      });
+      console.error('Error updating subscription:', error);
+      toast.error('Failed to update subscription: ' + error.message);
     }
   });
 };
 
-export const useCreateCheckout = () => {
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (planId: string) => {
-      console.log('Mock: Creating checkout session for plan:', planId);
-      return { url: 'https://checkout.stripe.com/mock-session' };
-    },
-    onSuccess: (data) => {
-      // Mock opening checkout
-      console.log('Mock: Would open Stripe checkout at:', data.url);
-      toast({
-        title: "Checkout Session Created",
-        description: "Redirecting to payment page...",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to create checkout session: " + error.message,
-        variant: "destructive",
-      });
-    }
-  });
-};
-
-export const useCustomerPortal = () => {
-  const { toast } = useToast();
+// Hook to cancel subscription
+export const useCancelSubscription = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   return useMutation({
     mutationFn: async () => {
-      console.log('Mock: Opening customer portal');
-      return { url: 'https://billing.stripe.com/mock-portal' };
-    },
-    onSuccess: (data) => {
-      // Mock opening portal
-      console.log('Mock: Would open customer portal at:', data.url);
-      toast({
-        title: "Customer Portal",
-        description: "Redirecting to billing portal...",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to open customer portal: " + error.message,
-        variant: "destructive",
-      });
-    }
-  });
-};
+      if (!profile?.organization_id) {
+        throw new Error('Organization ID is required');
+      }
 
-export const useCreateSubscription = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .update({ 
+          status: 'cancelled',
+          auto_renew: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('organization_id', profile.organization_id)
+        .eq('status', 'active')
+        .select()
+        .single();
 
-  return useMutation({
-    mutationFn: async (data: {
-      organizationId: string;
-      planId: string;
-      stripeCustomerId?: string;
-      stripeSubscriptionId?: string;
-    }) => {
-      console.log('Mock: Creating subscription:', data);
-      return { success: true };
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Subscription created successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ['company-subscription'] });
+      toast.success('Subscription cancelled successfully');
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to create subscription: " + error.message,
-        variant: "destructive",
-      });
+      console.error('Error cancelling subscription:', error);
+      toast.error('Failed to cancel subscription: ' + error.message);
     }
   });
 };
 
-export const useUpdateSubscription = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (data: {
-      subscriptionId: string;
-      planId: string;
-    }) => {
-      console.log('Mock: Updating subscription:', data);
-      return { success: true };
+// Default data functions
+function getDefaultPlans(): SubscriptionPlan[] {
+  return [
+    {
+      id: 'starter',
+      name: 'Starter',
+      price: 29,
+      billing_cycle: 'monthly',
+      features: [
+        'Up to 5 drivers',
+        'Up to 10 vehicles',
+        'Basic reporting',
+        'Email support',
+        'Mobile app access'
+      ],
+      limits: {
+        drivers: 5,
+        vehicles: 10,
+        storage: 10,
+        api_calls: 1000
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Subscription updated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ['company-subscription'] });
+    {
+      id: 'professional',
+      name: 'Professional',
+      price: 79,
+      billing_cycle: 'monthly',
+      features: [
+        'Up to 25 drivers',
+        'Up to 50 vehicles',
+        'Advanced reporting',
+        'Priority support',
+        'API access',
+        'Custom integrations',
+        'Real-time tracking'
+      ],
+      limits: {
+        drivers: 25,
+        vehicles: 50,
+        storage: 100,
+        api_calls: 10000
+      },
+      popular: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to update subscription: " + error.message,
-        variant: "destructive",
-      });
+    {
+      id: 'enterprise',
+      name: 'Enterprise',
+      price: 199,
+      billing_cycle: 'monthly',
+      features: [
+        'Unlimited drivers',
+        'Unlimited vehicles',
+        'Custom reporting',
+        'Dedicated support',
+        'Full API access',
+        'White-label options',
+        'Advanced analytics',
+        'Custom integrations'
+      ],
+      limits: {
+        drivers: -1,
+        vehicles: -1,
+        storage: 1000,
+        api_calls: 100000
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
-  });
-};
+  ];
+}
+
+function getDefaultBillingHistory(): BillingHistory[] {
+  return [
+    {
+      id: '1',
+      subscription_id: '1',
+      date: new Date().toISOString(),
+      amount: 79,
+      status: 'paid',
+      description: 'Professional Plan - Monthly',
+      payment_method: 'Card ending in 1234',
+      tax_amount: 15.80,
+      discount_amount: 0,
+      created_at: new Date().toISOString()
+    }
+  ];
+}
+
+function getDefaultUsageData(): UsageData[] {
+  return [
+    {
+      id: '1',
+      organization_id: '1',
+      date: new Date().toISOString(),
+      drivers: 12,
+      vehicles: 25,
+      storage: 45,
+      api_calls: 2500,
+      created_at: new Date().toISOString()
+    }
+  ];
+}

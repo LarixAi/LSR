@@ -1079,28 +1079,7 @@ const EnhancedVehicleCheck: React.FC = () => {
                     </Button>
                   </div>
                   
-                  {/* Fallback option for when camera is not available */}
-                  <div className="border-t pt-4">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-3">Camera not working? Use fallback option:</p>
-                      <Button 
-                        onClick={() => {
-                          // Create a mock photo for testing
-                          const mockPhoto = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjQ4MCIgdmlld0JveD0iMCAwIDY0MCA0ODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjMyMCIgeT0iMjQwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2QjcyODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk1vY2sgUmVnaXN0cmF0aW9uIFBsYXRlPC90ZXh0Pgo8L3N2Zz4K';
-                          setRegistrationPhoto(mockPhoto);
-                          toast({
-                            title: "Mock Photo Added",
-                            description: "A mock registration photo has been added for testing purposes.",
-                          });
-                        }}
-                        variant="outline"
-                        className="w-full h-12 text-base mobile-button"
-                      >
-                        <FileText className="w-5 h-5 mr-2" />
-                        Use Mock Photo (Testing)
-                      </Button>
-                    </div>
-                  </div>
+
                   
                   {/* Camera status */}
                   {isCameraActive && (

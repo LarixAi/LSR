@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,9 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   CreditCard, 
   Download, 
@@ -31,11 +32,18 @@ import {
   RefreshCw,
   Play,
   Pause,
-  Stop,
+  Square,
   Eye,
   FileDown,
   AlertCircle,
-  Info
+  Info,
+  WifiOff,
+  Smartphone,
+  Shield,
+  Activity,
+  Calendar,
+  MapPin,
+  Timer
 } from 'lucide-react';
 
 interface CardReader {
@@ -47,32 +55,57 @@ interface CardReader {
   status: 'active' | 'inactive' | 'maintenance' | 'calibration_due';
   last_calibration_date: string | null;
   next_calibration_due: string | null;
+  connection_type: 'usb' | 'bluetooth' | 'wifi';
+  battery_level?: number;
+  signal_strength?: number;
+}
+
+interface TachographCard {
+  card_number: string;
+  card_type: 'driver' | 'vehicle' | 'workshop';
+  holder_name: string;
+  issuing_authority: string;
+  expiry_date: string;
+  issue_date: string;
+  driver_id?: string;
+  vehicle_id?: string;
+  card_status: 'valid' | 'expired' | 'suspended' | 'damaged';
+  last_download_date?: string;
+  records_count: number;
+  violations_count: number;
 }
 
 interface DownloadSession {
   id: string;
+  organization_id: string;
+  card_reader_id: string;
   card_type: 'driver' | 'vehicle' | 'workshop';
   card_number: string;
   download_status: 'in_progress' | 'completed' | 'failed' | 'partial';
   download_start_time: string;
-  download_end_time: string | null;
+  download_end_time?: string;
   records_downloaded: number;
-  error_message: string | null;
+  errors_encountered: number;
+  download_method: 'card_reader' | 'bluetooth' | 'remote';
 }
 
-interface CardData {
-  cardType: 'driver' | 'vehicle' | 'workshop';
-  cardNumber: string;
-  cardHolderName: string;
-  cardExpiryDate: string;
-  downloadDate: string;
-  recordsCount: number;
-  violationsCount: number;
-  filePath: string;
+interface TachographRecord {
+  id: string;
+  driver_id: string;
+  vehicle_id: string;
+  record_date: string;
+  start_time: string;
+  end_time: string;
+  activity_type: 'driving' | 'work' | 'availability' | 'break' | 'rest';
+  distance_km: number;
+  start_location: string;
+  end_location: string;
+  speed_data: any;
+  violations: any[];
 }
 
 interface TachographCardReaderProps {
-  onDataDownloaded: (data: CardData) => void;
+  onDataDownloaded?: (cardData: { cardType: string; recordsCount: number }) => void;
 }
 
 const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownloaded }) => {
@@ -84,10 +117,12 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [cardType, setCardType] = useState<'driver' | 'vehicle' | 'workshop' | null>(null);
-  const [cardInfo, setCardInfo] = useState<any>(null);
+  const [cardInfo, setCardInfo] = useState<TachographCard | null>(null);
   const [selectedReader, setSelectedReader] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isCardDetected, setIsCardDetected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
 
   // Fetch available card readers
   const { data: cardReaders = [], isLoading: readersLoading } = useQuery({
@@ -172,67 +207,99 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
     }
 
     try {
-      // Simulate connection process
+      setConnectionStatus('connecting');
       setIsConnected(false);
       setDownloadProgress(0);
+      setCardInfo(null);
+      setCardType(null);
+      setIsCardDetected(false);
       
-      // In a real implementation, this would use Web Serial API or Web Bluetooth API
+      // In a real implementation, this would connect to the actual card reader
+      // For now, we'll show the connection process but require manual card detection
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       setIsConnected(true);
+      setConnectionStatus('connected');
       toast({
         title: "Connected",
-        description: "Successfully connected to card reader"
+        description: "Card reader is connected. Please insert a tachograph card manually."
       });
     } catch (error) {
       console.error('Failed to connect to card reader:', error);
+      setConnectionStatus('error');
       toast({
         title: "Connection Failed",
-        description: "Failed to connect to card reader",
+        description: "Failed to connect to card reader. Please check the connection and try again.",
         variant: "destructive"
       });
     }
   };
 
-  // Detect card
-  const detectCard = async () => {
-    if (!isConnected) return;
+  // Disconnect from card reader
+  const disconnectFromReader = () => {
+    setIsConnected(false);
+    setConnectionStatus('disconnected');
+    setCardInfo(null);
+    setCardType(null);
+    setIsCardDetected(false);
+    setDownloadProgress(0);
     
-    try {
-      // Simulate card detection
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock card data - in real implementation this would come from the card reader
-      const mockCardData = {
-        type: 'driver' as const,
-        info: {
-          number: 'DRIVER123456789',
-          holder: 'John Smith',
-          expiry: '2025-12-31',
-          type: 'Driver Card'
-        }
-      };
-      
-      setCardType(mockCardData.type);
-      setCardInfo(mockCardData.info);
-      
+    toast({
+      title: "Disconnected",
+      description: "Disconnected from card reader"
+    });
+  };
+
+  // Manual card detection (for real implementation)
+  const detectCard = async () => {
+    if (!isConnected) {
       toast({
-        title: "Card Detected",
-        description: `${mockCardData.info.type} detected`
+        title: "Not Connected",
+        description: "Please connect to a card reader first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // In a real implementation, this would call the card reader API
+      // For now, we'll show that manual detection is required
+      toast({
+        title: "Manual Detection Required",
+        description: "Please insert a tachograph card and use the card reader's detection button or software.",
+        variant: "destructive"
       });
     } catch (error) {
       console.error('Failed to detect card:', error);
       toast({
         title: "Card Detection Failed",
-        description: "Failed to detect card in reader",
+        description: "Failed to detect card. Please check the card and try again.",
         variant: "destructive"
       });
     }
   };
 
+  // Eject card
+  const ejectCard = () => {
+    setCardInfo(null);
+    setCardType(null);
+    setIsCardDetected(false);
+    toast({
+      title: "Card Ejected",
+      description: "Card has been ejected from reader"
+    });
+  };
+
   // Download card data
   const downloadCardData = async () => {
-    if (!isConnected || !cardType || !selectedReader) return;
+    if (!isConnected || !cardType || !selectedReader || !cardInfo) {
+      toast({
+        title: "Cannot Download",
+        description: "Please ensure a card is detected and reader is connected",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsDownloading(true);
     setDownloadProgress(0);
@@ -245,15 +312,17 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
           organization_id: profile?.organization_id,
           card_reader_id: selectedReader,
           card_type: cardType,
-          card_number: cardInfo?.number || 'Unknown',
-          download_status: 'in_progress'
+          card_number: cardInfo.card_number,
+          download_status: 'in_progress',
+          download_method: 'card_reader'
         })
         .select()
         .single();
 
       if (sessionError) throw sessionError;
 
-      // Simulate download process with progress updates
+      // In a real implementation, this would download actual data from the card
+      // For now, we'll show the process but indicate no real data is available
       const downloadSteps = [
         { progress: 10, message: 'Initializing download...' },
         { progress: 25, message: 'Reading card data...' },
@@ -268,20 +337,33 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
         setDownloadProgress(step.progress);
       }
 
-      // Fetch real tachograph records from the card
-      const realRecords = await fetchTachographRecords(cardInfo?.driver_id || '', 7);
+      // In a real implementation, actual tachograph records would be downloaded here
+      // For now, we'll create a placeholder record to show the process
+      const placeholderRecord = {
+        id: `record_${Date.now()}`,
+        driver_id: drivers[0]?.id || '',
+        vehicle_id: vehicles[0]?.id || '',
+        record_date: new Date().toISOString().split('T')[0],
+        start_time: new Date().toISOString(),
+        end_time: new Date(Date.now() + 3600000).toISOString(),
+        activity_type: 'driving' as const,
+        distance_km: 0,
+        start_location: 'Manual Entry Required',
+        end_location: 'Manual Entry Required',
+        speed_data: { max_speed: 0 },
+        violations: []
+      };
       
-      // Save records to database
+      // Save placeholder record to database
       const { error: recordsError } = await supabase
         .from('tachograph_records')
-        .insert(realRecords.map(record => ({
-          ...record,
+        .insert({
+          ...placeholderRecord,
           organization_id: profile?.organization_id,
           card_type: cardType,
-          card_number: cardInfo?.number,
-          card_holder_name: cardInfo?.holder,
+          card_number: cardInfo.card_number,
           download_method: 'card_reader'
-        })));
+        });
 
       if (recordsError) throw recordsError;
 
@@ -291,371 +373,330 @@ const TachographCardReader: React.FC<TachographCardReaderProps> = ({ onDataDownl
         .update({
           download_status: 'completed',
           download_end_time: new Date().toISOString(),
-          records_downloaded: realRecords.length
+          records_downloaded: 1
         })
         .eq('id', sessionData.id);
 
-      // Notify parent component
-      onDataDownloaded({
-        cardType,
-        cardNumber: cardInfo?.number || '',
-        cardHolderName: cardInfo?.holder || '',
-        cardExpiryDate: cardInfo?.expiry || '',
-        downloadDate: new Date().toISOString(),
-        recordsCount: realRecords.length,
-        violationsCount: realRecords.filter(r => r.violations && r.violations.length > 0).length,
-        filePath: `downloads/${sessionData.id}.ddd`
+      setIsDownloading(false);
+      setDownloadProgress(0);
+      
+      toast({
+        title: "Download Complete",
+        description: "Download process completed. Note: This is a placeholder - real card data requires actual card reader integration."
       });
 
-      // Refresh queries
+      // Call callback if provided
+      if (onDataDownloaded) {
+        onDataDownloaded({
+          cardType,
+          recordsCount: 1
+        });
+      }
+
+      // Refresh data
       queryClient.invalidateQueries({ queryKey: ['tachograph-records'] });
       queryClient.invalidateQueries({ queryKey: ['download-sessions'] });
 
-      toast({
-        title: "Download Complete",
-        description: `Successfully downloaded ${realRecords.length} records from ${cardType} card`
-      });
-
     } catch (error) {
       console.error('Download failed:', error);
-      toast({
-        title: "Download Failed",
-        description: "Failed to download card data",
-        variant: "destructive"
-      });
-    } finally {
       setIsDownloading(false);
       setDownloadProgress(0);
+      
+      toast({
+        title: "Download Failed",
+        description: "Failed to download card data. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
-  // Fetch real tachograph records from database
-  const fetchTachographRecords = async (driverId: string, days: number = 7) => {
-    try {
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-
-      const { data, error } = await supabase
-        .from('tachograph_records')
-        .select('*')
-        .eq('driver_id', driverId)
-        .gte('record_date', startDate.toISOString().split('T')[0])
-        .lte('record_date', endDate.toISOString().split('T')[0])
-        .order('record_date', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching tachograph records:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Failed to fetch tachograph records:', error);
-      return [];
+  const getConnectionIcon = () => {
+    switch (connectionStatus) {
+      case 'connected': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'connecting': return <RefreshCw className="w-5 h-5 text-yellow-500 animate-spin" />;
+      case 'error': return <AlertTriangle className="w-5 h-5 text-red-500" />;
+      default: return <WifiOff className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  const getDeviceIcon = (deviceType: string) => {
-    switch (deviceType) {
-      case 'usb_reader':
-        return <Usb className="h-4 w-4" />;
-      case 'bluetooth_reader':
-        return <Bluetooth className="h-4 w-4" />;
-      case 'digivu_plus':
-      case 'generation_2':
-        return <Wifi className="h-4 w-4" />;
-      default:
-        return <CreditCard className="h-4 w-4" />;
+  const getCardTypeIcon = (type: string) => {
+    switch (type) {
+      case 'driver': return <Users className="w-4 h-4" />;
+      case 'vehicle': return <Truck className="w-4 h-4" />;
+      case 'workshop': return <Settings className="w-4 h-4" />;
+      default: return <CreditCard className="w-4 h-4" />;
     }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      active: 'bg-green-100 text-green-800',
-      inactive: 'bg-gray-100 text-gray-800',
-      maintenance: 'bg-yellow-100 text-yellow-800',
-      calibration_due: 'bg-red-100 text-red-800'
-    };
-    return <Badge className={colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
-      {status.replace('_', ' ').toUpperCase()}
-    </Badge>;
-  };
-
-  const getDownloadStatusBadge = (status: string) => {
-    const colors = {
-      completed: 'bg-green-100 text-green-800',
-      in_progress: 'bg-blue-100 text-blue-800',
-      failed: 'bg-red-100 text-red-800',
-      partial: 'bg-yellow-100 text-yellow-800'
-    };
-    return <Badge className={colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
-      {status.replace('_', ' ').toUpperCase()}
-    </Badge>;
   };
 
   return (
     <div className="space-y-6">
-      {/* Card Reader Selection */}
+      {/* Connection Status */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Card Reader
+            {getConnectionIcon()}
+            Card Reader Status
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Reader Selection */}
-          <div>
-            <Label htmlFor="card-reader">Select Card Reader</Label>
-            <Select value={selectedReader} onValueChange={setSelectedReader}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a card reader" />
-              </SelectTrigger>
-              <SelectContent>
-                {cardReaders.map((reader) => (
-                  <SelectItem key={reader.id} value={reader.id}>
-                    <div className="flex items-center gap-2">
-                      {getDeviceIcon(reader.device_type)}
-                      <span>{reader.device_name}</span>
-                      {getStatusBadge(reader.status)}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Card Reader</Label>
+              <Select value={selectedReader} onValueChange={setSelectedReader}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select card reader" />
+                </SelectTrigger>
+                <SelectContent>
+                  {readersLoading ? (
+                    <SelectItem value="loading" disabled>Loading readers...</SelectItem>
+                  ) : cardReaders.length === 0 ? (
+                    <SelectItem value="no-readers" disabled>No card readers available</SelectItem>
+                  ) : (
+                    cardReaders.map((reader) => (
+                      <SelectItem key={reader.id} value={reader.id}>
+                        <div className="flex items-center gap-2">
+                          {reader.device_type === 'usb_reader' && <Usb className="w-4 h-4" />}
+                          {reader.device_type === 'bluetooth_reader' && <Bluetooth className="w-4 h-4" />}
+                          {(reader.device_type === 'digivu_plus' || reader.device_type === 'generation_2') && <Wifi className="w-4 h-4" />}
+                          {reader.device_name}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-end gap-2">
+              {!isConnected ? (
+                <Button onClick={connectToReader} disabled={!selectedReader || connectionStatus === 'connecting'}>
+                  <Usb className="w-4 h-4 mr-2" />
+                  Connect
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={disconnectFromReader}>
+                  <WifiOff className="w-4 h-4 mr-2" />
+                  Disconnect
+                </Button>
+              )}
+            </div>
           </div>
 
-          {/* Connection Status */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Reader Status</span>
-            <Badge variant={isConnected ? "default" : "secondary"}>
-              {isConnected ? "Connected" : "Disconnected"}
-            </Badge>
-          </div>
-
-          {/* Connection Button */}
-          {!isConnected && (
-            <Button onClick={connectToReader} className="w-full" disabled={!selectedReader}>
-              <Usb className="mr-2 h-4 w-4" />
-              Connect to Card Reader
-            </Button>
-          )}
-
-          {/* Card Detection */}
-          {isConnected && !cardType && (
-            <div className="text-center py-4">
-              <p className="text-sm text-muted-foreground mb-2">
-                Insert a tachograph card to begin
-              </p>
-              <Button onClick={detectCard} variant="outline">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Detect Card
-              </Button>
-            </div>
-          )}
-
-          {/* Card Info */}
-          {cardInfo && (
-            <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-2">Card Information</h3>
-              <div className="space-y-1 text-sm">
-                <div><span className="font-medium">Type:</span> {cardType}</div>
-                <div><span className="font-medium">Number:</span> {cardInfo.number}</div>
-                <div><span className="font-medium">Holder:</span> {cardInfo.holder}</div>
-                <div><span className="font-medium">Expiry:</span> {cardInfo.expiry}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Download Progress */}
-          {isDownloading && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Downloading data...</span>
-                <span>{downloadProgress}%</span>
-              </div>
-              <Progress value={downloadProgress} />
-            </div>
-          )}
-
-          {/* Download Button */}
-          {cardType && !isDownloading && (
-            <Button 
-              onClick={downloadCardData} 
-              className="w-full"
-              disabled={!isConnected}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download {cardType} Card Data
-            </Button>
+          {isConnected && (
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>
+                Card reader is connected. Please insert a tachograph card and use the card reader's software to detect it.
+              </AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
 
-      {/* Recent Downloads */}
+      {/* Card Detection */}
+      {isConnected && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              Card Detection
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!isCardDetected ? (
+              <div className="text-center py-8">
+                <CreditCard className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">No card detected</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Insert a tachograph card and use your card reader's software to detect it.
+                </p>
+                <Button 
+                  onClick={detectCard} 
+                  variant="outline" 
+                  className="mt-4"
+                  disabled={!isConnected}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Manual Detection
+                </Button>
+              </div>
+            ) : cardInfo && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Card Type</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      {getCardTypeIcon(cardInfo.card_type)}
+                      <span className="capitalize">{cardInfo.card_type}</span>
+                      <Badge variant={cardInfo.card_status === 'valid' ? 'default' : 'destructive'}>
+                        {cardInfo.card_status}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label>Card Number</Label>
+                    <p className="font-mono text-sm mt-1">{cardInfo.card_number}</p>
+                  </div>
+                  
+                  <div>
+                    <Label>Card Holder</Label>
+                    <p className="mt-1">{cardInfo.holder_name}</p>
+                  </div>
+                  
+                  <div>
+                    <Label>Issuing Authority</Label>
+                    <p className="mt-1">{cardInfo.issuing_authority}</p>
+                  </div>
+                  
+                  <div>
+                    <Label>Expiry Date</Label>
+                    <p className="mt-1">{new Date(cardInfo.expiry_date).toLocaleDateString()}</p>
+                  </div>
+                  
+                  <div>
+                    <Label>Records Available</Label>
+                    <p className="mt-1">{cardInfo.records_count} records</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={downloadCardData} disabled={isDownloading}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Data
+                  </Button>
+                  <Button variant="outline" onClick={ejectCard}>
+                    <Square className="w-4 h-4 mr-2" />
+                    Eject Card
+                  </Button>
+                </div>
+
+                {isDownloading && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Downloading...</span>
+                      <span>{downloadProgress}%</span>
+                    </div>
+                    <Progress value={downloadProgress} />
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Download History */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <FileDown className="h-5 w-5" />
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
               Recent Downloads
-            </span>
+            </div>
             <Button variant="outline" size="sm" onClick={() => setIsHistoryOpen(true)}>
-              <Eye className="h-4 w-4" />
               View All
             </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {downloadSessions.slice(0, 5).map((session) => (
-              <div key={session.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <div className="font-medium text-sm">
-                      {session.card_type.charAt(0).toUpperCase() + session.card_type.slice(1)} Card
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Card Type</TableHead>
+                <TableHead>Card Number</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Records</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {downloadSessions.slice(0, 5).map((session) => (
+                <TableRow key={session.id}>
+                  <TableCell>
+                    {new Date(session.download_start_time).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getCardTypeIcon(session.card_type)}
+                      <span className="capitalize">{session.card_type}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {session.card_number} • {new Date(session.download_start_time).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getDownloadStatusBadge(session.download_status)}
-                  {session.records_downloaded > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {session.records_downloaded} records
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-            {downloadSessions.length === 0 && (
-              <div className="text-center py-4 text-muted-foreground">
-                <FileDown className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No recent downloads</p>
-              </div>
-            )}
-          </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {session.card_number}
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={
+                        session.download_status === 'completed' ? 'default' :
+                        session.download_status === 'failed' ? 'destructive' :
+                        'secondary'
+                      }
+                    >
+                      {session.download_status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{session.records_downloaded || 0}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Settings Dialog */}
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Card Reader Settings</DialogTitle>
-          </DialogHeader>
-          <Tabs defaultValue="readers" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="readers">Card Readers</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="readers" className="space-y-4">
-              <div className="space-y-4">
-                {cardReaders.map((reader) => (
-                  <div key={reader.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {getDeviceIcon(reader.device_type)}
-                        <span className="font-medium">{reader.device_name}</span>
-                      </div>
-                      {getStatusBadge(reader.status)}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                      <div>Serial: {reader.serial_number}</div>
-                      <div>Firmware: {reader.firmware_version}</div>
-                      <div>Last Cal: {reader.last_calibration_date || 'Never'}</div>
-                      <div>Next Cal: {reader.next_calibration_due || 'Not set'}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="settings" className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="auto-download">Auto Download</Label>
-                  <Select defaultValue="disabled">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="disabled">Disabled</SelectItem>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="download-format">Download Format</Label>
-                  <Select defaultValue="ddd">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ddd">DDD (Digital)</SelectItem>
-                      <SelectItem value="tgd">TGD (Tachograph)</SelectItem>
-                      <SelectItem value="c1b">C1B (Card)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
-
-      {/* History Dialog */}
+      {/* Download History Dialog */}
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Download History</DialogTitle>
+            <DialogDescription>
+              View all tachograph card download sessions
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Card Type</TableHead>
-                    <TableHead>Card Number</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Records</TableHead>
-                    <TableHead>Duration</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {downloadSessions.map((session) => (
-                    <TableRow key={session.id}>
-                      <TableCell>
-                        {new Date(session.download_start_time).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {session.card_type.charAt(0).toUpperCase() + session.card_type.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{session.card_number}</TableCell>
-                      <TableCell>{getDownloadStatusBadge(session.download_status)}</TableCell>
-                      <TableCell>{session.records_downloaded}</TableCell>
-                      <TableCell>
-                        {session.download_end_time ? 
-                          `${Math.round((new Date(session.download_end_time).getTime() - new Date(session.download_start_time).getTime()) / 1000)}s` : 
-                          'In Progress'
-                        }
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date & Time</TableHead>
+                <TableHead>Card Type</TableHead>
+                <TableHead>Card Number</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Records</TableHead>
+                <TableHead>Method</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {downloadSessions.map((session) => (
+                <TableRow key={session.id}>
+                  <TableCell>
+                    {new Date(session.download_start_time).toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getCardTypeIcon(session.card_type)}
+                      <span className="capitalize">{session.card_type}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {session.card_number}
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={
+                        session.download_status === 'completed' ? 'default' :
+                        session.download_status === 'failed' ? 'destructive' :
+                        'secondary'
+                      }
+                    >
+                      {session.download_status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{session.records_downloaded || 0}</TableCell>
+                  <TableCell className="capitalize">{session.download_method}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </DialogContent>
       </Dialog>
     </div>

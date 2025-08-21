@@ -190,3 +190,4 @@ BEGIN
     RAISE NOTICE 'All organizations are now properly isolated';
     RAISE NOTICE 'Authentication should now work properly';
 END $$;
+

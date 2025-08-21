@@ -45,7 +45,10 @@ import {
   CircleDot,
   Scale,
   Fuel,
-  Package
+  Package,
+  Bell,
+  Train,
+  UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -185,10 +188,22 @@ const TransportSidebar = () => {
                 description: 'Resource scheduling'
               },
               {
-                title: 'Routes',
+                title: 'School Routes',
                 url: '/routes',
                 icon: Route,
-                description: 'Route management'
+                description: 'School route management'
+              },
+              {
+                title: 'Rail Replacement',
+                url: '/rail-replacement',
+                icon: Train,
+                description: 'Rail replacement bus services'
+              },
+              {
+                title: 'Personal Assistants',
+                url: '/personal-assistants',
+                icon: UserPlus,
+                description: 'Manage Personal Assistants for school routes'
               },
               {
                 title: 'Route Planning',
@@ -230,6 +245,12 @@ const TransportSidebar = () => {
                 url: '/admin/emails',
                 icon: Mail,
                 description: 'Send emails and manage templates'
+              },
+              {
+                title: 'Advanced Notifications',
+                url: '/notifications',
+                icon: Bell,
+                description: 'Send and manage notifications'
               }
             ]
           },
@@ -362,6 +383,17 @@ const TransportSidebar = () => {
                 description: 'Record fuel purchases'
               }
             ]
+          },
+          {
+            title: 'Communication',
+            items: [
+              {
+                title: 'Notifications',
+                url: '/notifications',
+                icon: Bell,
+                description: 'Send and receive notifications'
+              }
+            ]
           }
         ];
 
@@ -407,9 +439,9 @@ const TransportSidebar = () => {
               },
               {
                 title: 'Notifications',
-                url: '/parent/notifications',
-                icon: CheckSquare,
-                description: 'Important updates'
+                url: '/notifications',
+                icon: Bell,
+                description: 'Send and receive notifications'
               }
             ]
           }
@@ -454,6 +486,17 @@ const TransportSidebar = () => {
                 url: '/inventory',
                 icon: FileText,
                 description: 'Parts management'
+              }
+            ]
+          },
+          {
+            title: 'Communication',
+            items: [
+              {
+                title: 'Notifications',
+                url: '/notifications',
+                icon: Bell,
+                description: 'Send and receive notifications'
               }
             ]
           }

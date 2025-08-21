@@ -53,7 +53,7 @@ export const useAnalyticsData = () => {
       if (!profile?.organization_id) return [];
       
       const { data, error } = await supabase
-        .from('jobs')
+        .from('jobs' as any)
         .select('*')
         .eq('organization_id', profile.organization_id)
         .order('created_at', { ascending: false })
@@ -90,155 +90,145 @@ export const useAnalyticsData = () => {
 
   // Calculate real metrics from database data
   const calculateMetrics = () => {
-    // Revenue calculation (assuming job pricing exists or using estimates)
-    const completedJobs = jobs.filter(job => job.status === 'completed');
-    const estimatedRevenue = completedJobs.length * 150; // £150 average per job
+    // Revenue calculation - only use real revenue data if available
+    const completedJobs = (jobs as any[]).filter(job => (job as any).status === 'completed');
+    const realRevenue = completedJobs.reduce((sum, job) => sum + ((job as any).total_amount || 0), 0);
     
     // Trip/Job metrics
     const totalTrips = jobs.length;
-    const recentTrips = jobs.filter(job => {
-      const jobDate = new Date(job.created_at);
+    const recentTrips = (jobs as any[]).filter(job => {
+      const jobDate = new Date((job as any).created_at);
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       return jobDate >= monthAgo;
     }).length;
 
     // Fleet efficiency (based on vehicle utilization)
-    const activeVehicles = vehicles.filter(v => v.status === 'active' || v.is_active).length;
+    const activeVehicles = vehicles.filter(v => (v as any).status === 'active' || (v as any).is_active).length;
     const totalVehicles = vehicles.length;
     const fleetEfficiency = totalVehicles > 0 ? (activeVehicles / totalVehicles) * 100 : 0;
 
     // Active drivers
-    const activeDrivers = drivers.filter(d => d.is_active).length;
+    const activeDrivers = drivers.filter(d => (d as any).is_active).length;
 
-    // Fuel costs estimation (based on vehicle count and activity)
-    const estimatedFuelCosts = activeVehicles * 50 * 30; // £50 per vehicle per month estimate
+    // Fuel costs - only use real fuel purchase data if available
+    const realFuelCosts = 0; // Will be calculated from fuel_purchases table if needed
     
-    // Maintenance costs estimation (based on vehicle count)
-    const maintenanceVehicles = vehicles.filter(v => v.status === 'maintenance').length;
-    const estimatedMaintenanceCosts = (totalVehicles * 200) + (maintenanceVehicles * 1000); // Base + extra for maintenance
+    // Maintenance costs - only use real maintenance data if available
+    const realMaintenanceCosts = 0; // Will be calculated from maintenance records if needed
     
     // Compliance score (based on active vs total drivers and vehicles)
-    const driverCompliance = drivers.length > 0 ? (activeDrivers / drivers.length) * 100 : 100;
-    const vehicleCompliance = totalVehicles > 0 ? (activeVehicles / totalVehicles) * 100 : 100;
+    const driverCompliance = drivers.length > 0 ? (activeDrivers / drivers.length) * 100 : 0;
+    const vehicleCompliance = totalVehicles > 0 ? (activeVehicles / totalVehicles) * 100 : 0;
     const complianceScore = (driverCompliance + vehicleCompliance) / 2;
 
     return {
       revenue: {
-        value: `£${estimatedRevenue.toLocaleString()}`,
-        change: recentTrips > 0 ? 8.5 : -2.1,
-        changeType: recentTrips > 0 ? 'increase' : 'decrease'
+        value: `£${realRevenue.toLocaleString()}`,
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       },
       trips: {
         value: totalTrips.toString(),
-        change: recentTrips > totalTrips * 0.7 ? 12.3 : -5.2,
-        changeType: recentTrips > totalTrips * 0.7 ? 'increase' : 'decrease'
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       },
       efficiency: {
         value: `${fleetEfficiency.toFixed(1)}%`,
-        change: fleetEfficiency > 80 ? 3.1 : -1.8,
-        changeType: fleetEfficiency > 80 ? 'increase' : 'decrease'
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       },
       drivers: {
         value: activeDrivers.toString(),
-        change: activeDrivers > drivers.length * 0.8 ? 6.2 : -3.4,
-        changeType: activeDrivers > drivers.length * 0.8 ? 'increase' : 'decrease'
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       },
       routes: {
         value: routes.length.toString(),
-        change: routes.length > 10 ? 4.7 : -1.2,
-        changeType: routes.length > 10 ? 'increase' : 'decrease'
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       },
       vehicles: {
         value: totalVehicles.toString(),
-        change: totalVehicles > 5 ? 2.8 : -0.5,
-        changeType: totalVehicles > 5 ? 'increase' : 'decrease'
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       },
       fuel: {
-        value: `£${estimatedFuelCosts.toLocaleString()}`,
-        change: activeVehicles > totalVehicles * 0.8 ? -5.8 : 2.3,
-        changeType: activeVehicles > totalVehicles * 0.8 ? 'decrease' : 'increase'
+        value: `£${realFuelCosts.toLocaleString()}`,
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       },
       maintenance: {
-        value: `£${estimatedMaintenanceCosts.toLocaleString()}`,
-        change: maintenanceVehicles > 0 ? 15.2 : -8.1,
-        changeType: maintenanceVehicles > 0 ? 'increase' : 'decrease'
+        value: `£${realMaintenanceCosts.toLocaleString()}`,
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       },
       compliance: {
         value: `${complianceScore.toFixed(1)}%`,
-        change: complianceScore > 90 ? 1.5 : -2.3,
-        changeType: complianceScore > 90 ? 'increase' : 'decrease'
+        change: 0, // No change calculation without historical data
+        changeType: 'neutral' as const
       }
     };
   };
 
   const metrics = calculateMetrics();
 
-  // Revenue trend data based on actual job and route data
+  // Revenue trend data - empty when no real data exists
   const revenueData = [
-    { name: 'This Month', value: parseInt(metrics.revenue.value.replace(/[£,]/g, '')), trend: metrics.revenue.changeType === 'increase' ? 'up' : 'down' },
-    { name: 'Last Month', value: Math.round(parseInt(metrics.revenue.value.replace(/[£,]/g, '')) * 0.92), trend: 'up' },
-    { name: '2 Months Ago', value: Math.round(parseInt(metrics.revenue.value.replace(/[£,]/g, '')) * 0.85), trend: 'stable' },
-    { name: '3 Months Ago', value: Math.round(parseInt(metrics.revenue.value.replace(/[£,]/g, '')) * 0.78), trend: 'up' },
+    { name: 'This Month', value: parseInt(metrics.revenue.value.replace(/[£,]/g, '')), trend: 'neutral' as const },
+    { name: 'Last Month', value: 0, trend: 'neutral' as const },
+    { name: '2 Months Ago', value: 0, trend: 'neutral' as const },
+    { name: '3 Months Ago', value: 0, trend: 'neutral' as const },
   ];
 
-  // Service distribution based on actual route types or job types
+  // Service distribution based on actual data only
   const serviceData = [
-    { name: 'School Runs', value: jobs.filter(j => j.job_type === 'school_run').length, color: 'bg-blue-500' },
-    { name: 'Regular Routes', value: routes.filter(r => r.status === 'active').length, color: 'bg-green-500' },
-    { name: 'Special Events', value: jobs.filter(j => j.job_type === 'special_event').length, color: 'bg-purple-500' },
-    { name: 'Maintenance', value: vehicles.filter(v => v.status === 'maintenance').length, color: 'bg-orange-500' },
+    { name: 'School Runs', value: (jobs as any[]).filter(j => (j as any).job_type === 'school_run').length, color: 'bg-blue-500' },
+    { name: 'Regular Routes', value: routes.filter(r => (r as any).status === 'active').length, color: 'bg-green-500' },
+    { name: 'Special Events', value: (jobs as any[]).filter(j => (j as any).job_type === 'special_event').length, color: 'bg-purple-500' },
+    { name: 'Maintenance', value: vehicles.filter(v => (v as any).status === 'maintenance').length, color: 'bg-orange-500' },
   ];
 
-  // Performance metrics calculations
+  // Performance metrics calculations - using real data only
   const calculatePerformanceMetrics = () => {
-    const activeDrivers = drivers.filter(d => d.is_active).length;
+    const activeDrivers = drivers.filter(d => (d as any).is_active).length;
     const totalVehicles = vehicles.length;
-    const activeVehicles = vehicles.filter(v => v.status === 'active' || v.is_active).length;
-    const maintenanceVehicles = vehicles.filter(v => v.status === 'maintenance').length;
-    const completedJobs = jobs.filter(j => j.status === 'completed').length;
+    const activeVehicles = vehicles.filter(v => (v as any).status === 'active' || (v as any).is_active).length;
+    const maintenanceVehicles = vehicles.filter(v => (v as any).status === 'maintenance').length;
+    const completedJobs = (jobs as any[]).filter(j => (j as any).status === 'completed').length;
     
-    // Driver performance calculations
-    const driverRating = activeDrivers > 0 ? (4.2 + (activeDrivers / drivers.length * 0.8)) : 4.0;
-    const punctuality = completedJobs > 0 ? Math.min(95 + (completedJobs * 0.5), 100) : 85;
-    const safetyScore = activeDrivers > 0 ? Math.min(88 + (activeDrivers / drivers.length * 10), 100) : 75;
-    const fuelEfficiency = activeVehicles > 0 ? Math.min(82 + (activeVehicles / totalVehicles * 15), 100) : 70;
-    
-    // Vehicle utilization calculations
+    // Real performance calculations based on actual data
     const averageUtilization = totalVehicles > 0 ? (activeVehicles / totalVehicles * 100) : 0;
     const downtime = totalVehicles > 0 ? (maintenanceVehicles / totalVehicles * 100) : 0;
-    const maintenanceSchedule = totalVehicles > 0 ? Math.min(90 + (activeVehicles / totalVehicles * 10), 100) : 85;
     const availability = totalVehicles > 0 ? ((totalVehicles - maintenanceVehicles) / totalVehicles * 100) : 100;
     
-    // Customer satisfaction calculations
-    const overallRating = completedJobs > 0 ? (4.0 + (completedJobs * 0.01)) : 3.5;
-    const onTimePerformance = completedJobs > 0 ? Math.min(88 + (completedJobs * 0.2), 100) : 80;
-    const complaintResolution = completedJobs > 0 ? Math.min(95 + (completedJobs * 0.1), 100) : 90;
-    const repeatCustomers = completedJobs > 0 ? Math.min(80 + (completedJobs * 0.15), 100) : 70;
+    // Default values when no real data exists
+    const defaultRating = '0.0/5';
+    const defaultPercentage = '0.0%';
     
     return {
       driverPerformance: {
-        averageRating: `${Math.min(driverRating, 5).toFixed(1)}/5`,
-        punctuality: `${punctuality.toFixed(1)}%`,
-        safetyScore: `${safetyScore.toFixed(1)}%`,
-        fuelEfficiency: `${fuelEfficiency.toFixed(1)}%`
+        averageRating: defaultRating, // Will be calculated from real ratings when available
+        punctuality: defaultPercentage, // Will be calculated from real data when available
+        safetyScore: defaultPercentage, // Will be calculated from real data when available
+        fuelEfficiency: defaultPercentage // Will be calculated from real data when available
       },
       vehicleUtilization: {
         averageUtilization: `${averageUtilization.toFixed(1)}%`,
         downtime: `${downtime.toFixed(1)}%`,
-        maintenanceSchedule: `${maintenanceSchedule.toFixed(1)}%`,
+        maintenanceSchedule: defaultPercentage, // Will be calculated from real data when available
         availability: `${availability.toFixed(1)}%`
       },
       customerSatisfaction: {
-        overallRating: `${Math.min(overallRating, 5).toFixed(1)}/5`,
-        onTimePerformance: `${onTimePerformance.toFixed(1)}%`,
-        complaintResolution: `${complaintResolution.toFixed(1)}%`,
-        repeatCustomers: `${repeatCustomers.toFixed(1)}%`
+        overallRating: defaultRating, // Will be calculated from real ratings when available
+        onTimePerformance: defaultPercentage, // Will be calculated from real data when available
+        complaintResolution: defaultPercentage, // Will be calculated from real data when available
+        repeatCustomers: defaultPercentage // Will be calculated from real data when available
       },
       quickStats: {
         activeDrivers: activeDrivers,
         fleetVehicles: totalVehicles,
-        onTimeRate: `${onTimePerformance.toFixed(1)}%`,
+        onTimeRate: defaultPercentage, // Will be calculated from real data when available
         targetAchievement: `${Math.min((completedJobs / Math.max(jobs.length, 1)) * 100, 100).toFixed(1)}%`
       }
     };

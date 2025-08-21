@@ -26,6 +26,7 @@ import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileOptimizedLayout from '@/components/mobile/MobileOptimizedLayout';
 import { toast } from 'sonner';
+import ComplianceDebugPanel from '@/components/compliance/ComplianceDebugPanel';
 
 const DriverCompliance = () => {
   const { user, profile, session, loading: authLoading } = useAuth();
@@ -716,11 +717,16 @@ const DriverCompliance = () => {
     </div>
   );
 
-  return isMobile ? (
-    <MobileOptimizedLayout>
-      {content}
-    </MobileOptimizedLayout>
-  ) : content;
+  return (
+    <>
+      {isMobile ? (
+        <MobileOptimizedLayout>
+          {content}
+        </MobileOptimizedLayout>
+      ) : content}
+      <ComplianceDebugPanel />
+    </>
+  );
 };
 
 export default DriverCompliance;

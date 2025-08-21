@@ -4,21 +4,20 @@ import path from "path";
 
 // Mobile-specific Vite configuration
 export default defineConfig(({ mode }) => ({
+  base: "./", // Use relative paths for mobile builds
   build: {
-    outDir: mode === 'driver' ? 'dist-driver' : 'dist-parent',
+    outDir: mode === "driver" ? "dist-driver" : "dist-parent",
     rollupOptions: {
       input: {
-        main: path.resolve(__dirname, 'index.html')
-      }
-    }
+        main: path.resolve(__dirname, "index.html"),
+      },
+    },
   },
   define: {
-    'process.env.VITE_APP_TYPE': JSON.stringify(mode === 'driver' ? 'driver' : 'parent'),
-    'process.env.VITE_PLATFORM': JSON.stringify('mobile')
+    "process.env.VITE_APP_TYPE": JSON.stringify(mode === "driver" ? "driver" : "parent"),
+    "process.env.VITE_PLATFORM": JSON.stringify("mobile"),
   },
-  plugins: [
-    react()
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -26,6 +25,6 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     host: "::",
-    port: mode === 'driver' ? 8081 : 8082,
-  }
+    port: mode === "driver" ? 8081 : 8082,
+  },
 }));

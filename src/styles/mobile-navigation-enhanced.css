@@ -1,0 +1,439 @@
+/* Enhanced Mobile Navigation Animations */
+
+/* Slide animations for status bar */
+@keyframes slide-down-mobile {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up-mobile {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-down-mobile {
+  animation: slide-down-mobile 0.3s ease-out;
+}
+
+.animate-slide-up-mobile {
+  animation: slide-up-mobile 0.3s ease-out;
+}
+
+/* Enhanced button animations */
+.nav-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+.nav-button:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+.nav-button:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Special vehicle check styling */
+.vehicle-check-active {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.vehicle-check-icon {
+  color: #dc2626;
+  filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.4));
+}
+
+/* Pulse animation for vehicle check indicator */
+@keyframes pulse-red {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.animate-pulse-red {
+  animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Ripple effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  animation: ripple 0.6s ease-out;
+}
+
+/* Enhanced badge animations */
+@keyframes bounce-subtle {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -3px, 0);
+  }
+  70% {
+    transform: translate3d(0, -1px, 0);
+  }
+  90% {
+    transform: translate3d(0, -1px, 0);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 1s ease-in-out;
+}
+
+/* Connection status animations */
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.status-online {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Enhanced hover effects */
+.nav-item-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile-specific performance optimizations */
+.mobile-nav-optimized {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform: translateZ(0);
+}
+
+/* Safe area handling for notched devices */
+.mobile-nav-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 12px);
+}
+
+/* High-DPI display optimizations */
+@media screen and (min-resolution: 2dppx) {
+  .nav-button {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .vehicle-check-active {
+    box-shadow: 0 6px 24px rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .nav-button,
+  .animate-slide-down-mobile,
+  .animate-slide-up-mobile,
+  .animate-pulse-red,
+  .ripple-effect,
+  .animate-bounce-subtle,
+  .status-online {
+    animation: none;
+    transition: none;
+  }
+  
+  .nav-button:hover {
+    transform: none;
+  }
+}
+
+/* Landscape mode optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobile-nav-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  }
+  
+  .nav-button {
+    padding: 0.5rem;
+  }
+}
+
+/* Vehicle check special styling */
+.vehicle-check-special {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+}
+
+.vehicle-check-special:hover {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  box-shadow: 0 6px 24px rgba(239, 68, 68, 0.25);
+}
+
+.vehicle-check-special.active {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* Enhanced navigation bar styling */
+.mobile-nav-enhanced {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(229, 231, 235, 0.8);
+  box-shadow: 
+    0 -4px 20px rgba(0, 0, 0, 0.1),
+    0 -1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Quick actions bar styling */
+.quick-actions-bar {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-top: 1px solid rgba(229, 231, 235, 0.6);
+}
+
+/* Status indicators */
+.status-indicator {
+  transition: all 0.3s ease;
+}
+
+.status-indicator.online {
+  color: #10b981;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.status-indicator.offline {
+  color: #f59e0b;
+  animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+/* Sync pending indicator */
+.sync-pending {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+/* Logout button styling */
+.logout-button {
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  color: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Active route indicator */
+.active-indicator {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.active-indicator.vehicle-check {
+  background: #dc2626;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5);
+}
+
+.active-indicator.default {
+  background: hsl(var(--primary));
+  box-shadow: 0 0 8px rgba(var(--primary), 0.4);
+}
+
+/* High-specificity vehicle check styling to override any conflicts */
+button[data-vehicle-check="true"] .vehicle-check-icon,
+button[data-vehicle-check="true"] span,
+button[data-vehicle-check="true"] svg {
+  color: #dc2626 !important;
+}
+
+button[data-vehicle-check="true"]:hover .vehicle-check-icon,
+button[data-vehicle-check="true"]:hover span,
+button[data-vehicle-check="true"]:hover svg {
+  color: #b91c1c !important;
+}
+
+button[data-vehicle-check="true"].active .vehicle-check-icon,
+button[data-vehicle-check="true"].active span,
+button[data-vehicle-check="true"].active svg {
+  color: #dc2626 !important;
+}
+
+/* Professional Navigation Bar Styles from Uiverse.io */
+.shadow-box-up {
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1), 0 -1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.bg-light-secondary {
+  background-color: #f8fafc;
+}
+
+.shadow-button-flat-nopressed {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-button-flat-pressed {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.text-light-blue-light {
+  color: #3b82f6;
+}
+
+/* Dark mode support */
+.dark .bg-box-dark {
+  background-color: #1f2937;
+}
+
+.dark .shadow-box-dark-out {
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3), 0 -1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-buttons-box-dark {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .bg-button-curved-default-dark {
+  background-color: #374151;
+}
+
+.dark .shadow-button-curved-default-dark {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dark .bg-button-curved-pressed-dark {
+  background-color: #4b5563;
+}
+
+.dark .shadow-button-curved-pressed-dark {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Professional navigation container */
+.professional-nav-container {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: none;
+  box-shadow: none;
+}
+
+/* Professional button styling */
+.professional-nav-button {
+  border: 2px solid transparent;
+  background-color: #f8fafc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  border-radius: 9999px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.professional-nav-button:hover {
+  border-color: #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transform: translateY(-1px);
+  color: #374151;
+}
+
+.professional-nav-button:active {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transform: translateY(0);
+}
+
+.professional-nav-button.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Vehicle check special styling for professional design */
+.professional-nav-button[data-vehicle-check="true"] {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.professional-nav-button[data-vehicle-check="true"]:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.professional-nav-button[data-vehicle-check="true"].active {
+  background-color: #dc2626;
+  color: white;
+  border-color: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.professional-nav-button[data-vehicle-check="true"] .vehicle-check-icon {
+  color: #dc2626;
+}
+
+.professional-nav-button[data-vehicle-check="true"]:hover .vehicle-check-icon {
+  color: #b91c1c;
+}
+
+.professional-nav-button[data-vehicle-check="true"].active .vehicle-check-icon {
+  color: white;
+}
+
+/* Navigation container styling to match the image */
+.nav-container-white {
+  background: white;
+  border-radius: 9999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 0.5rem 1rem;
+  margin: 0 auto;
+  max-width: fit-content;
+}
+
+/* Icon styling to match the image */
+.nav-icon {
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.nav-icon.active {
+  color: #3b82f6;
+}
+
+.nav-icon.vehicle-check {
+  color: #dc2626;
+}
+
+.nav-icon.vehicle-check.active {
+  color: white;
+}

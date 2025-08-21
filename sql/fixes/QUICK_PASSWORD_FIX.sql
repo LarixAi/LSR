@@ -44,3 +44,4 @@ BEGIN
     RAISE NOTICE 'RLS temporarily configured for testing';
     RAISE NOTICE 'Check the profiles above to see available users';
 END $$;
+

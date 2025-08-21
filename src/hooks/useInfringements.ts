@@ -91,12 +91,7 @@ export const useInfringements = () => {
       try {
         const { data, error } = await supabase
           .from('infringements')
-          .select(`
-            *,
-            driver:profiles!infringements_driver_id_fkey(id, first_name, last_name, email),
-            vehicle:vehicles(id, vehicle_number, make, model),
-            infringement_type_rel:infringement_types(*)
-          `)
+          .select('*')
           .eq('organization_id', profile.organization_id)
           .order('created_at', { ascending: false });
 
@@ -110,8 +105,65 @@ export const useInfringements = () => {
           throw error;
         }
 
-        console.log('Fetched infringements:', data);
-        return data as Infringement[] || [];
+        // Fetch related data separately to avoid foreign key relationship issues
+        const infringementsWithRelations = await Promise.all(
+          (data || []).map(async (infringement) => {
+            // Fetch driver data
+            let driver = null;
+            if (infringement.driver_id) {
+              try {
+                const { data: driverData } = await supabase
+                  .from('profiles')
+                  .select('id, first_name, last_name, email')
+                  .eq('id', infringement.driver_id)
+                  .single();
+                driver = driverData;
+              } catch (driverError) {
+                console.warn('Could not fetch driver data for infringement:', infringement.id);
+              }
+            }
+
+            // Fetch vehicle data
+            let vehicle = null;
+            if (infringement.vehicle_id) {
+              try {
+                const { data: vehicleData } = await supabase
+                  .from('vehicles')
+                  .select('id, vehicle_number, make, model')
+                  .eq('id', infringement.vehicle_id)
+                  .single();
+                vehicle = vehicleData;
+              } catch (vehicleError) {
+                console.warn('Could not fetch vehicle data for infringement:', infringement.id);
+              }
+            }
+
+            // Fetch infringement type data
+            let infringementType = null;
+            if (infringement.infringement_type_id) {
+              try {
+                const { data: typeData } = await supabase
+                  .from('infringement_types')
+                  .select('*')
+                  .eq('id', infringement.infringement_type_id)
+                  .single();
+                infringementType = typeData;
+              } catch (typeError) {
+                console.warn('Could not fetch infringement type data for infringement:', infringement.id);
+              }
+            }
+
+            return {
+              ...infringement,
+              driver: driver || { id: infringement.driver_id, first_name: 'Unknown', last_name: 'Driver', email: 'unknown@example.com' },
+              vehicle: vehicle || { id: infringement.vehicle_id, vehicle_number: 'Unknown', make: 'Unknown', model: 'Unknown' },
+              infringement_type_rel: infringementType
+            };
+          })
+        );
+
+        console.log('Fetched infringements with relations:', infringementsWithRelations);
+        return infringementsWithRelations as Infringement[] || [];
       } catch (error) {
         console.error('Error in useInfringements:', error);
         // Return empty array for now if there are issues

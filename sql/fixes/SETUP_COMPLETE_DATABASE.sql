@@ -300,3 +300,4 @@ BEGIN
     RAISE NOTICE '2. Test admin login in the application';
     RAISE NOTICE '3. Test password reset functionality';
 END $$;
+

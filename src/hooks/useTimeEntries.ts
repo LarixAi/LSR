@@ -138,7 +138,8 @@ export const useClockIn = () => {
       }
 
       const today = new Date().toISOString().split('T')[0];
-      const now = new Date().toISOString();
+      const now = new Date();
+      const timeString = now.toTimeString().split(' ')[0]; // Format as HH:MM:SS
 
       // Check if already clocked in today
       const { data: existingEntry } = await supabase
@@ -157,7 +158,7 @@ export const useClockIn = () => {
         .insert({
           driver_id: profile.id,
           entry_date: today,
-          clock_in_time: now,
+          clock_in_time: timeString,
           location_clock_in: location || 'Unknown',
           status: 'active'
         })
@@ -189,12 +190,13 @@ export const useClockOut = () => {
       }
 
       const today = new Date().toISOString().split('T')[0];
-      const now = new Date().toISOString();
+      const now = new Date();
+      const timeString = now.toTimeString().split(' ')[0]; // Format as HH:MM:SS
 
       const { data, error } = await supabase
         .from('time_entries')
         .update({
-          clock_out_time: now,
+          clock_out_time: timeString,
           location_clock_out: location || 'Unknown',
           status: 'completed'
         })
@@ -229,12 +231,13 @@ export const useStartBreak = () => {
       }
 
       const today = new Date().toISOString().split('T')[0];
-      const now = new Date().toISOString();
+      const now = new Date();
+      const timeString = now.toTimeString().split(' ')[0]; // Format as HH:MM:SS
 
       const { data, error } = await supabase
         .from('time_entries')
         .update({
-          break_start_time: now
+          break_start_time: timeString
         })
         .eq('driver_id', profile.id)
         .eq('entry_date', today)
@@ -266,12 +269,13 @@ export const useEndBreak = () => {
       }
 
       const today = new Date().toISOString().split('T')[0];
-      const now = new Date().toISOString();
+      const now = new Date();
+      const timeString = now.toTimeString().split(' ')[0]; // Format as HH:MM:SS
 
       const { data, error } = await supabase
         .from('time_entries')
         .update({
-          break_end_time: now
+          break_end_time: timeString
         })
         .eq('driver_id', profile.id)
         .eq('entry_date', today)

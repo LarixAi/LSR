@@ -64,7 +64,6 @@ const AdminApprovalPanel = () => {
         .from('parts_approval_requests' as any)
         .select(`
           *,
-          requester:profiles!parts_approval_requests_requester_id_fkey(full_name, email),
           part:parts_inventory!parts_approval_requests_part_id_fkey(part_number, name, quantity, unit_price)
         `)
         .eq('organization_id', profile?.organization_id)
@@ -74,7 +73,30 @@ const AdminApprovalPanel = () => {
         console.error('Error fetching approval requests:', error);
         return [];
       }
-      return (data || []) as unknown as ApprovalRequest[];
+
+      // Fetch requester profiles separately since the foreign key relationship doesn't exist
+      const requestsWithProfiles = await Promise.all(
+        (data || []).map(async (request: any) => {
+          if (request.requester_id) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('full_name, email')
+              .eq('id', request.requester_id)
+              .single();
+            
+            return {
+              ...request,
+              requester: profileData || { full_name: 'Unknown User', email: 'unknown@example.com' }
+            };
+          }
+          return {
+            ...request,
+            requester: { full_name: 'Unknown User', email: 'unknown@example.com' }
+          };
+        })
+      );
+
+      return requestsWithProfiles as unknown as ApprovalRequest[];
     }
   });
 

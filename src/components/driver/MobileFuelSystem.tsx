@@ -238,7 +238,7 @@ export default function MobileFuelSystem() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  {statistics?.totalLiters?.toFixed(1) || '0.0'}L
+                  {statistics?.totalQuantity?.toFixed(1) || '0.0'}L
                 </div>
                 <p className="text-sm text-muted-foreground">Total Fuel</p>
               </div>
@@ -248,7 +248,7 @@ export default function MobileFuelSystem() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
-                  £{statistics?.averagePricePerLiter?.toFixed(2) || '0.00'}
+                  £{statistics?.averagePrice?.toFixed(2) || '0.00'}
                 </div>
                 <p className="text-sm text-muted-foreground">Avg Price/L</p>
               </div>

@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SafeSidebarTrigger from './layout/SafeSidebarTrigger';
 import UserProfileDropdown from './header/UserProfileDropdown';
+import HeaderNotificationSystem from './notifications/HeaderNotificationSystem';
 
 
 const Header = () => {
@@ -26,11 +27,12 @@ const Header = () => {
       '/mechanics': 'Mechanics',
       '/jobs': 'Job Management',
       '/admin-schedule': 'Resource Scheduling',
-      '/routes': 'Route Management',
+      '/routes': 'School Routes Management',
       '/admin/route-management': 'Route Planning & Pricing',
       '/admin/compliance-dashboard': 'Compliance Dashboard',
       '/admin/tachograph-management': 'Tachograph Management',
       '/admin/api-management': 'API Management',
+      '/rail-replacement': 'Rail Replacement Services',
       '/invoice-management': 'Invoice Management',
       '/quotation-management': 'Quotation Management',
       '/compliance': 'Compliance',
@@ -78,8 +80,9 @@ const Header = () => {
             </div>
           )}
 
-          {/* Right Section - Profile */}
+          {/* Right Section - Notifications and Profile */}
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+            <HeaderNotificationSystem />
             <UserProfileDropdown />
           </div>
         </div>

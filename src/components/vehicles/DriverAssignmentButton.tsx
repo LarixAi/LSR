@@ -185,7 +185,14 @@ const DriverAssignmentButton = ({ vehicle, currentAssignment, variant = 'button'
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
           {currentAssignment ? (
             <>
               <User className="w-4 h-4 mr-1" />

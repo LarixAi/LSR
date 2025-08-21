@@ -387,31 +387,39 @@ const MobileNavigationUpdated: React.FC = () => {
 
       {/* Main Navigation */}
       <nav className={cn(
-        "fixed bottom-0 left-0 right-0 z-40 bg-white/98 backdrop-blur-sm border-t border-gray-200 safe-area-bottom",
+        "fixed bottom-0 left-0 right-0 z-40 professional-nav-container",
         showStatusBar && "top-12" // Add top margin if status bar is shown
       )}>
-        <div className="flex justify-around items-center py-3 px-4 max-w-md mx-auto">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = isActiveRoute(item.path);
-            const isDisabled = item.requiresOnline && connectionStatus === 'offline';
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavigation(item)}
-                disabled={isDisabled}
-                className={cn(
-                  "flex flex-col items-center justify-center space-y-1 p-2 rounded-lg transition-all duration-200 min-w-0 flex-1",
-                  isActive 
-                    ? "text-primary bg-primary/10" 
-                    : isDisabled
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-gray-600 hover:text-primary hover:bg-gray-100"
-                )}
-              >
-                <div className="relative">
-                  <Icon className="w-5 h-5" />
+        <div className="flex justify-center items-center py-4 px-4">
+          <div className="nav-container-white">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = isActiveRoute(item.path);
+              const isDisabled = item.requiresOnline && connectionStatus === 'offline';
+              const isVehicleCheck = item.id === 'vehicle-check';
+              
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigation(item)}
+                  disabled={isDisabled}
+                  data-vehicle-check={isVehicleCheck}
+                  title={`Go to ${item.label.toLowerCase()}`}
+                  className={cn(
+                    "professional-nav-button inline-flex items-center mr-4 last-of-type:mr-0 p-2.5 text-sm relative",
+                    isActive && "active",
+                    isVehicleCheck && "vehicle-check-special",
+                    isDisabled && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Icon className={cn(
+                    "w-5 h-5 transition-colors duration-200 nav-icon",
+                    isVehicleCheck && "vehicle-check",
+                    isActive && "active",
+                    isDisabled && "text-gray-400"
+                  )} />
+                  
+                  {/* Badge for notifications */}
                   {item.badge && item.badge > 0 && (
                     <Badge 
                       variant="destructive" 
@@ -420,16 +428,15 @@ const MobileNavigationUpdated: React.FC = () => {
                       {item.badge}
                     </Badge>
                   )}
+                  
+                  {/* Offline indicator */}
                   {isDisabled && (
                     <Signal className="absolute -top-1 -right-1 w-3 h-3 text-gray-400" />
                   )}
-                </div>
-                <span className="text-xs font-medium truncate w-full text-center">
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Quick Actions Bar */}

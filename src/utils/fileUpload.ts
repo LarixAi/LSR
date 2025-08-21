@@ -19,9 +19,19 @@ export const uploadFileToStorage = async (
     // Create unique filename
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const storagePath = `${folder}/${organizationId}/${userId}/${fileName}`;
+    // Simplified storage path - just use folder and filename
+    const storagePath = `${folder}/${fileName}`;
 
     console.log('Uploading file:', { bucket, storagePath, fileSize: file.size });
+
+    // Check if bucket exists and user has access
+    console.log('Checking bucket access...');
+    const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+    if (bucketError) {
+      console.error('Bucket list error:', bucketError);
+    } else {
+      console.log('Available buckets:', buckets?.map(b => b.name));
+    }
 
     // Upload file to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -33,6 +43,12 @@ export const uploadFileToStorage = async (
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
+      console.error('Upload error details:', {
+        code: uploadError.code,
+        message: uploadError.message,
+        details: uploadError.details,
+        hint: uploadError.hint
+      });
       return { success: false, error: uploadError.message };
     }
 

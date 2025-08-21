@@ -170,9 +170,9 @@ const Routes: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <RouteIcon className="w-8 h-8 text-blue-600" />
-            Route Management
+            School Routes Management
           </h1>
-          <p className="text-gray-600 mt-1">Manage and optimize transportation routes</p>
+          <p className="text-gray-600 mt-1">Manage and optimize school transportation routes</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -261,7 +261,7 @@ const Routes: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <RouteIcon className="w-5 h-5" />
-            Route Management
+            School Routes Management
           </CardTitle>
           <div className="flex gap-4">
             <div className="relative">

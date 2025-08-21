@@ -1,589 +1,681 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  User, 
+  AlertTriangle, 
+  FileText, 
+  Plus, 
+  Edit, 
+  Trash2,
+  Shield,
+  Heart,
+  Brain,
+  Globe
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Upload, User, AlertTriangle, FileText } from 'lucide-react';
-import ComprehensiveChildRegistration from './ComprehensiveChildRegistration';
-
-interface ChildProfile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth?: string;
-  grade?: string;
-  school?: string;
-  pickup_location: string;
-  dropoff_location?: string;
-  emergency_contact_name?: string;
-  emergency_contact_phone?: string;
-  medical_conditions?: string;
-  allergies?: string;
-  special_instructions?: string;
-  profile_image_url?: string;
-}
-
-interface RiskAssessment {
-  id: string;
-  assessment_type: string;
-  risk_level: string;
-  description: string;
-  required_equipment?: string;
-  document_url?: string;
-}
+import { useIsMobile } from '@/hooks/use-mobile';
+import { 
+  useChildProfiles, 
+  useRiskAssessments, 
+  useCreateChildProfile, 
+  useUpdateChildProfile,
+  useCreateRiskAssessment,
+  calculateAge,
+  type ChildProfile,
+  type RiskAssessment
+} from '@/hooks/useChildManagement';
+import { useToast } from '@/hooks/use-toast';
 
 const ChildManagementDialog = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [selectedChild, setSelectedChild] = useState<ChildProfile | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [riskAssessmentFile, setRiskAssessmentFile] = useState<File | null>(null);
-  const [isComprehensiveRegistrationOpen, setIsComprehensiveRegistrationOpen] = useState(false);
+  const [isAddChildDialogOpen, setIsAddChildDialogOpen] = useState(false);
+  const [isAddRiskAssessmentDialogOpen, setIsAddRiskAssessmentDialogOpen] = useState(false);
+  const [editingChild, setEditingChild] = useState<ChildProfile | null>(null);
+  const [isEditChildDialogOpen, setIsEditChildDialogOpen] = useState(false);
 
-  const [formData, setFormData] = useState<Partial<ChildProfile>>({
+  // Form states
+  const [childFormData, setChildFormData] = useState({
     first_name: '',
     last_name: '',
+    date_of_birth: '',
+    grade: '',
+    school: '',
     pickup_location: '',
+    dropoff_location: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
+    medical_conditions: '',
+    allergies: '',
+    special_instructions: ''
   });
 
-  const [riskAssessment, setRiskAssessment] = useState({
+  const [riskAssessmentFormData, setRiskAssessmentFormData] = useState({
     assessment_type: '',
     risk_level: 'low',
     description: '',
     required_equipment: '',
   });
 
-  // Mock data for children since child_profiles table doesn't exist
-  const { data: children } = useQuery({
-    queryKey: ['child-profiles', user?.id],
-    queryFn: async () => {
-      console.log('Fetching children for user:', user?.id);
-      
-      // Mock children data
-      const mockChildren: ChildProfile[] = [
-        {
-          id: 'child-1',
-          first_name: 'Emma',
-          last_name: 'Johnson',
-          date_of_birth: '2015-03-15',
-          grade: '3rd Grade',
-          school: 'Lincoln Elementary',
-          pickup_location: '123 Main Street',
-          dropoff_location: 'Lincoln Elementary School',
-          emergency_contact_name: 'Jane Johnson',
-          emergency_contact_phone: '555-0123',
-          medical_conditions: 'None',
-          allergies: 'Peanuts',
-          special_instructions: 'Please ensure seatbelt is properly fastened',
-          profile_image_url: undefined
-        },
-        {
-          id: 'child-2',
-          first_name: 'Noah',
-          last_name: 'Johnson',
-          date_of_birth: '2017-08-22',
-          grade: '1st Grade',
-          school: 'Lincoln Elementary',
-          pickup_location: '123 Main Street',
-          dropoff_location: 'Lincoln Elementary School',
-          emergency_contact_name: 'Jane Johnson',
-          emergency_contact_phone: '555-0123',
-          medical_conditions: 'Asthma',
-          allergies: 'None',
-          special_instructions: 'Carries inhaler in backpack',
-          profile_image_url: undefined
-        }
-      ];
+  // Fetch real data from backend
+  const { data: children = [], isLoading: childrenLoading, refetch: refetchChildren } = useChildProfiles();
+  const { data: riskAssessments = [], isLoading: riskAssessmentsLoading, refetch: refetchRiskAssessments } = useRiskAssessments(selectedChild?.id);
 
-      return mockChildren;
-    },
-    enabled: !!user?.id
-  });
+  // Mutations
+  const createChildMutation = useCreateChildProfile();
+  const updateChildMutation = useUpdateChildProfile();
+  const createRiskAssessmentMutation = useCreateRiskAssessment();
 
-  // Mock data for risk assessments since risk_assessments table doesn't exist
-  const { data: childRiskAssessments } = useQuery({
-    queryKey: ['risk-assessments', selectedChild?.id],
-    queryFn: async () => {
-      if (!selectedChild?.id) return [];
-      
-      console.log('Fetching risk assessments for child:', selectedChild.id);
-      
-      // Mock risk assessments data
-      const mockRiskAssessments: RiskAssessment[] = [
-        {
-          id: 'risk-1',
-          assessment_type: 'medical',
-          risk_level: 'medium',
-          description: 'Child has asthma and may need inhaler during transport',
-          required_equipment: 'Emergency inhaler accessible',
-          document_url: undefined
-        },
-        {
-          id: 'risk-2',
-          assessment_type: 'behavioral',
-          risk_level: 'low',
-          description: 'Child may get car sick on longer trips',
-          required_equipment: 'Motion sickness bags available',
-          document_url: undefined
-        }
-      ];
-
-      return selectedChild.id === 'child-2' ? mockRiskAssessments : [];
-    },
-    enabled: !!selectedChild?.id
-  });
-
-  const uploadFile = async (file: File, bucket: string, folder: string) => {
-    // Mock file upload since storage buckets don't exist
-    console.log('Mock uploading file:', file.name, 'to bucket:', bucket, 'folder:', folder);
-    
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Return a mock URL
-    return `https://mock-storage.example.com/${bucket}/${folder}/${user?.id}/${Date.now()}_${file.name}`;
+  const handleChildInputChange = (field: string, value: string) => {
+    setChildFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const saveChildMutation = useMutation({
-    mutationFn: async (data: Partial<ChildProfile>) => {
-      console.log('Saving child profile:', data);
-      
-      let profileImageUrl = data.profile_image_url;
+  const handleRiskAssessmentInputChange = (field: string, value: string) => {
+    setRiskAssessmentFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
-      if (imageFile) {
-        profileImageUrl = await uploadFile(imageFile, 'child-profiles', 'profile-images');
-      }
-
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const childData = {
-        ...data,
-        profile_image_url: profileImageUrl,
-        parent_id: user?.id,
-        first_name: data.first_name!,
-        last_name: data.last_name!,
-        pickup_location: data.pickup_location!,
-        id: selectedChild?.id || `child-${Date.now()}`,
-      };
-
-      return childData as ChildProfile;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['child-profiles'] });
-      toast({
-        title: "Success",
-        description: `Child profile ${selectedChild ? 'updated' : 'created'} successfully.`,
+  const handleCreateChild = async () => {
+    try {
+      await createChildMutation.mutateAsync({
+        ...childFormData,
+        is_active: true
       });
-      resetForm();
-      setOpen(false);
-    },
-    onError: (error) => {
-      console.error('Error saving child profile:', error);
+      
       toast({
-        title: "Error",
-        description: "Failed to save child profile. Please try again.",
-        variant: "destructive",
+        title: "Child added successfully",
+        description: `${childFormData.first_name} ${childFormData.last_name} has been added to your family.`,
+      });
+      
+      setChildFormData({
+        first_name: '',
+        last_name: '',
+        date_of_birth: '',
+        grade: '',
+        school: '',
+        pickup_location: '',
+        dropoff_location: '',
+        emergency_contact_name: '',
+        emergency_contact_phone: '',
+        medical_conditions: '',
+        allergies: '',
+        special_instructions: ''
+      });
+      setIsAddChildDialogOpen(false);
+      refetchChildren();
+    } catch (error) {
+      toast({
+        title: "Failed to add child",
+        description: "There was an error adding your child. Please try again.",
+        variant: "destructive"
       });
     }
-  });
+  };
 
-  const saveRiskAssessmentMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedChild || !riskAssessment.description) return;
-
-      console.log('Saving risk assessment:', riskAssessment);
-
-      let documentUrl;
-      if (riskAssessmentFile) {
-        documentUrl = await uploadFile(riskAssessmentFile, 'risk-assessments', 'documents');
-      }
-
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const assessmentData = {
-        ...riskAssessment,
-        id: `risk-${Date.now()}`,
-        child_id: selectedChild.id,
-        document_url: documentUrl,
-        created_by: user?.id,
-      };
-
-      return assessmentData;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['risk-assessments'] });
-      toast({
-        title: "Risk Assessment Saved",
-        description: "Risk assessment has been saved successfully.",
+  const handleUpdateChild = async () => {
+    if (!editingChild) return;
+    
+    try {
+      await updateChildMutation.mutateAsync({
+        id: editingChild.id,
+        ...childFormData
       });
-      setRiskAssessment({
+      
+      toast({
+        title: "Child updated successfully",
+        description: `${childFormData.first_name} ${childFormData.last_name}'s information has been updated.`,
+      });
+      
+      setIsEditChildDialogOpen(false);
+      setEditingChild(null);
+      refetchChildren();
+    } catch (error) {
+      toast({
+        title: "Failed to update child",
+        description: "There was an error updating your child's information. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCreateRiskAssessment = async () => {
+    if (!selectedChild) return;
+    
+    try {
+      await createRiskAssessmentMutation.mutateAsync({
+        child_id: selectedChild.id,
+        assessment_type: riskAssessmentFormData.assessment_type as any,
+        risk_level: riskAssessmentFormData.risk_level as any,
+        description: riskAssessmentFormData.description,
+        required_equipment: riskAssessmentFormData.required_equipment,
+        is_active: true,
+        assessment_date: new Date().toISOString().split('T')[0]
+      });
+      
+      toast({
+        title: "Risk assessment added successfully",
+        description: "The risk assessment has been added to your child's profile.",
+      });
+      
+      setRiskAssessmentFormData({
         assessment_type: '',
         risk_level: 'low',
         description: '',
         required_equipment: '',
       });
-      setRiskAssessmentFile(null);
-    },
-    onError: (error) => {
-      console.error('Error saving risk assessment:', error);
+      setIsAddRiskAssessmentDialogOpen(false);
+      refetchRiskAssessments();
+    } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save risk assessment. Please try again.",
-        variant: "destructive",
+        title: "Failed to add risk assessment",
+        description: "There was an error adding the risk assessment. Please try again.",
+        variant: "destructive"
       });
     }
-  });
+  };
 
-  const resetForm = () => {
-    setFormData({
-      first_name: '',
-      last_name: '',
-      pickup_location: '',
+  const openEditChildDialog = (child: ChildProfile) => {
+    setEditingChild(child);
+    setChildFormData({
+      first_name: child.first_name,
+      last_name: child.last_name,
+      date_of_birth: child.date_of_birth,
+      grade: child.grade || '',
+      school: child.school || '',
+      pickup_location: child.pickup_location || '',
+      dropoff_location: child.dropoff_location || '',
+      emergency_contact_name: child.emergency_contact_name || '',
+      emergency_contact_phone: child.emergency_contact_phone || '',
+      medical_conditions: child.medical_conditions || '',
+      allergies: child.allergies || '',
+      special_instructions: child.special_instructions || ''
     });
-    setSelectedChild(null);
-    setImageFile(null);
-    setRiskAssessmentFile(null);
+    setIsEditChildDialogOpen(true);
   };
 
-  const handleEditChild = (child: ChildProfile) => {
-    setSelectedChild(child);
-    setFormData(child);
+  const getRiskLevelColor = (level: string) => {
+    switch (level) {
+      case 'low': return 'bg-green-100 text-green-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'critical': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
-  const handleAddNewChild = () => {
-    setIsComprehensiveRegistrationOpen(true);
-  };
-
-  const handleChildAdded = () => {
-    queryClient.invalidateQueries({ queryKey: ['child-profiles'] });
-    setIsComprehensiveRegistrationOpen(false);
-    toast({
-      title: "Success",
-      description: "Child registered successfully with comprehensive information.",
-    });
+  const getAssessmentTypeIcon = (type: string) => {
+    switch (type) {
+      case 'medical': return <Heart className="w-4 h-4" />;
+      case 'behavioral': return <Brain className="w-4 h-4" />;
+      case 'physical': return <User className="w-4 h-4" />;
+      case 'environmental': return <Globe className="w-4 h-4" />;
+      default: return <AlertTriangle className="w-4 h-4" />;
+    }
   };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button className="bg-teal-600 hover:bg-teal-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Manage Children
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Child Management</DialogTitle>
-            <DialogDescription>
-              Add or update your child's information, upload profile photos, and manage risk assessments.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Existing Children */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Your Children</h3>
-              <div className="space-y-3 max-h-60 overflow-y-auto">
-                {children?.map((child) => (
-                  <Card key={child.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleEditChild(child)}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={child.profile_image_url} />
-                          <AvatarFallback>
-                            <User className="h-6 w-6" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h4 className="font-medium">{child.first_name} {child.last_name}</h4>
-                          <p className="text-sm text-gray-500">{child.pickup_location}</p>
-                          {child.grade && <Badge variant="outline">{child.grade}</Badge>}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                <Button variant="outline" className="w-full" onClick={handleAddNewChild}>
+    <div className="space-y-6">
+      {/* Children List */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center space-x-2">
+              <User className="w-5 h-5" />
+              <span>My Children</span>
+            </CardTitle>
+            <Dialog open={isAddChildDialogOpen} onOpenChange={setIsAddChildDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add New Child (Comprehensive)
+                  Add Child
                 </Button>
-              </div>
-            </div>
-
-            {/* Child Form - Only show if editing existing child */}
-            {selectedChild && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
-                  Edit Child: {selectedChild.first_name} {selectedChild.last_name}
-                </h3>
-
-                <div className="grid grid-cols-2 gap-4">
+              </DialogTrigger>
+              <DialogContent className={isMobile ? 'w-[95vw] max-w-none mx-2' : ''}>
+                <DialogHeader>
+                  <DialogTitle>Add New Child</DialogTitle>
+                  <DialogDescription>
+                    Add a new child to your family profile
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        value={childFormData.first_name}
+                        onChange={(e) => handleChildInputChange('first_name', e.target.value)}
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        value={childFormData.last_name}
+                        onChange={(e) => handleChildInputChange('last_name', e.target.value)}
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <Label htmlFor="first_name">First Name *</Label>
+                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
                     <Input
-                      id="first_name"
-                      value={formData.first_name || ''}
-                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      required
+                      id="dateOfBirth"
+                      type="date"
+                      value={childFormData.date_of_birth}
+                      onChange={(e) => handleChildInputChange('date_of_birth', e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="grade">Grade</Label>
+                      <Input
+                        id="grade"
+                        value={childFormData.grade}
+                        onChange={(e) => handleChildInputChange('grade', e.target.value)}
+                        placeholder="e.g., 3rd Grade"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="school">School</Label>
+                      <Input
+                        id="school"
+                        value={childFormData.school}
+                        onChange={(e) => handleChildInputChange('school', e.target.value)}
+                        placeholder="Enter school name"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="pickupLocation">Pickup Location</Label>
+                    <Input
+                      id="pickupLocation"
+                      value={childFormData.pickup_location}
+                      onChange={(e) => handleChildInputChange('pickup_location', e.target.value)}
+                      placeholder="Enter pickup address"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="last_name">Last Name *</Label>
+                    <Label htmlFor="dropoffLocation">Dropoff Location</Label>
                     <Input
-                      id="last_name"
-                      value={formData.last_name || ''}
-                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      required
+                      id="dropoffLocation"
+                      value={childFormData.dropoff_location}
+                      onChange={(e) => handleChildInputChange('dropoff_location', e.target.value)}
+                      placeholder="Enter dropoff address"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="date_of_birth">Date of Birth</Label>
-                  <Input
-                    id="date_of_birth"
-                    type="date"
-                    value={formData.date_of_birth || ''}
-                    onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
+                      <Input
+                        id="emergencyContactName"
+                        value={childFormData.emergency_contact_name}
+                        onChange={(e) => handleChildInputChange('emergency_contact_name', e.target.value)}
+                        placeholder="Emergency contact name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
+                      <Input
+                        id="emergencyContactPhone"
+                        value={childFormData.emergency_contact_phone}
+                        onChange={(e) => handleChildInputChange('emergency_contact_phone', e.target.value)}
+                        placeholder="Emergency contact phone"
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <Label htmlFor="grade">Grade</Label>
-                    <Input
-                      id="grade"
-                      value={formData.grade || ''}
-                      onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                    <Label htmlFor="medicalConditions">Medical Conditions</Label>
+                    <Textarea
+                      id="medicalConditions"
+                      value={childFormData.medical_conditions}
+                      onChange={(e) => handleChildInputChange('medical_conditions', e.target.value)}
+                      placeholder="Any medical conditions or special needs"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="school">School</Label>
-                    <Input
-                      id="school"
-                      value={formData.school || ''}
-                      onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                    <Label htmlFor="allergies">Allergies</Label>
+                    <Textarea
+                      id="allergies"
+                      value={childFormData.allergies}
+                      onChange={(e) => handleChildInputChange('allergies', e.target.value)}
+                      placeholder="Any allergies or dietary restrictions"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="specialInstructions">Special Instructions</Label>
+                    <Textarea
+                      id="specialInstructions"
+                      value={childFormData.special_instructions}
+                      onChange={(e) => handleChildInputChange('special_instructions', e.target.value)}
+                      placeholder="Any special instructions for transport"
                     />
                   </div>
                 </div>
-
-                <div>
-                  <Label htmlFor="pickup_location">Pickup Location *</Label>
-                  <Input
-                    id="pickup_location"
-                    value={formData.pickup_location || ''}
-                    onChange={(e) => setFormData({ ...formData, pickup_location: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="profile_image">Profile Photo</Label>
-                  <Input
-                    id="profile_image"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="medical_conditions">Medical Conditions</Label>
-                  <Textarea
-                    id="medical_conditions"
-                    value={formData.medical_conditions || ''}
-                    onChange={(e) => setFormData({ ...formData, medical_conditions: e.target.value })}
-                    rows={2}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="allergies">Allergies</Label>
-                  <Textarea
-                    id="allergies"
-                    value={formData.allergies || ''}
-                    onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
-                    rows={2}
-                  />
-                </div>
-
-                <Button 
-                  onClick={() => saveChildMutation.mutate(formData)}
-                  disabled={!formData.first_name || !formData.last_name || !formData.pickup_location || saveChildMutation.isPending}
-                  className="w-full"
-                >
-                  {saveChildMutation.isPending ? 'Saving...' : 'Update Child'}
-                </Button>
-              </div>
-            )}
-
-            {/* No child selected - show info */}
-            {!selectedChild && (
-              <div className="space-y-4">
-                <div className="text-center py-8">
-                  <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Select a Child to Edit</h3>
-                  <p className="text-gray-500">
-                    Choose a child from the list to edit their information, or use the comprehensive registration form to add a new child.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Risk Assessment Section */}
-          {selectedChild && (
-            <div className="mt-6 pt-6 border-t">
-              <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
-                Risk Assessment for {selectedChild.first_name}
-              </h3>
-
-              {/* Existing Risk Assessments */}
-              {childRiskAssessments && childRiskAssessments.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="font-medium mb-2">Current Risk Assessments</h4>
-                  <div className="space-y-2">
-                    {childRiskAssessments.map((assessment) => (
-                      <Card key={assessment.id} className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Badge variant={assessment.risk_level === 'high' ? 'destructive' : assessment.risk_level === 'medium' ? 'default' : 'secondary'}>
-                              {assessment.risk_level.toUpperCase()} RISK
-                            </Badge>
-                            <p className="font-medium">{assessment.assessment_type}</p>
-                            <p className="text-sm text-gray-600">{assessment.description}</p>
-                            {assessment.required_equipment && (
-                              <p className="text-sm font-medium text-blue-600">Required: {assessment.required_equipment}</p>
-                            )}
-                          </div>
-                          {assessment.document_url && (
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={assessment.document_url} target="_blank" rel="noopener noreferrer">
-                                <FileText className="w-4 h-4 mr-1" />
-                                View Doc
-                              </a>
-                            </Button>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Add New Risk Assessment */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="assessment_type">Assessment Type</Label>
-                  <Select 
-                    value={riskAssessment.assessment_type} 
-                    onValueChange={(value) => setRiskAssessment({ ...riskAssessment, assessment_type: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mobility">Mobility</SelectItem>
-                      <SelectItem value="behavioral">Behavioral</SelectItem>
-                      <SelectItem value="medical">Medical</SelectItem>
-                      <SelectItem value="safety">Safety</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="risk_level">Risk Level</Label>
-                  <Select 
-                    value={riskAssessment.risk_level} 
-                    onValueChange={(value) => setRiskAssessment({ ...riskAssessment, risk_level: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="required_equipment">Required Equipment</Label>
-                  <Input
-                    id="required_equipment"
-                    value={riskAssessment.required_equipment}
-                    onChange={(e) => setRiskAssessment({ ...riskAssessment, required_equipment: e.target.value })}
-                    placeholder="e.g., car seat, harness, wheelchair access"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={riskAssessment.description}
-                    onChange={(e) => setRiskAssessment({ ...riskAssessment, description: e.target.value })}
-                    rows={3}
-                    placeholder="Describe the assessment details..."
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="risk_document">Assessment Document</Label>
-                  <Input
-                    id="risk_document"
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={(e) => setRiskAssessmentFile(e.target.files?.[0] || null)}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <Button 
-                    onClick={() => saveRiskAssessmentMutation.mutate()}
-                    disabled={!riskAssessment.description || !riskAssessment.assessment_type || saveRiskAssessmentMutation.isPending}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    {saveRiskAssessmentMutation.isPending ? 'Saving...' : 'Add Risk Assessment'}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddChildDialogOpen(false)}>
+                    Cancel
                   </Button>
-                </div>
-              </div>
+                  <Button 
+                    onClick={handleCreateChild}
+                    disabled={!childFormData.first_name || !childFormData.last_name || !childFormData.date_of_birth || createChildMutation.isPending}
+                  >
+                    {createChildMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Adding...
+                      </>
+                    ) : (
+                      'Add Child'
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {childrenLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          ) : children.length === 0 ? (
+            <div className="text-center py-8">
+              <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-muted-foreground">No children added yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Add your children to manage their transport information</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {children.map((child) => {
+                const age = calculateAge(child.date_of_birth);
+                return (
+                  <div 
+                    key={child.id} 
+                    className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
+                      selectedChild?.id === child.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                    }`}
+                    onClick={() => setSelectedChild(child)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h3 className="font-semibold">{child.first_name} {child.last_name}</h3>
+                          <Badge variant="outline">{age} years old</Badge>
+                          {child.grade && <Badge variant="secondary">{child.grade}</Badge>}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{child.school || 'School not set'}</p>
+                        {(child.medical_conditions && child.medical_conditions !== 'None') || 
+                         (child.allergies && child.allergies !== 'None') ? (
+                          <div className="flex items-center space-x-2 mt-2">
+                            <AlertTriangle className="w-4 h-4 text-orange-500" />
+                            <span className="text-sm text-orange-600">Medical alerts</span>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditChildDialog(child);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
+        </CardContent>
+      </Card>
 
+      {/* Risk Assessments */}
+      {selectedChild && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="w-5 h-5" />
+                <span>Risk Assessments - {selectedChild.first_name}</span>
+              </CardTitle>
+              <Dialog open={isAddRiskAssessmentDialogOpen} onOpenChange={setIsAddRiskAssessmentDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Assessment
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className={isMobile ? 'w-[95vw] max-w-none mx-2' : ''}>
+                  <DialogHeader>
+                    <DialogTitle>Add Risk Assessment</DialogTitle>
+                    <DialogDescription>
+                      Add a new risk assessment for {selectedChild.first_name}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="assessmentType">Assessment Type</Label>
+                      <Select value={riskAssessmentFormData.assessment_type} onValueChange={(value) => handleRiskAssessmentInputChange('assessment_type', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select assessment type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="medical">Medical</SelectItem>
+                          <SelectItem value="behavioral">Behavioral</SelectItem>
+                          <SelectItem value="physical">Physical</SelectItem>
+                          <SelectItem value="environmental">Environmental</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="riskLevel">Risk Level</Label>
+                      <Select value={riskAssessmentFormData.risk_level} onValueChange={(value) => handleRiskAssessmentInputChange('risk_level', value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="critical">Critical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={riskAssessmentFormData.description}
+                        onChange={(e) => handleRiskAssessmentInputChange('description', e.target.value)}
+                        placeholder="Describe the risk assessment"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="requiredEquipment">Required Equipment</Label>
+                      <Textarea
+                        id="requiredEquipment"
+                        value={riskAssessmentFormData.required_equipment}
+                        onChange={(e) => handleRiskAssessmentInputChange('required_equipment', e.target.value)}
+                        placeholder="Any required equipment or accommodations"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddRiskAssessmentDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleCreateRiskAssessment}
+                      disabled={!riskAssessmentFormData.assessment_type || !riskAssessmentFormData.description || createRiskAssessmentMutation.isPending}
+                    >
+                      {createRiskAssessmentMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Adding...
+                        </>
+                      ) : (
+                        'Add Assessment'
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {riskAssessmentsLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+            ) : riskAssessments.length === 0 ? (
+              <div className="text-center py-8">
+                <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-muted-foreground">No risk assessments yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Add risk assessments to ensure safe transport</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {riskAssessments.map((assessment) => (
+                  <div key={assessment.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          {getAssessmentTypeIcon(assessment.assessment_type)}
+                          <span className="font-medium capitalize">{assessment.assessment_type}</span>
+                          <Badge className={getRiskLevelColor(assessment.risk_level)}>
+                            {assessment.risk_level}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{assessment.description}</p>
+                        {assessment.required_equipment && (
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Required:</strong> {assessment.required_equipment}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Edit Child Dialog */}
+      <Dialog open={isEditChildDialogOpen} onOpenChange={setIsEditChildDialogOpen}>
+        <DialogContent className={isMobile ? 'w-[95vw] max-w-none mx-2' : ''}>
+          <DialogHeader>
+            <DialogTitle>Edit Child Information</DialogTitle>
+            <DialogDescription>
+              Update {editingChild?.first_name}'s information
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="editFirstName">First Name</Label>
+                <Input
+                  id="editFirstName"
+                  value={childFormData.first_name}
+                  onChange={(e) => handleChildInputChange('first_name', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="editLastName">Last Name</Label>
+                <Input
+                  id="editLastName"
+                  value={childFormData.last_name}
+                  onChange={(e) => handleChildInputChange('last_name', e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="editDateOfBirth">Date of Birth</Label>
+              <Input
+                id="editDateOfBirth"
+                type="date"
+                value={childFormData.date_of_birth}
+                onChange={(e) => handleChildInputChange('date_of_birth', e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="editGrade">Grade</Label>
+                <Input
+                  id="editGrade"
+                  value={childFormData.grade}
+                  onChange={(e) => handleChildInputChange('grade', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="editSchool">School</Label>
+                <Input
+                  id="editSchool"
+                  value={childFormData.school}
+                  onChange={(e) => handleChildInputChange('school', e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="editMedicalConditions">Medical Conditions</Label>
+              <Textarea
+                id="editMedicalConditions"
+                value={childFormData.medical_conditions}
+                onChange={(e) => handleChildInputChange('medical_conditions', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="editAllergies">Allergies</Label>
+              <Textarea
+                id="editAllergies"
+                value={childFormData.allergies}
+                onChange={(e) => handleChildInputChange('allergies', e.target.value)}
+              />
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Close
+            <Button variant="outline" onClick={() => setIsEditChildDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateChild}
+              disabled={!childFormData.first_name || !childFormData.last_name || updateChildMutation.isPending}
+            >
+              {updateChildMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Updating...
+                </>
+              ) : (
+                'Update Child'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Comprehensive Child Registration Dialog */}
-      <ComprehensiveChildRegistration
-        open={isComprehensiveRegistrationOpen}
-        onOpenChange={setIsComprehensiveRegistrationOpen}
-        onChildAdded={handleChildAdded}
-      />
-    </>
+    </div>
   );
 };
 

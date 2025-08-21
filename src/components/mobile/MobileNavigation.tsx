@@ -1,32 +1,31 @@
 import React from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminAccess } from '@/utils/adminAccess';
-import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  Truck,
-  Users,
-  FileText,
-  Calendar,
-  Settings,
-  User,
-  Home,
-  Bell,
-  Briefcase,
-  MapPin,
-  AlertTriangle,
   CheckCircle,
+  Briefcase,
+  AlertTriangle,
   MoreHorizontal,
+  Home,
+  Users,
+  MapPin,
+  Calendar,
+  Bell,
+  Truck,
+  FileText,
+  User,
+  Settings
 } from 'lucide-react';
 
 interface NavigationItem {
   id: string;
   label: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
   path: string;
-  roles?: string[];
   badge?: number;
 }
 
@@ -91,52 +90,42 @@ const MobileNavigation: React.FC = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/98 backdrop-blur-sm border-t border-gray-200 safe-area-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <div className="flex justify-around items-center py-3 px-4 max-w-md mx-auto">
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = isActiveRoute(item.path);
-          
-          return (
-            <button
-              key={item.id}
-              onClick={() => navigate(item.path)}
-              className={cn(
-                "flex flex-col items-center justify-center px-4 py-3 rounded-lg transition-all duration-200 min-w-[72px] relative",
-                "touch-manipulation active:scale-95",
-                isActive 
-                  ? "text-blue-600" 
-                  : "text-gray-500 hover:text-gray-700"
-              )}
-            >
-              <div className="relative">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 professional-nav-container safe-area-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="flex justify-center items-center py-4 px-4">
+        <div className="nav-container-white">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = isActiveRoute(item.path);
+            const isVehicleCheck = item.id === 'vehicle-check';
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.path)}
+                data-vehicle-check={isVehicleCheck}
+                title={`Go to ${item.label.toLowerCase()}`}
+                className={cn(
+                  "professional-nav-button inline-flex items-center mr-4 last-of-type:mr-0 p-2.5 text-sm",
+                  isActive && "active",
+                  isVehicleCheck && "vehicle-check-special"
+                )}
+              >
                 <Icon className={cn(
-                  "w-7 h-7 mb-2 transition-colors duration-200", 
-                  isActive ? "text-blue-600" : "text-gray-500"
+                  "w-5 h-5 transition-colors duration-200 nav-icon", 
+                  isVehicleCheck && "vehicle-check",
+                  isActive && "active"
                 )} />
                 
-                {/* Professional active indicator */}
-                {isActive && (
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-0.5 bg-blue-600 rounded-full" />
+                {/* Badge for notifications */}
+                {item.badge && item.badge > 0 && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-sm">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </div>
                 )}
-              </div>
-              
-              <span className={cn(
-                "text-sm font-medium leading-tight text-center",
-                isActive ? "text-blue-600" : "text-gray-500"
-              )}>
-                {item.label}
-              </span>
-              
-              {/* Professional badge design */}
-              {item.badge && item.badge > 0 && (
-                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-sm">
-                  {item.badge > 99 ? '99+' : item.badge}
-                </div>
-              )}
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

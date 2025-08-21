@@ -279,29 +279,68 @@ const AdminInventoryDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">New part added</p>
-                    <p className="text-xs text-gray-500">Brake Pad Set (Front) - 2 minutes ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Approval request submitted</p>
-                    <p className="text-xs text-gray-500">Quantity increase for Oil Filter - 15 minutes ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Low stock alert</p>
-                    <p className="text-xs text-gray-500">Battery 12V 100Ah - 1 hour ago</p>
-                  </div>
-                </div>
+                {(() => {
+                  // Check if there's any real activity data
+                  const hasRealActivity = inventoryStats?.totalParts > 0 || approvalStats?.pending > 0 || approvalStats?.approved > 0;
+                  
+                  if (!hasRealActivity) {
+                    return (
+                      <div className="text-center py-8 text-gray-500">
+                        <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                        <p className="text-sm">No recent activity</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Activity will appear here as you manage inventory
+                        </p>
+                      </div>
+                    );
+                  }
+                  
+                  // Show real activity based on actual data
+                  const activities = [];
+                  
+                  // Add activity for parts if they exist
+                  if (inventoryStats?.totalParts > 0) {
+                    activities.push({
+                      type: 'success',
+                      title: 'Inventory Available',
+                      description: `${inventoryStats.totalParts} parts in stock`,
+                      time: 'Current'
+                    });
+                  }
+                  
+                  // Add activity for pending approvals
+                  if (approvalStats?.pending > 0) {
+                    activities.push({
+                      type: 'warning',
+                      title: 'Pending Approvals',
+                      description: `${approvalStats.pending} requests awaiting review`,
+                      time: 'Current'
+                    });
+                  }
+                  
+                  // Add activity for approved requests
+                  if (approvalStats?.approved > 0) {
+                    activities.push({
+                      type: 'success',
+                      title: 'Approved Requests',
+                      description: `${approvalStats.approved} requests approved this month`,
+                      time: 'This month'
+                    });
+                  }
+                  
+                  return activities.map((activity, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                      <div className={`w-2 h-2 rounded-full ${
+                        activity.type === 'success' ? 'bg-green-500' : 
+                        activity.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.title}</p>
+                        <p className="text-xs text-gray-500">{activity.description} - {activity.time}</p>
+                      </div>
+                    </div>
+                  ));
+                })()}
               </div>
             </CardContent>
           </Card>

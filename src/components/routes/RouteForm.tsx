@@ -36,23 +36,23 @@ const RouteForm: React.FC<RouteFormProps> = ({ showForm, onCancel }) => {
 
   const createRouteMutation = useMutation({
     mutationFn: async (routeData: RouteFormData) => {
-      console.log('Mock: Creating route with data:', routeData);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockRoute = {
-        id: `route-${Date.now()}`,
-        name: routeData.name,
-        description: routeData.description,
-        start_location: routeData.start_location,
-        end_location: routeData.end_location,
-        estimated_duration: routeData.estimated_duration ? parseInt(routeData.estimated_duration) : null,
-        distance_km: routeData.distance_km ? parseFloat(routeData.distance_km) : null
-      };
-      
-      console.log('Mock route created:', mockRoute);
-      return mockRoute;
+      const { data, error } = await supabase
+        .from('routes')
+        .insert({
+          name: routeData.name,
+          description: routeData.description,
+          start_location: routeData.start_location,
+          end_location: routeData.end_location,
+          estimated_duration: routeData.estimated_duration ? parseInt(routeData.estimated_duration) : null,
+          distance_km: routeData.distance_km ? parseFloat(routeData.distance_km) : null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['routes'] });

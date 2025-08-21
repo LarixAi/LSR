@@ -344,3 +344,4 @@ BEGIN
     RAISE NOTICE 'Maintenance functions created for ongoing optimization';
     RAISE NOTICE 'Performance dashboard view created';
 END $$;
+

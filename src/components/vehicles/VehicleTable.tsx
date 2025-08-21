@@ -192,7 +192,11 @@ const VehicleTable = ({ vehicles, isLoading, searchTerm }: VehicleTableProps) =>
                 {filteredVehicles.map((vehicle) => {
                   const assignedDriver = getAssignedDriver(vehicle.id);
                   return (
-                    <TableRow key={vehicle.id}>
+                    <TableRow 
+                      key={vehicle.id}
+                      className="cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => navigate(`/vehicle-details/${vehicle.id}`)}
+                    >
                       <TableCell>
                         <div className="font-medium">{vehicle.vehicle_number}</div>
                       </TableCell>
@@ -231,14 +235,13 @@ const VehicleTable = ({ vehicles, isLoading, searchTerm }: VehicleTableProps) =>
                           <Button 
                             variant="outline" 
                             size="sm"
-                            style={{ pointerEvents: 'auto', cursor: 'pointer' }}
                             onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               console.log('=== DETAILS BUTTON CLICKED ===');
                               console.log('Vehicle ID:', vehicle.id);
                               console.log('License Plate:', vehicle.license_plate);
                               console.log('Navigating to:', `/vehicle-details/${vehicle.id}`);
-                              e.preventDefault();
-                              e.stopPropagation();
                               navigate(`/vehicle-details/${vehicle.id}`);
                             }}
                           >
@@ -248,14 +251,13 @@ const VehicleTable = ({ vehicles, isLoading, searchTerm }: VehicleTableProps) =>
                           <Button 
                             variant="outline" 
                             size="sm"
-                            style={{ pointerEvents: 'auto', cursor: 'pointer' }}
                             onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               console.log('=== SERVICE BUTTON CLICKED ===');
                               console.log('Vehicle ID:', vehicle.id);
                               console.log('License Plate:', vehicle.license_plate);
                               console.log('Navigating to:', `/vehicle-service/${vehicle.id}`);
-                              e.preventDefault();
-                              e.stopPropagation();
                               navigate(`/vehicle-service/${vehicle.id}`);
                             }}
                           >

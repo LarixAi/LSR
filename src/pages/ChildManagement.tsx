@@ -23,10 +23,27 @@ import {
   AlertCircle,
   CheckCircle,
   Navigation,
-  User
+  User,
+  Mail,
+  AlertTriangle,
+  XCircle,
+  Bus,
+  Home,
+  Activity
 } from 'lucide-react';
 import EmergencyContacts from '@/components/parent/EmergencyContacts';
 import ComprehensiveChildRegistration from '@/components/parent/ComprehensiveChildRegistration';
+import { 
+  useChildProfiles, 
+  useChildTransportStatus, 
+  useParentCommunications,
+  useStudentAttendance,
+  calculateAge,
+  type ChildProfile,
+  type ParentCommunication,
+  type StudentAttendance
+} from '@/hooks/useChildManagement';
+import { format } from 'date-fns';
 
 const ChildManagement = () => {
   const { user, profile, loading } = useAuth();
@@ -37,6 +54,19 @@ const ChildManagement = () => {
   const [showCallDialog, setShowCallDialog] = useState<string | null>(null);
   const [editingChild, setEditingChild] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedChild, setSelectedChild] = useState<ChildProfile | null>(null);
+
+  // Fetch real data from backend
+  const { data: children = [], isLoading: childrenLoading, error: childrenError } = useChildProfiles();
+  const { data: communications = [], isLoading: communicationsLoading } = useParentCommunications();
+  const { data: attendance = [], isLoading: attendanceLoading } = useStudentAttendance(
+    selectedChild?.id,
+    format(new Date().setDate(new Date().getDate() - 7), 'yyyy-MM-dd'), // Last 7 days
+    format(new Date(), 'yyyy-MM-dd')
+  );
+
+  // Get transport status for selected child
+  const { data: transportStatus } = useChildTransportStatus(selectedChild?.id);
 
   if (loading) {
     return (
@@ -58,51 +88,60 @@ const ChildManagement = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Enhanced mock data for demonstration
-  const children = [
-    {
-      id: '1',
-      firstName: 'Emma',
-      lastName: 'Smith',
-      age: 8,
-      grade: 'Year 3',
-      school: 'Elmwood Primary School',
-      emergencyContact: '+44 7123 456789',
-      medicalNotes: 'Mild asthma - inhaler required',
-      pickupTime: '15:30',
-      dropoffTime: '08:00',
-      route: 'Route 1',
-      currentStatus: 'at_school',
-      transportStatus: 'active',
-      avatar: '/api/placeholder/100/100',
-      driver: 'John Smith',
-      driverPhone: '+44 7123 456790',
-      transportOffice: '+44 7123 456791',
-      lastSeen: '15:25',
-      estimatedArrival: '15:35'
-    },
-    {
-      id: '2',
-      firstName: 'James',
-      lastName: 'Smith',
-      age: 6,
-      grade: 'Year 1',
-      school: 'Elmwood Primary School',
-      emergencyContact: '+44 7123 456789',
-      medicalNotes: 'No known allergies',
-      pickupTime: '15:30',
-      dropoffTime: '08:00',
-      route: 'Route 1',
-      currentStatus: 'on_transport',
-      transportStatus: 'active',
-      avatar: '/api/placeholder/100/100',
-      driver: 'Sarah Johnson',
-      driverPhone: '+44 7123 456792',
-      transportOffice: '+44 7123 456791',
-      lastSeen: '15:20',
-      estimatedArrival: '15:40'
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'at_school': return 'bg-blue-100 text-blue-800';
+      case 'on_transport': return 'bg-yellow-100 text-yellow-800';
+      case 'at_home': return 'bg-green-100 text-green-800';
+      case 'pickup_pending': return 'bg-orange-100 text-orange-800';
+      case 'dropoff_pending': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
-  ];
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'at_school': return <School className="w-4 h-4" />;
+      case 'on_transport': return <Bus className="w-4 h-4" />;
+      case 'at_home': return <Home className="w-4 h-4" />;
+      case 'pickup_pending': return <Clock className="w-4 h-4" />;
+      case 'dropoff_pending': return <Clock className="w-4 h-4" />;
+      default: return <Activity className="w-4 h-4" />;
+    }
+  };
+
+  const getAttendanceStatusColor = (status: string) => {
+    switch (status) {
+      case 'present': return 'bg-green-100 text-green-800';
+      case 'absent': return 'bg-red-100 text-red-800';
+      case 'late': return 'bg-yellow-100 text-yellow-800';
+      case 'excused': return 'bg-blue-100 text-blue-800';
+      case 'unexcused': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getMessageTypeColor = (type: string) => {
+    switch (type) {
+      case 'delay': return 'bg-orange-100 text-orange-800';
+      case 'incident': return 'bg-red-100 text-red-800';
+      case 'absence': return 'bg-yellow-100 text-yellow-800';
+      case 'emergency': return 'bg-red-100 text-red-800';
+      default: return 'bg-blue-100 text-blue-800';
+    }
+  };
+
+  if (childrenError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Error Loading Children</h2>
+          <p className="text-muted-foreground">Failed to load child information. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   const recentActivity = [
     {

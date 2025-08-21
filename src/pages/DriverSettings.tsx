@@ -26,10 +26,13 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileSettings from '@/components/mobile/MobileSettings';
 
 const DriverSettings: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const [settings, setSettings] = useState({
     // Profile Settings
@@ -73,6 +76,11 @@ const DriverSettings: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // Use mobile settings component on mobile devices
+  if (isMobile) {
+    return <MobileSettings />;
+  }
 
   if (authLoading) {
     return (

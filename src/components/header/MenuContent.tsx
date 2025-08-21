@@ -25,7 +25,7 @@ const MenuContent = ({ onItemClick }: MenuContentProps) => {
     { title: 'Document Management', url: '/documents', icon: FileText },
     { title: 'Drivers', url: '/drivers', icon: Users },
     { title: 'Vehicle Management', url: '/vehicles', icon: Car },
-    { title: 'Routes', url: '/routes', icon: Route },
+    { title: 'School Routes', url: '/routes', icon: Route },
     { title: 'Admin Schedule', url: '/admin-schedule', icon: Calendar },
     { title: 'Subscriptions', url: '/subscriptions', icon: UserCheck },
     { title: 'Incidents', url: '/incidents', icon: AlertCircle },
@@ -37,7 +37,7 @@ const MenuContent = ({ onItemClick }: MenuContentProps) => {
     { title: 'My Jobs', url: '/driver-jobs', icon: Briefcase },
     { title: 'Schedule', url: '/driver-schedule', icon: Clock },
     { title: 'Vehicle Checks', url: '/vehicles', icon: Car },
-    { title: 'My Routes', url: '/routes', icon: Route },
+    { title: 'My School Routes', url: '/routes', icon: Route },
   ];
 
   return (

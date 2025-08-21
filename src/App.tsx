@@ -11,6 +11,8 @@ import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PasswordChangeWrapper from "./components/auth/PasswordChangeWrapper";
 import { lazy, Suspense } from "react";
+import { isMobile } from "@/utils/mobileDetection";
+import MobileTest from "@/components/mobile/MobileTest";
 
 // Lazy load components for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -32,6 +34,8 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const SupportTicket = lazy(() => import("./pages/SupportTicket"));
+const HelpSupport = lazy(() => import("./pages/HelpSupport"));
+const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
 const StaffDirectory = lazy(() => import("./pages/StaffDirectory"));
 const ComplianceReportsPage = lazy(() => import("./pages/ComplianceReportsPage"));
 const VehicleInspections = lazy(() => import("./pages/VehicleInspections"));
@@ -60,6 +64,9 @@ const AdminSchedule = lazy(() => import("./pages/AdminSchedule"));
 const AdminInventoryDashboard = lazy(() => import("./pages/AdminInventoryDashboard"));
 const AdminMechanicRequests = lazy(() => import("./pages/AdminMechanicRequests"));
 const AdminTrainingManagement = lazy(() => import("./pages/AdminTrainingManagement"));
+const AdvancedNotificationSystem = lazy(() => import("./components/notifications/AdvancedNotificationSystem"));
+const MobileNotificationSystem = lazy(() => import("./components/notifications/MobileNotificationSystem"));
+const RailReplacement = lazy(() => import("./pages/RailReplacement"));
 
 // New pages - Driver specific
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
@@ -186,151 +193,6 @@ const App = () => {
                           </ProtectedRoute>
                         } />
                         <Route path="/work-orders" element={
-                          <ProtectedRoute allowedRoles={['mechanic', 'driver']}>
-                            <WorkOrders />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/defect-reports" element={
-                          <ProtectedRoute allowedRoles={['mechanic', 'admin', 'council', 'driver']}>
-                            <DefectReports />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/parts-supplies" element={
-                          <ProtectedRoute allowedRoles={['mechanic', 'driver']}>
-                            <PartsSupplies />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/admin" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <Dashboard />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/vehicles" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <VehicleManagement />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/vehicle-management" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <VehicleManagement />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/vehicle-settings" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <VehicleManagementSettings />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/jobs" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <JobManagement />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/ai-assistants" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <AIAssistants />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/time-management" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <TimeManagement />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/licenses" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <LicenseManagement />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/license-management" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <LicenseManagement />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/drivers" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <DriverManagement />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/driver-management" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <DriverManagement />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/documents" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <Documents />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/driver/documents" element={
-                          <ProtectedRoute allowedRoles={['driver', 'admin', 'council', 'mechanic']}>
-                            <Documents />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/driver-documents" element={
-                          <ProtectedRoute allowedRoles={['driver', 'admin', 'council', 'mechanic']}>
-                            <Documents />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/user-profile" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <UserProfile />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="/subscriptions" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <Subscriptions />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/incident-reports" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <IncidentReports />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/routes" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <RoutesPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/support-ticket" element={<SupportTicket />} />
-                        <Route path="/staff-directory" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <StaffDirectory />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/compliance" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <ComplianceReportsPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/vehicle-inspections" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <VehicleInspections />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/reports/compliance" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <ComplianceReportsPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/reports/fleet" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <Dashboard />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/customer-dashboard" element={<div>Customer Dashboard - Under Construction</div>} />
-                        <Route path="/driver-mobile" element={
-                          <ProtectedRoute allowedRoles={['driver', 'admin', 'council']}>
-                            <DriverMobile />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/tracking/:bookingId" element={<RealTimeTracking />} />
-                        <Route path="/analytics" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <AnalyticsPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/work-orders" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
                             <WorkOrders />
                           </ProtectedRoute>
@@ -353,21 +215,6 @@ const App = () => {
                         <Route path="/inventory" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
                             <PartsSupplies />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/notifications" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
-                            <NotificationCenterPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/vehicle-details/:vehicleId" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
-                            <VehicleDetails />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/vehicle-service/:vehicleId" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
-                            <VehicleServicePage />
                           </ProtectedRoute>
                         } />
                         <Route path="/fuel-management" element={
@@ -400,6 +247,11 @@ const App = () => {
                         <Route path="/admin/mechanic-requests" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <AdminMechanicRequests />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/rail-replacement" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <RailReplacement />
                           </ProtectedRoute>
                         } />
 
@@ -479,76 +331,243 @@ const App = () => {
                             <EmailManagement />
                           </ProtectedRoute>
                         } />
-                        <Route path="/admin/compliance-dashboard" element={
+                        <Route path="/compliance-dashboard" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <ComplianceDashboard />
                           </ProtectedRoute>
                         } />
-                        <Route path="/admin/tachograph-management" element={
+                        <Route path="/tachograph-manager" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <TachographManager />
                           </ProtectedRoute>
                         } />
-                        <Route path="/admin/api-management" element={
-                          <ProtectedRoute allowedRoles={['admin']}>
+                        <Route path="/api-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <APIManagement />
                           </ProtectedRoute>
                         } />
-                        <Route path="/admin/vehicle-check-templates" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <VehicleCheckTemplates />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/admin/inventory" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <AdminInventoryDashboard />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/admin/training-management" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <AdminTrainingManagement />
-                          </ProtectedRoute>
-                        } />
-
-                        {/* Trial Management Test Route - Hidden */}
-                        {/* <Route path="/trial-test" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
-                            <TrialTestPage />
-                          </ProtectedRoute>
-                        } /> */}
-
-                        {/* System Diagnostic Route */}
                         <Route path="/system-diagnostic" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <SystemDiagnostic />
                           </ProtectedRoute>
                         } />
-
-                        {/* Test Page Route */}
-                        <Route path="/test" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
+                        <Route path="/test-page" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <TestPage />
                           </ProtectedRoute>
                         } />
 
-                        {/* Fix route inconsistencies */}
-                        <Route path="/staff" element={<StaffDirectory />} />
-                        <Route path="/incidents" element={<IncidentReports />} />
+                        {/* Vehicle Management */}
+                        <Route path="/vehicles" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <VehicleManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/vehicle-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <VehicleManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/vehicle-management-settings" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <VehicleManagementSettings />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/vehicle-details/:id" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <VehicleDetails />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/vehicle-service" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <VehicleServicePage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/vehicle-inspections" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <VehicleInspections />
+                          </ProtectedRoute>
+                        } />
 
+                        {/* Job Management */}
+                        <Route path="/jobs" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <JobManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/job-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <JobManagement />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Time Management */}
+                        <Route path="/time-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <TimeManagement />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* License Management */}
+                        <Route path="/licenses" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <LicenseManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/license-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <LicenseManagement />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Driver Management */}
+                        <Route path="/drivers" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <DriverManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/driver-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <DriverManagement />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Documents */}
+                        <Route path="/documents" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
+                            <Documents />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Incident Reports */}
+                        <Route path="/incidents" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
+                            <IncidentReports />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/incident-reports" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
+                            <IncidentReports />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* User Profile */}
+                        <Route path="/profile" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
+                            <Profile />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/user-profile" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
+                            <UserProfile />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Settings */}
+                        <Route path="/settings" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
+                            <Settings />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Subscriptions */}
+                        <Route path="/subscriptions" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <Subscriptions />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Support */}
+                        <Route path="/support" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
+                            <SupportTicket />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/help" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
+                            <HelpSupport />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/help-support" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
+                            <HelpSupport />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Admin Support Tickets */}
+                        <Route path="/admin/support-tickets" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AdminSupportTickets />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Staff Directory */}
+                        <Route path="/staff-directory" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <StaffDirectory />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Compliance Reports */}
+                        <Route path="/compliance-reports" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <ComplianceReportsPage />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Customer Auth */}
+                        <Route path="/customer-dashboard" element={<div>Customer Dashboard - Under Construction</div>} />
+                        <Route path="/driver-mobile" element={
+                          <ProtectedRoute allowedRoles={['driver', 'admin', 'council']}>
+                            <DriverMobile />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/tracking/:bookingId" element={<RealTimeTracking />} />
+                        <Route path="/analytics" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AnalyticsPage />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Routes */}
+                        <Route path="/routes" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <RoutesPage />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* AI Assistants */}
+                        <Route path="/ai-assistants" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AIAssistants />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Notification Center */}
+                        <Route path="/notifications" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
+                            <NotificationCenterPage />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Unauthorized */}
                         <Route path="/unauthorized" element={<Unauthorized />} />
-                      </Routes>
-                    </AppLayout>
+
+                        {/* Catch all route */}
+                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                        </Routes>
+                      </AppLayout>
                     </OrganizationProvider>
                   } />
                 </Routes>
-              </Suspense>
-              </SecurityProvider>
-            </PasswordChangeWrapper>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
+                </Suspense>
+                </SecurityProvider>
+              </PasswordChangeWrapper>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

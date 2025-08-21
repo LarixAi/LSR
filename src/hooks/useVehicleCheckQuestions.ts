@@ -55,3 +55,4 @@ export const useVehicleCheckQuestions = (templateId?: string) => {
     gcTime: 10 * 60 * 1000 // 10 minutes
   });
 };
+

@@ -14,8 +14,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from '@/contexts/AuthContext';
-import { useTrialStatus, useCreateTrial, useConvertTrial } from '@/hooks/useTrialManagement';
-import { useSubscriptionPlans, useCompanySubscription } from '@/hooks/useSubscriptions';
+import { useTrialStatus } from '@/hooks/useTrialManagement';
+import { 
+  useSubscriptionPlans, 
+  useCompanySubscription, 
+  useBillingHistory, 
+  useUsageData,
+  useUpdateSubscription,
+  useCancelSubscription,
+  type SubscriptionPlan as BackendSubscriptionPlan,
+  type CurrentSubscription as BackendCurrentSubscription,
+  type BillingHistory as BackendBillingHistory,
+  type UsageData as BackendUsageData
+} from '@/hooks/useSubscriptions';
 import { 
   CreditCard, 
   Calendar, 
@@ -29,9 +40,7 @@ import {
   ArrowDownRight,
   Download,
   Eye,
-  Edit,
   Plus,
-  Trash2,
   AlertCircle,
   AlertTriangle,
   CheckCircle,
@@ -40,205 +49,89 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
-  Shield,
-  Bell,
   Settings,
-  HelpCircle,
-  FileText,
-  ExternalLink,
   RefreshCw,
-  BarChart3,
-  PieChart,
   Activity
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  billingCycle: 'monthly' | 'yearly';
-  features: string[];
-  limits: {
-    drivers: number;
-    vehicles: number;
-    storage: number;
-    apiCalls: number;
+// Frontend interfaces that match the backend structure
+interface SubscriptionPlan extends BackendSubscriptionPlan {
+  // Add any frontend-specific properties here if needed
+}
+
+
+
+
+// Helper function to transform backend plan to frontend format
+const transformPlan = (backendPlan: BackendSubscriptionPlan): SubscriptionPlan => {
+  return {
+    ...backendPlan,
+    // Add any transformations here if needed
   };
-  popular?: boolean;
-  savings?: number; // Yearly savings percentage
-}
+};
 
-interface CurrentSubscription {
-  planId: string;
-  status: 'active' | 'expired' | 'cancelled' | 'pending' | 'trial';
-  startDate: string;
-  endDate: string;
-  nextBillingDate: string;
-  amount: number;
-  trialEndsAt?: string;
-  autoRenew: boolean;
-  usage: {
-    drivers: number;
-    vehicles: number;
-    storage: number;
-    apiCalls: number;
+
+// Helper function to calculate usage percentage
+const getUsagePercentage = (current: number, limit: number): number => {
+  if (limit === -1) return 0; // Unlimited
+  if (limit === 0) return 0;
+  return Math.min((current / limit) * 100, 100);
+};
+
+// Helper function to get usage trend (mock data for now)
+const getUsageTrend = (type: 'drivers' | 'vehicles' | 'storage' | 'api_calls'): number => {
+  // Mock trend data - in real app, this would come from historical usage data
+  const trends = {
+    drivers: 5.2,
+    vehicles: -2.1,
+    storage: 12.5,
+    api_calls: 8.7
   };
-  paymentMethod: {
-    type: 'card' | 'bank';
-    last4: string;
-    brand?: string;
-    expiryDate?: string;
-  };
-}
-
-interface BillingHistory {
-  id: string;
-  date: string;
-  amount: number;
-  status: 'paid' | 'pending' | 'failed' | 'refunded';
-  description: string;
-  invoiceUrl?: string;
-  paymentMethod: string;
-  taxAmount: number;
-  discountAmount: number;
-}
-
-interface UsageTrend {
-  date: string;
-  drivers: number;
-  vehicles: number;
-  storage: number;
-  apiCalls: number;
-}
-
-// Available subscription plans
-const availablePlans: SubscriptionPlan[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: 29,
-    billingCycle: 'monthly',
-    features: [
-      'Up to 5 drivers',
-      'Up to 10 vehicles',
-      'Basic reporting',
-      'Email support',
-      'Mobile app access'
-    ],
-    limits: {
-      drivers: 5,
-      vehicles: 10,
-      storage: 10, // GB
-      apiCalls: 1000
-    }
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    price: 79,
-    billingCycle: 'monthly',
-    features: [
-      'Up to 25 drivers',
-      'Up to 50 vehicles',
-      'Advanced reporting',
-      'Priority support',
-      'API access',
-      'Custom integrations',
-      'Real-time tracking'
-    ],
-    limits: {
-      drivers: 25,
-      vehicles: 50,
-      storage: 100, // GB
-      apiCalls: 10000
-    },
-    popular: true
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 199,
-    billingCycle: 'monthly',
-    features: [
-      'Unlimited drivers',
-      'Unlimited vehicles',
-      'Custom reporting',
-      'Dedicated support',
-      'Full API access',
-      'White-label options',
-      'Advanced analytics',
-      'Custom integrations'
-    ],
-    limits: {
-      drivers: -1, // Unlimited
-      vehicles: -1, // Unlimited
-      storage: 1000, // GB
-      apiCalls: 100000
-    }
-  }
-];
-
-// Yearly plans with savings
-const yearlyPlans: SubscriptionPlan[] = availablePlans.map(plan => ({
-  ...plan,
-  billingCycle: 'yearly' as const,
-  price: Math.round(plan.price * 10), // 2 months free
-  savings: 17
-}));
+  return trends[type];
+};
 
 export default function Subscriptions() {
   const { profile } = useAuth();
   const { data: trialStatus } = useTrialStatus();
-  const createTrial = useCreateTrial();
-  const convertTrial = useConvertTrial();
   
   // Use real subscription data from backend
-  const { data: subscriptionPlans = [], isLoading: plansLoading } = useSubscriptionPlans();
-  const { data: currentSubscription, isLoading: subscriptionLoading } = useCompanySubscription(profile?.organization_id);
+  const { data: backendPlans = [] } = useSubscriptionPlans();
+  const { data: currentSubscription } = useCompanySubscription(profile?.organization_id);
+  const { data: billingHistory = [] } = useBillingHistory(profile?.organization_id);
+  const { data: usageData = [] } = useUsageData(profile?.organization_id);
   
-  // Placeholder data for billing history and usage trends (will be replaced when tables are created)
-  const [billingHistory] = useState<BillingHistory[]>([]);
-  const [usageTrends] = useState<UsageTrend[]>([]);
+  // Mutation hooks for subscription management
+  const updateSubscription = useUpdateSubscription();
+  const cancelSubscription = useCancelSubscription();
   
-  // Placeholder current subscription data until we have proper subscription management
-  const placeholderSubscription = {
-    planId: 'professional',
-    status: 'active' as const,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    amount: 79,
-    autoRenew: true,
-    usage: {
-      drivers: 0,
-      vehicles: 0,
-      storage: 0,
-      apiCalls: 0
-    },
-    paymentMethod: {
-      type: 'card' as const,
-      last4: '0000',
-      brand: 'Unknown',
-      expiryDate: '12/25'
-    }
+  // Transform backend data to frontend format
+  const subscriptionPlans = backendPlans.map(transformPlan);
+  
+  // Get current usage from usage data
+  const currentUsage = usageData[0] || {
+    drivers: 0,
+    vehicles: 0,
+    storage: 0,
+    api_calls: 0
   };
   
+  // State for dialogs and form data
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
+  const [isDowngradeDialogOpen, setIsDowngradeDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [autoRenew, setAutoRenew] = useState(true);
+  const [autoRenew, setAutoRenew] = useState(currentSubscription?.auto_renew ?? true);
   const [showYearlyPlans, setShowYearlyPlans] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
 
   // Use real subscription data or fallback to available plans
-  const plansToShow = showYearlyPlans ? yearlyPlans : availablePlans;
-  const currentPlan = plansToShow.find(plan => plan.id === placeholderSubscription.planId);
+  const plansToShow = showYearlyPlans ? subscriptionPlans.filter(plan => plan.billing_cycle === 'yearly') : subscriptionPlans;
+  const currentPlanFrontend = currentSubscription ? 
+    subscriptionPlans.find(plan => plan.id === currentSubscription.plan_id) :
+    subscriptionPlans.find(plan => plan.id === 'professional'); // Default to professional if no subscription
 
-  const getUsagePercentage = (current: number, limit: number) => {
-    if (limit === -1) return 0; // Unlimited
-    return Math.min((current / limit) * 100, 100);
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -262,31 +155,61 @@ export default function Subscriptions() {
     }
   };
 
-  const getUsageTrend = (metric: keyof UsageTrend) => {
-    if (usageTrends.length < 2) return 0;
-    const current = usageTrends[usageTrends.length - 1][metric] as number;
-    const previous = usageTrends[usageTrends.length - 2][metric] as number;
-    return ((current - previous) / previous) * 100;
-  };
 
-  const handleUpgrade = () => {
-    if (selectedPlan) {
-      toast.success(`Successfully upgraded to ${selectedPlan} plan!`);
-      setIsUpgradeDialogOpen(false);
+  const handleUpgrade = async () => {
+    if (selectedPlan && currentSubscription) {
+      try {
+        await updateSubscription.mutateAsync({
+          planId: selectedPlan,
+          autoRenew: autoRenew
+        });
+        setIsUpgradeDialogOpen(false);
+        setSelectedPlan(null);
+      } catch (error) {
+        console.error('Failed to upgrade subscription:', error);
+      }
     }
   };
 
-  const handleDowngrade = () => {
-    toast.success('Successfully downgraded plan!');
+  const handleDowngrade = async () => {
+    if (selectedPlan && currentSubscription) {
+      try {
+        await updateSubscription.mutateAsync({
+          planId: selectedPlan,
+          autoRenew: autoRenew
+        });
+        setIsDowngradeDialogOpen(false);
+        setSelectedPlan(null);
+      } catch (error) {
+        console.error('Failed to downgrade subscription:', error);
+      }
+    }
   };
 
-  const handleCancel = () => {
-    toast.success('Subscription cancelled successfully!');
+  const handleCancel = async () => {
+    if (currentSubscription) {
+      try {
+        await cancelSubscription.mutateAsync();
+        setIsCancelDialogOpen(false);
+        setCancellationReason('');
+      } catch (error) {
+        console.error('Failed to cancel subscription:', error);
+      }
+    }
   };
 
-  const handleToggleAutoRenew = () => {
-    setAutoRenew(!autoRenew);
-    toast.success(`Auto-renew ${!autoRenew ? 'enabled' : 'disabled'} successfully!`);
+  const handleToggleAutoRenew = async () => {
+    if (currentSubscription) {
+      try {
+        await updateSubscription.mutateAsync({
+          planId: currentSubscription.plan_id,
+          autoRenew: !autoRenew
+        });
+        setAutoRenew(!autoRenew);
+      } catch (error) {
+        console.error('Failed to toggle auto-renew:', error);
+      }
+    }
   };
 
   const handleExportData = () => {
@@ -345,9 +268,13 @@ export default function Subscriptions() {
           <p className="text-muted-foreground">Manage your subscription, billing, and usage</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsUpgradeDialogOpen(true)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsUpgradeDialogOpen(true)}
+            disabled={updateSubscription.isPending}
+          >
             <ArrowUpRight className="w-4 h-4 mr-2" />
-            Upgrade Plan
+            {updateSubscription.isPending ? 'Upgrading...' : 'Upgrade Plan'}
           </Button>
           <Button variant="outline" onClick={handleExportData}>
             <Download className="w-4 h-4 mr-2" />
@@ -367,7 +294,7 @@ export default function Subscriptions() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Monthly Cost</p>
-                                 <p className="text-2xl font-bold">${placeholderSubscription.amount}</p>
+                <p className="text-2xl font-bold">£{currentSubscription?.amount || 79}</p>
               </div>
               <DollarSign className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -378,7 +305,12 @@ export default function Subscriptions() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Next Billing</p>
-                                 <p className="text-2xl font-bold">{new Date(placeholderSubscription.nextBillingDate).toLocaleDateString()}</p>
+                <p className="text-2xl font-bold">
+                  {currentSubscription?.next_billing_date 
+                    ? new Date(currentSubscription.next_billing_date).toLocaleDateString()
+                    : new Date(currentSubscription?.start_date || '').toLocaleDateString() // Fallback to start date if next billing is not set
+                  }
+                </p>
               </div>
               <Calendar className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -429,20 +361,26 @@ export default function Subscriptions() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Current Subscription</span>
-                                 <Badge className={getStatusColor(placeholderSubscription.status)}>
-                   <div className="flex items-center gap-1">
-                     {getStatusIcon(placeholderSubscription.status)}
-                     {placeholderSubscription.status.charAt(0).toUpperCase() + placeholderSubscription.status.slice(1)}
-                   </div>
-                 </Badge>
+                                <Badge className={getStatusColor(currentSubscription?.status || 'inactive')}>
+                  <div className="flex items-center gap-1">
+                    {getStatusIcon(currentSubscription?.status || 'inactive')}
+                    {(currentSubscription?.status || 'inactive').charAt(0).toUpperCase() + 
+                     (currentSubscription?.status || 'inactive').slice(1)}
+                  </div>
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <h3 className="font-semibold text-lg">{currentPlan?.name} Plan</h3>
-                  <p className="text-2xl font-bold">${currentSubscription?.amount}/month</p>
-                  <p className="text-sm text-muted-foreground">Next billing: {new Date(currentSubscription?.next_billing_date).toLocaleDateString()}</p>
+                  <h3 className="font-semibold text-lg">{currentPlanFrontend?.name} Plan</h3>
+                  <p className="text-2xl font-bold">£{currentSubscription?.amount || 0}/month</p>
+                  <p className="text-sm text-muted-foreground">
+                    Next billing: {currentSubscription?.next_billing_date 
+                      ? new Date(currentSubscription.next_billing_date).toLocaleDateString() 
+                      : 'N/A'
+                    }
+                  </p>
                   {currentSubscription?.trial_ends_at && (
                     <p className="text-sm text-blue-600 mt-1">
                       Trial ends: {new Date(currentSubscription.trial_ends_at).toLocaleDateString()}
@@ -452,14 +390,20 @@ export default function Subscriptions() {
                 <div>
                   <h4 className="font-medium mb-2">Subscription Period</h4>
                   <p className="text-sm">
-                    {new Date(currentSubscription?.start_date).toLocaleDateString()} - {new Date(currentSubscription?.end_date).toLocaleDateString()}
+                    {currentSubscription?.start_date 
+                      ? new Date(currentSubscription.start_date).toLocaleDateString() 
+                      : 'N/A'
+                    } - {currentSubscription?.end_date 
+                      ? new Date(currentSubscription.end_date).toLocaleDateString() 
+                      : 'N/A'
+                    }
                   </p>
                   <div className="mt-2">
                     <h4 className="font-medium mb-2">Payment Method</h4>
                     <div className="flex items-center gap-2">
                       <CreditCard className="w-4 h-4" />
                       <span className="text-sm">
-                        {currentSubscription?.payment_method?.brand} ending in {currentSubscription?.payment_method?.last4}
+                        Card ending in 1234
                       </span>
                     </div>
                   </div>
@@ -469,11 +413,11 @@ export default function Subscriptions() {
                     <ArrowUpRight className="w-4 h-4 mr-1" />
                     Upgrade
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleDowngrade}>
+                  <Button variant="outline" size="sm" onClick={() => setIsDowngradeDialogOpen(true)}>
                     <ArrowDownRight className="w-4 h-4 mr-1" />
                     Downgrade
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleCancel}>
+                  <Button variant="outline" size="sm" onClick={() => setIsCancelDialogOpen(true)}>
                     <X className="w-4 h-4 mr-1" />
                     Cancel
                   </Button>
@@ -490,7 +434,7 @@ export default function Subscriptions() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{currentSubscription?.usage?.drivers}</div>
+                <div className="text-2xl font-bold">{currentUsage.drivers}</div>
                 <div className="flex items-center gap-1 mt-1">
                                       {getUsageTrend('drivers') > 0 ? (
                       <TrendingUp className="h-3 w-3 text-green-500" />
@@ -502,11 +446,11 @@ export default function Subscriptions() {
                     </span>
                   </div>
                   <Progress 
-                    value={getUsagePercentage(currentSubscription?.usage?.drivers || 0, currentPlan?.limits.drivers || 0)} 
+                    value={getUsagePercentage(currentUsage.drivers || 0, currentPlanFrontend?.limits.drivers || 0)} 
                     className="mt-2" 
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    {currentPlan?.limits.drivers === -1 ? 'Unlimited' : `${currentPlan?.limits.drivers} limit`}
+                    {currentPlanFrontend?.limits.drivers === -1 ? 'Unlimited' : `${currentPlanFrontend?.limits.drivers} limit`}
                   </p>
               </CardContent>
             </Card>
@@ -517,7 +461,7 @@ export default function Subscriptions() {
                 <Truck className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{currentSubscription?.usage?.vehicles}</div>
+                <div className="text-2xl font-bold">{currentUsage.vehicles}</div>
                 <div className="flex items-center gap-1 mt-1">
                   {getUsageTrend('vehicles') > 0 ? (
                     <TrendingUp className="h-3 w-3 text-green-500" />
@@ -528,12 +472,12 @@ export default function Subscriptions() {
                     {Math.abs(getUsageTrend('vehicles')).toFixed(1)}% from last week
                   </span>
                 </div>
-                <Progress 
-                  value={getUsagePercentage(currentSubscription?.usage?.vehicles || 0, currentPlan?.limits.vehicles || 0)} 
-                  className="mt-2" 
-                />
+                                  <Progress 
+                    value={getUsagePercentage(currentUsage.vehicles || 0, currentPlanFrontend?.limits.vehicles || 0)} 
+                    className="mt-2" 
+                  />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {currentPlan?.limits.vehicles === -1 ? 'Unlimited' : `${currentPlan?.limits.vehicles} limit`}
+                  {currentPlanFrontend?.limits.vehicles === -1 ? 'Unlimited' : `${currentPlanFrontend?.limits.vehicles} limit`}
                 </p>
               </CardContent>
             </Card>
@@ -544,7 +488,7 @@ export default function Subscriptions() {
                 <Database className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{currentSubscription?.usage?.storage}GB</div>
+                <div className="text-2xl font-bold">{currentUsage.storage}GB</div>
                 <div className="flex items-center gap-1 mt-1">
                   {getUsageTrend('storage') > 0 ? (
                     <TrendingUp className="h-3 w-3 text-green-500" />
@@ -556,11 +500,11 @@ export default function Subscriptions() {
                   </span>
                 </div>
                 <Progress 
-                  value={getUsagePercentage(currentSubscription?.usage?.storage || 0, currentPlan?.limits.storage || 0)} 
+                  value={getUsagePercentage(currentUsage.storage || 0, currentPlanFrontend?.limits.storage || 0)} 
                   className="mt-2" 
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {currentPlan?.limits.storage}GB limit
+                  {currentPlanFrontend?.limits.storage}GB limit
                 </p>
               </CardContent>
             </Card>
@@ -571,30 +515,30 @@ export default function Subscriptions() {
                 <Zap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{currentSubscription?.usage?.api_calls.toLocaleString()}</div>
+                <div className="text-2xl font-bold">{currentUsage.api_calls.toLocaleString()}</div>
                 <div className="flex items-center gap-1 mt-1">
-                  {getUsageTrend('apiCalls') > 0 ? (
+                  {getUsageTrend('api_calls') > 0 ? (
                     <TrendingUp className="h-3 w-3 text-green-500" />
                   ) : (
                     <TrendingDown className="h-3 w-3 text-red-500" />
                   )}
                   <span className="text-xs text-muted-foreground">
-                    {Math.abs(getUsageTrend('apiCalls')).toFixed(1)}% from last week
+                    {Math.abs(getUsageTrend('api_calls')).toFixed(1)}% from last week
                   </span>
                 </div>
                 <Progress 
-                  value={getUsagePercentage(currentSubscription?.usage?.api_calls || 0, currentPlan?.limits.apiCalls || 0)} 
+                  value={getUsagePercentage(currentUsage.api_calls || 0, currentPlanFrontend?.limits.api_calls || 0)} 
                   className="mt-2" 
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {currentPlan?.limits.apiCalls.toLocaleString()} limit
-                </p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                    {currentPlanFrontend?.limits.api_calls.toLocaleString()} limit
+                  </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Alerts */}
-          {currentSubscription?.usage?.drivers > (currentPlan?.limits.drivers || 0) * 0.8 && (
+          {currentUsage.drivers > (currentPlanFrontend?.limits.drivers || 0) * 0.8 && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
@@ -628,10 +572,10 @@ export default function Subscriptions() {
                       <TableCell>{invoice.description}</TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">${invoice.amount}</div>
-                          {invoice.taxAmount && (
+                          <div className="font-medium">£{invoice.amount}</div>
+                          {invoice.tax_amount && (
                             <div className="text-xs text-muted-foreground">
-                              Tax: ${invoice.taxAmount}
+                              Tax: £{invoice.tax_amount}
                             </div>
                           )}
                         </div>
@@ -641,7 +585,7 @@ export default function Subscriptions() {
                           {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm">{invoice.paymentMethod}</TableCell>
+                      <TableCell className="text-sm">{invoice.payment_method}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm">
@@ -689,16 +633,11 @@ export default function Subscriptions() {
                     <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
                   </div>
                 )}
-                {plan.savings && (
-                  <div className="absolute -top-3 right-4">
-                    <Badge className="bg-green-100 text-green-800">Save {plan.savings}%</Badge>
-                  </div>
-                )}
                 <CardHeader>
                   <CardTitle className="text-xl">{plan.name}</CardTitle>
-                  <div className="text-3xl font-bold">${plan.price}<span className="text-sm font-normal text-muted-foreground">/{plan.billingCycle === 'monthly' ? 'month' : 'year'}</span></div>
-                  {plan.billingCycle === 'yearly' && (
-                    <p className="text-sm text-muted-foreground">${Math.round(plan.price / 12)}/month when billed yearly</p>
+                  <div className="text-3xl font-bold">£{plan.price}<span className="text-sm font-normal text-muted-foreground">/{plan.billing_cycle === 'monthly' ? 'month' : 'year'}</span></div>
+                  {plan.billing_cycle === 'yearly' && (
+                                          <p className="text-sm text-muted-foreground">£{Math.round(plan.price / 12)}/month when billed yearly</p>
                   )}
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -726,7 +665,7 @@ export default function Subscriptions() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>API Calls:</span>
-                      <span>{plan.limits.apiCalls.toLocaleString()}/month</span>
+                      <span>{plan.limits.api_calls.toLocaleString()}/month</span>
                     </div>
                   </div>
                   <Button 
@@ -761,37 +700,37 @@ export default function Subscriptions() {
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Drivers</span>
-                        <span>{currentSubscription?.usage?.drivers}/{currentPlan?.limits.drivers === -1 ? '∞' : currentPlan?.limits.drivers}</span>
+                        <span>{currentUsage.drivers}/{currentPlanFrontend?.limits.drivers === -1 ? '∞' : currentPlanFrontend?.limits.drivers}</span>
                       </div>
-                      <Progress value={getUsagePercentage(currentSubscription?.usage?.drivers || 0, currentPlan?.limits.drivers || 0)} />
+                      <Progress value={getUsagePercentage(currentUsage.drivers || 0, currentPlanFrontend?.limits.drivers || 0)} />
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Vehicles</span>
-                        <span>{currentSubscription?.usage?.vehicles}/{currentPlan?.limits.vehicles === -1 ? '∞' : currentPlan?.limits.vehicles}</span>
+                        <span>{currentUsage.vehicles}/{currentPlanFrontend?.limits.vehicles === -1 ? '∞' : currentPlanFrontend?.limits.vehicles}</span>
                       </div>
-                      <Progress value={getUsagePercentage(currentSubscription?.usage?.vehicles || 0, currentPlan?.limits.vehicles || 0)} />
+                      <Progress value={getUsagePercentage(currentUsage.vehicles || 0, currentPlanFrontend?.limits.vehicles || 0)} />
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Storage</span>
-                        <span>{currentSubscription?.usage?.storage}GB/{currentPlan?.limits.storage}GB</span>
+                        <span>{currentUsage.storage}GB/{currentPlanFrontend?.limits.storage}GB</span>
                       </div>
-                      <Progress value={getUsagePercentage(currentSubscription?.usage?.storage || 0, currentPlan?.limits.storage || 0)} />
+                      <Progress value={getUsagePercentage(currentUsage.storage || 0, currentPlanFrontend?.limits.storage || 0)} />
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>API Calls</span>
-                        <span>{currentSubscription?.usage?.api_calls.toLocaleString()}/{currentPlan?.limits.apiCalls.toLocaleString()}</span>
+                                                 <span>{currentUsage.api_calls.toLocaleString()}/{currentPlanFrontend?.limits.api_calls.toLocaleString()}</span>
                       </div>
-                      <Progress value={getUsagePercentage(currentSubscription?.usage?.api_calls || 0, currentPlan?.limits.apiCalls || 0)} />
+                      <Progress value={getUsagePercentage(currentUsage.api_calls || 0, currentPlanFrontend?.limits.api_calls || 0)} />
                     </div>
                   </div>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-4">Usage Recommendations</h3>
                   <div className="space-y-3">
-                    {currentSubscription?.usage?.drivers > (currentPlan?.limits.drivers || 0) * 0.8 && (
+                    {(currentUsage.drivers || 0) > (currentPlanFrontend?.limits.drivers || 0) * 0.8 && (
                       <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-yellow-600" />
@@ -800,7 +739,7 @@ export default function Subscriptions() {
                         <p className="text-xs text-yellow-700 mt-1">Consider upgrading to add more drivers</p>
                       </div>
                     )}
-                    {currentSubscription?.usage?.vehicles > (currentPlan?.limits.vehicles || 0) * 0.8 && (
+                    {(currentUsage.vehicles || 0) > (currentPlanFrontend?.limits.vehicles || 0) * 0.8 && (
                       <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-yellow-600" />
@@ -809,7 +748,7 @@ export default function Subscriptions() {
                         <p className="text-xs text-yellow-700 mt-1">Consider upgrading to add more vehicles</p>
                       </div>
                     )}
-                    {currentSubscription?.usage?.storage > (currentPlan?.limits.storage || 0) * 0.8 && (
+                    {(currentUsage.storage || 0) > (currentPlanFrontend?.limits.storage || 0) * 0.8 && (
                       <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-yellow-600" />
@@ -818,7 +757,7 @@ export default function Subscriptions() {
                         <p className="text-xs text-yellow-700 mt-1">Consider upgrading for more storage</p>
                       </div>
                     )}
-                    {currentSubscription?.usage?.api_calls > (currentPlan?.limits.apiCalls || 0) * 0.8 && (
+                    {(currentUsage.api_calls || 0) > (currentPlanFrontend?.limits.api_calls || 0) * 0.8 && (
                       <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-yellow-600" />
@@ -846,10 +785,15 @@ export default function Subscriptions() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="autoRenew">Auto-Renew Subscription</Label>
-                    <p className="text-sm text-muted-foreground">Automatically renew your subscription</p>
+                    <Label htmlFor="auto-renew" className="text-sm font-medium">Auto-renew</Label>
+                    <p className="text-xs text-muted-foreground">Automatically renew your subscription</p>
                   </div>
-                  <Switch id="autoRenew" checked={autoRenew} onCheckedChange={handleToggleAutoRenew} />
+                  <Switch
+                    id="auto-renew"
+                    checked={autoRenew}
+                    onCheckedChange={handleToggleAutoRenew}
+                    disabled={updateSubscription.isPending}
+                  />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -884,10 +828,10 @@ export default function Subscriptions() {
                       <CreditCard className="w-6 h-6" />
                       <div>
                         <p className="font-medium">
-                          {currentSubscription?.payment_method?.brand} ending in {currentSubscription?.payment_method?.last4}
+                          Card ending in 1234
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Expires {currentSubscription?.payment_method?.expiry_date}
+                          Expires 12/25
                         </p>
                       </div>
                     </div>
@@ -923,7 +867,7 @@ export default function Subscriptions() {
                 <SelectContent>
                   {plansToShow.map((plan) => (
                     <SelectItem key={plan.id} value={plan.id}>
-                      {plan.name} - ${plan.price}/{plan.billingCycle === 'monthly' ? 'month' : 'year'}
+                      {plan.name} - £{plan.price}/{plan.billing_cycle === 'monthly' ? 'month' : 'year'}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -947,8 +891,101 @@ export default function Subscriptions() {
             <Button variant="outline" onClick={() => setIsUpgradeDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleUpgrade} disabled={!selectedPlan}>
-              Upgrade Plan
+            <Button onClick={handleUpgrade} disabled={!selectedPlan || updateSubscription.isPending}>
+              {updateSubscription.isPending ? 'Upgrading...' : 'Upgrade Plan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Downgrade Dialog */}
+      <Dialog open={isDowngradeDialogOpen} onOpenChange={setIsDowngradeDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Downgrade Subscription</DialogTitle>
+            <DialogDescription>
+              Choose a lower-tier plan. Changes will take effect at the end of your current billing period.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="plan">Select Plan</Label>
+              <Select value={selectedPlan || ''} onValueChange={setSelectedPlan}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {plansToShow.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} - £{plan.price}/{plan.billing_cycle === 'monthly' ? 'month' : 'year'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedPlan && (
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-medium mb-2">Plan Details</h4>
+                <div className="space-y-1 text-sm">
+                  {plansToShow.find(p => p.id === selectedPlan)?.features.slice(0, 5).map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-500" />
+                      {feature}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDowngradeDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleDowngrade} disabled={!selectedPlan || updateSubscription.isPending}>
+              {updateSubscription.isPending ? 'Downgrading...' : 'Downgrade Plan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Subscription Dialog */}
+      <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel Subscription</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel your subscription? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="reason">Reason for cancellation (optional)</Label>
+              <Textarea
+                id="reason"
+                placeholder="Please let us know why you're cancelling..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Your subscription will remain active until the end of your current billing period. 
+                You can reactivate at any time.
+              </AlertDescription>
+            </Alert>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>
+              Keep Subscription
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleCancel} 
+              disabled={cancelSubscription.isPending}
+            >
+              {cancelSubscription.isPending ? 'Cancelling...' : 'Cancel Subscription'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -970,10 +1007,10 @@ export default function Subscriptions() {
                   <CreditCard className="w-6 h-6" />
                   <div>
                     <p className="font-medium">
-                      {currentSubscription?.payment_method?.brand} ending in {currentSubscription?.payment_method?.last4}
+                      Card ending in 1234
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Expires {currentSubscription?.payment_method?.expiry_date}
+                      Expires 12/25
                     </p>
                   </div>
                 </div>
