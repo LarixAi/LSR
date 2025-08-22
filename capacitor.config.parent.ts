@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lsr.parent',
-  appName: 'LSRMobileApp',
+  appName: 'LSR Parent App',
   webDir: 'dist-parent',
   server: {
     androidScheme: 'https'
@@ -17,7 +17,7 @@ const config: CapacitorConfig = {
     }
   },
   ios: {
-    scheme: 'TransEntrix Parent'
+    scheme: 'LSR Parent'
   },
   android: {
     allowMixedContent: true

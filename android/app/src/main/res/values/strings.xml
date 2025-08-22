@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">TMS App</string>
-    <string name="title_activity_main">TMS App</string>
-    <string name="package_name">com.tms.app</string>
-    <string name="custom_url_scheme">com.tms.app</string>
+    <string name="app_name">LSR Mobile App</string>
+    <string name="title_activity_main">LSR Mobile App</string>
+    <string name="package_name">app.lsr.driver</string>
+    <string name="custom_url_scheme">app.lsr.driver</string>
 </resources>

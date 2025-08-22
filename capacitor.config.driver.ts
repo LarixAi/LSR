@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lsr.driver',
-  appName: 'LSRMobileApp',
+  appName: 'LSR Driver App',
   webDir: 'dist-driver',
   server: {
     androidScheme: 'https'
@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
     }
   },
   ios: {
-    scheme: 'App'
+    scheme: 'LSR Driver'
   },
   android: {
     allowMixedContent: true
