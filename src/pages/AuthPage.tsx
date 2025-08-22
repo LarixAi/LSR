@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import { isMobile } from '@/utils/mobileDetection';
 import MobileAuth from '@/components/mobile/MobileAuth';
+import AnimatedSignInButton from '@/components/mobile/AnimatedSignInButton';
 
 type UserRole = 'driver' | 'mechanic' | 'parent' | 'council' | 'admin';
 
@@ -253,13 +254,13 @@ const AuthPage = () => {
                     </button>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 text-base font-medium bg-blue-600 hover:bg-blue-700" 
-                    disabled={loading}
-                  >
-                    {loading ? "Signing in..." : "Log in"}
-                  </Button>
+                  <div className="flex justify-center">
+                    <AnimatedSignInButton
+                      onClick={handleSignIn}
+                      text="Log in"
+                      isLoading={loading}
+                    />
+                  </div>
                 </form>
 
                 <div className="relative">

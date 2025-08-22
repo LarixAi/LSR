@@ -5,30 +5,25 @@ const config: CapacitorConfig = {
   appName: 'LSRMobileApp',
   webDir: 'dist-driver',
   server: {
-    androidScheme: 'https',
-    cleartext: false,
-    allowNavigation: [
-      'https://dznbihypzmvcmradijqn.supabase.co',
-      'https://*.supabase.co',
-      'https://dznbihypzmvcmradijqn.supabase.co/*',
-      'https://supabase.co/*'
-    ]
+    androidScheme: 'https'
   },
+  bundledWebRuntime: false,
   plugins: {
     Camera: {
       permissions: ['camera', 'photos']
     },
     Geolocation: {
       permissions: ['location']
+    },
+    BluetoothLe: {
+      permissions: ['bluetooth', 'bluetoothAdmin', 'accessCoarseLocation']
     }
   },
   ios: {
-    scheme: 'App',
-    contentInset: 'automatic'
+    scheme: 'App'
   },
   android: {
-    allowMixedContent: true,
-    webContentsDebuggingEnabled: true
+    allowMixedContent: true
   }
 };
 

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { isMobile, isBiometricAvailable } from '@/utils/mobileDetection';
+import AnimatedSignInButton from './AnimatedSignInButton';
 import { 
   User, 
   Mail, 
@@ -229,20 +230,11 @@ const MobileAuth: React.FC = () => {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full h-12 text-base font-medium touch-target mobile-button-improved mobile-touch-improved"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </Button>
+            <AnimatedSignInButton
+              isLoading={isLoading}
+              onClick={handleSignIn}
+              text="Sign In"
+            />
           </form>
 
           {/* Support Link */}
