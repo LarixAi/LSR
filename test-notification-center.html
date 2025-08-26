@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Center Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .demo-section {
+            margin-bottom: 40px;
+        }
+
+        .demo-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .demo-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .notification-card {
+            width: 400px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .notification-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .header-btn:hover {
+            background: #f1f3f4;
+            color: #333;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab.active {
+            background: #e9ecef;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .tab-badge {
+            background: #dee2e6;
+            color: #666;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .notification-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            gap: 12px;
+            transition: background-color 0.2s ease;
+        }
+
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #666;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .status-online { background: #10b981; }
+        .status-away { background: #f59e0b; }
+        .status-offline { background: #9ca3af; }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .notification-text strong {
+            font-weight: 600;
+        }
+
+        .comment-bubble {
+            background: #f1f3f4;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-text {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .file-attachment {
+            background: #f1f3f4;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-icon {
+            width: 32px;
+            height: 32px;
+            background: #3b82f6;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .file-size {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .download-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .download-btn:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #f9fafb;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .notification-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            margin-left: 12px;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .time-ago {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .unread-dot {
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .test-btn {
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .test-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .features-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .features-list h3 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .features-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features-list li {
+            padding: 4px 0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .features-list li::before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="header">
+            <h1>🔔 Modern Notification Center</h1>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="toggleNotificationCenter()">Open Notification Center</button>
+                <button class="test-btn" onclick="addTestNotification()">Add Test Notification</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="demo-section">
+                <h2 class="demo-title">Notification Center Demo</h2>
+                <p class="demo-description">
+                    This demonstrates a modern notification center with tabs, different notification types, 
+                    user avatars with status indicators, and interactive elements like action buttons and file downloads.
+                </p>
+
+                <div class="features-list">
+                    <h3>✨ Features Included:</h3>
+                    <ul>
+                        <li>Tabbed navigation (View all, Verified, Mentions)</li>
+                        <li>User avatars with online/away/offline status indicators</li>
+                        <li>Different notification types (comments, follows, invitations, file shares)</li>
+                        <li>Comment bubbles with full text display</li>
+                        <li>File attachments with download functionality</li>
+                        <li>Action buttons (Accept/Decline for invitations)</li>
+                        <li>Unread indicators and timestamps</li>
+                        <li>Mark all as read functionality</li>
+                        <li>Responsive design with hover effects</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Notification Center Demo -->
+            <div id="notificationCenter" class="notification-card" style="display: none;">
+                <div class="notification-header">
+                    <div class="notification-title">Your notifications</div>
+                    <div class="header-actions">
+                        <button class="header-btn" onclick="markAllAsRead()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                        </button>
+                        <button class="header-btn" onclick="toggleNotificationCenter()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('all')">
+                        View all
+                        <span class="tab-badge">2</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('verified')">Verified</button>
+                    <button class="tab" onclick="switchTab('mentions')">Mentions</button>
+                </div>
+
+                <div class="notification-list" id="notificationList">
+                    <!-- Notifications will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let notifications = [
+            {
+                id: '1',
+                type: 'comment',
+                user: { name: 'Amélie', status: 'online' },
+                title: 'Amélie commented in **Dashboard 2.0**',
+                content: 'Really love this approach. I think this is the best solution for the document sync UX issue.',
+                timestamp: 'Friday 3:12 PM',
+                timeAgo: '2 hours ago',
+                isRead: false,
+                project: 'Dashboard 2.0'
+            },
+            {
+                id: '2',
+                type: 'follow',
+                user: { name: 'Sienna', status: 'away' },
+                title: 'Sienna followed you',
+                timestamp: 'Friday 3:04 PM',
+                timeAgo: '2 hours ago',
+                isRead: false
+            },
+            {
+                id: '3',
+                type: 'invitation',
+                user: { name: 'Ammar', status: 'offline' },
+                title: 'Ammar invited you to **Blog design**',
+                timestamp: 'Friday 2:22 PM',
+                timeAgo: '3 hours ago',
+                isRead: true,
+                project: 'Blog design',
+                actions: ['Decline', 'Accept']
+            },
+            {
+                id: '4',
+                type: 'file_share',
+                user: { name: 'Mathilde', status: 'online' },
+                title: 'Mathilde shared a file in **Dashboard 2.0**',
+                timestamp: 'Friday 1:40 PM',
+                timeAgo: '4 hours ago',
+                isRead: true,
+                project: 'Dashboard 2.0',
+                file: { name: 'Prototype recording 01.mp4', type: 'MP4', size: '14 MB' }
+            }
+        ];
+
+        let activeTab = 'all';
+
+        function toggleNotificationCenter() {
+            const center = document.getElementById('notificationCenter');
+            center.style.display = center.style.display === 'none' ? 'block' : 'none';
+            if (center.style.display === 'block') {
+                renderNotifications();
+            }
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            
+            // Update tab styling
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notificationList');
+            const filteredNotifications = notifications.filter(notification => {
+                if (activeTab === 'all') return true;
+                if (activeTab === 'verified') return notification.user.status === 'online';
+                if (activeTab === 'mentions') return notification.type === 'comment';
+                return true;
+            });
+
+            list.innerHTML = filteredNotifications.map(notification => `
+                <div class="notification-item ${!notification.isRead ? 'unread' : ''}">
+                    <div class="avatar">
+                        ${notification.user.name.charAt(0)}
+                        <div class="status-indicator status-${notification.user.status}"></div>
+                    </div>
+                    
+                    <div class="notification-content">
+                        <div class="notification-text">${notification.title}</div>
+                        
+                        ${notification.content ? `
+                            <div class="comment-bubble">
+                                <div class="comment-text">${notification.content}</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${notification.file ? `
+                            <div class="file-attachment">
+                                <div class="file-icon">${notification.file.type}</div>
+                                <div class="file-info">
+                                    <div class="file-name">${notification.file.name}</div>
+                                    <div class="file-size">${notification.file.size}</div>
+                                </div>
+                                <button class="download-btn" onclick="downloadFile('${notification.id}')">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7,10 12,15 17,10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        ${notification.actions ? `
+                            <div class="action-buttons">
+                                ${notification.actions.map(action => `
+                                    <button class="btn ${action === 'Accept' ? 'btn-primary' : ''}" 
+                                            onclick="handleAction('${notification.id}', '${action.toLowerCase()}')">
+                                        ${action}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="notification-meta">
+                        <div class="timestamp">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            ${notification.timestamp}
+                        </div>
+                        <div class="time-ago">${notification.timeAgo}</div>
+                        ${!notification.isRead ? '<div class="unread-dot"></div>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function markAllAsRead() {
+            notifications = notifications.map(n => ({ ...n, isRead: true }));
+            renderNotifications();
+            updateUnreadBadge();
+        }
+
+        function handleAction(notificationId, action) {
+            const notification = notifications.find(n => n.id === notificationId);
+            if (notification) {
+                notification.isRead = true;
+                renderNotifications();
+                updateUnreadBadge();
+                console.log(`${action} action for notification ${notificationId}`);
+            }
+        }
+
+        function downloadFile(notificationId) {
+            console.log(`Downloading file for notification ${notificationId}`);
+            // Add actual download logic here
+        }
+
+        function addTestNotification() {
+            const newNotification = {
+                id: Date.now().toString(),
+                type: 'comment',
+                user: { name: 'Test User', status: 'online' },
+                title: 'Test User commented in **Test Project**',
+                content: 'This is a test notification to demonstrate the notification system.',
+                timestamp: 'Just now',
+                timeAgo: 'Just now',
+                isRead: false,
+                project: 'Test Project'
+            };
+            
+            notifications.unshift(newNotification);
+            renderNotifications();
+            updateUnreadBadge();
+        }
+
+        function updateUnreadBadge() {
+            const unreadCount = notifications.filter(n => !n.isRead).length;
+            const badge = document.querySelector('.tab-badge');
+            if (badge) {
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'inline' : 'none';
+            }
+        }
+
+        // Initialize
+        updateUnreadBadge();
+    </script>
+</body>
+</html>
+
+

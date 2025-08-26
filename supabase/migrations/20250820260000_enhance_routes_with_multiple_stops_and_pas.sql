@@ -279,7 +279,7 @@ SELECT
             'stop_order', rs.stop_order,
             'passenger_count', rs.passenger_count
         ) ORDER BY rs.stop_order
-    ) as stops
+    ) as route_stops_data
 FROM public.routes r
 LEFT JOIN public.route_stops rs ON r.id = rs.route_id
 WHERE r.route_type = 'school'
@@ -300,7 +300,7 @@ SELECT
             'rail_station_name', rrs_stops.rail_station_name,
             'rail_line', rrs_stops.rail_line
         ) ORDER BY rrs_stops.stop_order
-    ) as stops
+    ) as rail_stops_data
 FROM public.rail_replacement_services rrs
 LEFT JOIN public.rail_replacement_stops rrs_stops ON rrs.id = rrs_stops.service_id
 GROUP BY rrs.id;

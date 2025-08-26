@@ -141,55 +141,6 @@ export default function DriverManagement() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={async () => {
-              try {
-                // Add sample drivers
-                const { data: sampleDrivers, error } = await supabase
-                  .from('profiles')
-                  .insert([
-                    {
-                      email: 'john.driver@test.com',
-                      first_name: 'John',
-                      last_name: 'Driver',
-                      role: 'driver',
-                      phone: '555-0123',
-                      organization_id: profile?.organization_id,
-                      is_active: true,
-                      employment_status: 'active',
-                      onboarding_status: 'completed'
-                    },
-                    {
-                      email: 'sarah.wilson@test.com',
-                      first_name: 'Sarah',
-                      last_name: 'Wilson',
-                      role: 'driver',
-                      phone: '555-0456',
-                      organization_id: profile?.organization_id,
-                      is_active: true,
-                      employment_status: 'active',
-                      onboarding_status: 'completed'
-                    }
-                  ])
-                  .select();
-
-                if (error) {
-                  console.error('Error adding sample drivers:', error);
-                  alert('Error adding sample drivers: ' + error.message);
-                } else {
-                  console.log('Sample drivers added:', sampleDrivers);
-                  refetch();
-                  alert('Sample drivers added successfully!');
-                }
-              } catch (err) {
-                console.error('Error:', err);
-                alert('Error adding sample drivers');
-              }
-            }}
-          >
-            Add Sample Drivers
-          </Button>
           <Button onClick={() => setAddDriverOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Driver

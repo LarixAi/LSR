@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { 
   Route, 
   Plus, 
@@ -119,9 +119,12 @@ const RoutePlanning: React.FC = () => {
               Create Route
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" aria-describedby="create-route-description">
             <DialogHeader>
               <DialogTitle>Create New Route</DialogTitle>
+              <DialogDescription id="create-route-description">
+                Add a new transport route to your fleet.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme System Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .theme-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .theme-mode {
+            padding: 12px 24px;
+            border: 2px solid;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .theme-mode.active {
+            transform: scale(1.05);
+        }
+
+        .color-sets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .color-set {
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .color-set:hover {
+            transform: translateY(-2px);
+        }
+
+        .color-set.active {
+            border-color: currentColor;
+            transform: scale(1.02);
+        }
+
+        .color-preview {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .color-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .color-set-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .color-set-description {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .demo-section {
+            margin-bottom: 40px;
+        }
+
+        .demo-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .demo-card {
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid;
+        }
+
+        .demo-button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 4px;
+        }
+
+        .demo-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 4px;
+        }
+
+        .demo-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid;
+            margin: 4px 0;
+        }
+
+        .demo-select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid;
+            margin: 4px 0;
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 1000;
+        }
+
+        /* Professional Theme */
+        .theme-professional {
+            --primary: #1f2937;
+            --secondary: #6b7280;
+            --accent: #3b82f6;
+            --background: #ffffff;
+            --surface: #f9fafb;
+            --text: #111827;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #3b82f6;
+        }
+
+        /* Ocean Theme */
+        .theme-ocean {
+            --primary: #1e40af;
+            --secondary: #3b82f6;
+            --accent: #06b6d4;
+            --background: #ffffff;
+            --surface: #f0f9ff;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --border: #cbd5e1;
+            --success: #059669;
+            --warning: #d97706;
+            --error: #dc2626;
+            --info: #0284c7;
+        }
+
+        /* Forest Theme */
+        .theme-forest {
+            --primary: #166534;
+            --secondary: #16a34a;
+            --accent: #22c55e;
+            --background: #ffffff;
+            --surface: #f0fdf4;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --border: #bbf7d0;
+            --success: #059669;
+            --warning: #d97706;
+            --error: #dc2626;
+            --info: #0284c7;
+        }
+
+        /* Sunset Theme */
+        .theme-sunset {
+            --primary: #ea580c;
+            --secondary: #f97316;
+            --accent: #fb923c;
+            --background: #ffffff;
+            --surface: #fff7ed;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --border: #fed7aa;
+            --success: #059669;
+            --warning: #d97706;
+            --error: #dc2626;
+            --info: #0284c7;
+        }
+
+        /* Royal Theme */
+        .theme-royal {
+            --primary: #7c3aed;
+            --secondary: #8b5cf6;
+            --accent: #a855f7;
+            --background: #ffffff;
+            --surface: #faf5ff;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --border: #ddd6fe;
+            --success: #059669;
+            --warning: #d97706;
+            --error: #dc2626;
+            --info: #0284c7;
+        }
+
+        /* Midnight Theme */
+        .theme-midnight {
+            --primary: #1f2937;
+            --secondary: #374151;
+            --accent: #3b82f6;
+            --background: #111827;
+            --surface: #1f2937;
+            --text: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border: #374151;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #3b82f6;
+        }
+
+        /* Apply theme variables */
+        .theme-professional,
+        .theme-ocean,
+        .theme-forest,
+        .theme-sunset,
+        .theme-royal,
+        .theme-midnight {
+            background-color: var(--background);
+            color: var(--text);
+        }
+
+        .theme-professional .header,
+        .theme-ocean .header,
+        .theme-forest .header,
+        .theme-sunset .header,
+        .theme-royal .header,
+        .theme-midnight .header {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+        }
+
+        .theme-professional .demo-card,
+        .theme-ocean .demo-card,
+        .theme-forest .demo-card,
+        .theme-sunset .demo-card,
+        .theme-royal .demo-card,
+        .theme-midnight .demo-card {
+            background-color: var(--surface);
+            border-color: var(--border);
+        }
+
+        .theme-professional .demo-button,
+        .theme-ocean .demo-button,
+        .theme-forest .demo-button,
+        .theme-sunset .demo-button,
+        .theme-royal .demo-button,
+        .theme-midnight .demo-button {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .theme-professional .demo-input,
+        .theme-ocean .demo-input,
+        .theme-forest .demo-input,
+        .theme-sunset .demo-input,
+        .theme-royal .demo-input,
+        .theme-midnight .demo-input,
+        .theme-professional .demo-select,
+        .theme-ocean .demo-select,
+        .theme-forest .demo-select,
+        .theme-sunset .demo-select,
+        .theme-royal .demo-select,
+        .theme-midnight .demo-select {
+            background-color: var(--background);
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        .theme-professional .status-bar,
+        .theme-ocean .status-bar,
+        .theme-forest .status-bar,
+        .theme-sunset .status-bar,
+        .theme-royal .status-bar,
+        .theme-midnight .status-bar {
+            background-color: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body class="theme-professional">
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Theme System Test</h1>
+            <p>Test different themes and color sets for your Logistics Solution Resources app</p>
+        </div>
+
+        <!-- Theme Mode Controls -->
+        <div class="theme-controls">
+            <div class="theme-mode" onclick="setThemeMode('light')" id="mode-light">
+                ☀️ Light Mode
+            </div>
+            <div class="theme-mode" onclick="setThemeMode('dark')" id="mode-dark">
+                🌙 Dark Mode
+            </div>
+            <div class="theme-mode active" onclick="setThemeMode('auto')" id="mode-auto">
+                🖥️ System Default
+            </div>
+        </div>
+
+        <!-- Color Set Selection -->
+        <div class="demo-section">
+            <h2 class="demo-title">Color Themes</h2>
+            <div class="color-sets">
+                <div class="color-set active" onclick="setColorSet('professional')" id="set-professional">
+                    <div class="color-preview">
+                        <div class="color-dot" style="background-color: #1f2937;"></div>
+                        <div class="color-dot" style="background-color: #6b7280;"></div>
+                        <div class="color-dot" style="background-color: #3b82f6;"></div>
+                        <div class="color-dot" style="background-color: #10b981;"></div>
+                    </div>
+                    <div class="color-set-name">Professional</div>
+                    <div class="color-set-description">Clean black and white theme</div>
+                </div>
+
+                <div class="color-set" onclick="setColorSet('ocean')" id="set-ocean">
+                    <div class="color-preview">
+                        <div class="color-dot" style="background-color: #1e40af;"></div>
+                        <div class="color-dot" style="background-color: #3b82f6;"></div>
+                        <div class="color-dot" style="background-color: #06b6d4;"></div>
+                        <div class="color-dot" style="background-color: #059669;"></div>
+                    </div>
+                    <div class="color-set-name">Ocean Blue</div>
+                    <div class="color-set-description">Professional blue theme</div>
+                </div>
+
+                <div class="color-set" onclick="setColorSet('forest')" id="set-forest">
+                    <div class="color-preview">
+                        <div class="color-dot" style="background-color: #166534;"></div>
+                        <div class="color-dot" style="background-color: #16a34a;"></div>
+                        <div class="color-dot" style="background-color: #22c55e;"></div>
+                        <div class="color-dot" style="background-color: #059669;"></div>
+                    </div>
+                    <div class="color-set-name">Forest Green</div>
+                    <div class="color-set-description">Natural green theme</div>
+                </div>
+
+                <div class="color-set" onclick="setColorSet('sunset')" id="set-sunset">
+                    <div class="color-preview">
+                        <div class="color-dot" style="background-color: #ea580c;"></div>
+                        <div class="color-dot" style="background-color: #f97316;"></div>
+                        <div class="color-dot" style="background-color: #fb923c;"></div>
+                        <div class="color-dot" style="background-color: #d97706;"></div>
+                    </div>
+                    <div class="color-set-name">Sunset Orange</div>
+                    <div class="color-set-description">Warm orange theme</div>
+                </div>
+
+                <div class="color-set" onclick="setColorSet('royal')" id="set-royal">
+                    <div class="color-preview">
+                        <div class="color-dot" style="background-color: #7c3aed;"></div>
+                        <div class="color-dot" style="background-color: #8b5cf6;"></div>
+                        <div class="color-dot" style="background-color: #a855f7;"></div>
+                        <div class="color-dot" style="background-color: #dc2626;"></div>
+                    </div>
+                    <div class="color-set-name">Royal Purple</div>
+                    <div class="color-set-description">Elegant purple theme</div>
+                </div>
+
+                <div class="color-set" onclick="setColorSet('midnight')" id="set-midnight">
+                    <div class="color-preview">
+                        <div class="color-dot" style="background-color: #1f2937;"></div>
+                        <div class="color-dot" style="background-color: #374151;"></div>
+                        <div class="color-dot" style="background-color: #3b82f6;"></div>
+                        <div class="color-dot" style="background-color: #10b981;"></div>
+                    </div>
+                    <div class="color-set-name">Midnight Dark</div>
+                    <div class="color-set-description">Dark professional theme</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Components -->
+        <div class="demo-section">
+            <h2 class="demo-title">Component Preview</h2>
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <h3>Buttons</h3>
+                    <button class="demo-button">Primary Button</button>
+                    <button class="demo-button" style="background-color: var(--secondary);">Secondary</button>
+                    <button class="demo-button" style="background-color: var(--success);">Success</button>
+                    <button class="demo-button" style="background-color: var(--warning);">Warning</button>
+                    <button class="demo-button" style="background-color: var(--error);">Error</button>
+                </div>
+
+                <div class="demo-card">
+                    <h3>Form Elements</h3>
+                    <input type="text" class="demo-input" placeholder="Text input" />
+                    <select class="demo-select">
+                        <option>Select option</option>
+                        <option>Option 1</option>
+                        <option>Option 2</option>
+                    </select>
+                    <textarea class="demo-input" placeholder="Textarea" rows="3"></textarea>
+                </div>
+
+                <div class="demo-card">
+                    <h3>Badges & Status</h3>
+                    <div class="demo-badge" style="background-color: var(--success); color: white;">Success</div>
+                    <div class="demo-badge" style="background-color: var(--warning); color: white;">Warning</div>
+                    <div class="demo-badge" style="background-color: var(--error); color: white;">Error</div>
+                    <div class="demo-badge" style="background-color: var(--info); color: white;">Info</div>
+                </div>
+
+                <div class="demo-card">
+                    <h3>Navigation Preview</h3>
+                    <div style="padding: 10px; border-radius: 6px; background-color: var(--surface); border: 1px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <div style="width: 30px; height: 30px; background: linear-gradient(to right, var(--primary), var(--secondary)); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">L</div>
+                            <span style="font-weight: 600; color: var(--text);">Logistics Solution Resources</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="padding: 6px 12px; background-color: var(--primary); color: white; border-radius: 4px; font-size: 12px;">Dashboard</div>
+                            <div style="padding: 6px 12px; color: var(--text-secondary); border-radius: 4px; font-size: 12px;">Vehicles</div>
+                            <div style="padding: 6px 12px; color: var(--text-secondary); border-radius: 4px; font-size: 12px;">Drivers</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="demo-section">
+            <h2 class="demo-title">How to Use</h2>
+            <div class="demo-card">
+                <h3>In Your App:</h3>
+                <ol style="margin-left: 20px; line-height: 1.6;">
+                    <li><strong>Theme Context:</strong> The theme system is available through the <code>useTheme()</code> hook</li>
+                    <li><strong>Settings Page:</strong> Users can change themes in the Settings page under "Appearance"</li>
+                    <li><strong>Auto-Save:</strong> Theme preferences are automatically saved to localStorage</li>
+                    <li><strong>System Default:</strong> Auto mode follows the user's system preference</li>
+                    <li><strong>CSS Variables:</strong> All colors are available as CSS custom properties</li>
+                </ol>
+                
+                <h3 style="margin-top: 20px;">Available Themes:</h3>
+                <ul style="margin-left: 20px; line-height: 1.6;">
+                    <li><strong>Professional:</strong> Clean black and white (default)</li>
+                    <li><strong>Ocean Blue:</strong> Professional blue theme</li>
+                    <li><strong>Forest Green:</strong> Natural green theme</li>
+                    <li><strong>Sunset Orange:</strong> Warm orange theme</li>
+                    <li><strong>Royal Purple:</strong> Elegant purple theme</li>
+                    <li><strong>Midnight Dark:</strong> Dark professional theme</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">
+        Theme: Professional | Mode: System Default
+    </div>
+
+    <script>
+        let currentTheme = 'professional';
+        let currentMode = 'auto';
+
+        function setColorSet(theme) {
+            // Remove all theme classes
+            document.body.classList.remove('theme-professional', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-royal', 'theme-midnight');
+            
+            // Add new theme class
+            document.body.classList.add(`theme-${theme}`);
+            currentTheme = theme;
+            
+            // Update active state
+            document.querySelectorAll('.color-set').forEach(set => set.classList.remove('active'));
+            document.getElementById(`set-${theme}`).classList.add('active');
+            
+            updateStatus();
+        }
+
+        function setThemeMode(mode) {
+            currentMode = mode;
+            
+            // Update active state
+            document.querySelectorAll('.theme-mode').forEach(m => m.classList.remove('active'));
+            document.getElementById(`mode-${mode}`).classList.add('active');
+            
+            // Apply dark mode if needed
+            if (mode === 'dark') {
+                document.body.classList.add('dark');
+            } else if (mode === 'light') {
+                document.body.classList.remove('dark');
+            } else {
+                // Auto mode - check system preference
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.body.classList.add('dark');
+                } else {
+                    document.body.classList.remove('dark');
+                }
+            }
+            
+            updateStatus();
+        }
+
+        function updateStatus() {
+            const statusBar = document.getElementById('status-bar');
+            const themeNames = {
+                'professional': 'Professional',
+                'ocean': 'Ocean Blue',
+                'forest': 'Forest Green',
+                'sunset': 'Sunset Orange',
+                'royal': 'Royal Purple',
+                'midnight': 'Midnight Dark'
+            };
+            
+            const modeNames = {
+                'light': 'Light Mode',
+                'dark': 'Dark Mode',
+                'auto': 'System Default'
+            };
+            
+            statusBar.textContent = `Theme: ${themeNames[currentTheme]} | Mode: ${modeNames[currentMode]}`;
+        }
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (currentMode === 'auto') {
+                if (e.matches) {
+                    document.body.classList.add('dark');
+                } else {
+                    document.body.classList.remove('dark');
+                }
+            }
+        });
+
+        // Initialize
+        updateStatus();
+    </script>
+</body>
+</html>
+
+

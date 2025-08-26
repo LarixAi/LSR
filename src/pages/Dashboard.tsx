@@ -129,113 +129,7 @@ export default function Dashboard() {
     enabled: !!profile?.organization_id
   });
 
-  // Clear all dashboard data mutation
-  const clearAllDataMutation = useMutation({
-    mutationFn: async () => {
-      const results = [];
-      
-      try {
-        // Clear vehicles - delete each one individually to avoid foreign key issues
-        if (vehicles.length > 0) {
-          console.log(`Deleting ${vehicles.length} vehicles...`);
-          for (const vehicle of vehicles) {
-            const { error } = await supabase
-              .from('vehicles')
-              .delete()
-              .eq('id', vehicle.id);
-            if (error) {
-              console.error(`Error deleting vehicle ${vehicle.id}:`, error);
-              results.push(`Vehicle ${vehicle.id}: ${error.message}`);
-            }
-          }
-        }
-        
-        // Clear incidents - delete each one individually
-        if (incidents.length > 0) {
-          console.log(`Deleting ${incidents.length} incidents...`);
-          for (const incident of incidents) {
-            const { error } = await supabase
-              .from('incidents')
-              .delete()
-              .eq('id', incident.id);
-            if (error) {
-              console.error(`Error deleting incident ${incident.id}:`, error);
-              results.push(`Incident ${incident.id}: ${error.message}`);
-            }
-          }
-        }
-        
-        // Clear maintenance requests - delete each one individually
-        if (maintenanceRequests.length > 0) {
-          console.log(`Deleting ${maintenanceRequests.length} maintenance requests...`);
-          for (const request of maintenanceRequests) {
-            const { error } = await supabase
-              .from('maintenance_requests')
-              .delete()
-              .eq('id', request.id);
-            if (error) {
-              console.error(`Error deleting maintenance request ${request.id}:`, error);
-              results.push(`Maintenance ${request.id}: ${error.message}`);
-            }
-          }
-        }
-        
-        // DON'T delete driver profiles - they are user accounts
-        // Just log how many drivers we found
-        if (drivers.length > 0) {
-          console.log(`Found ${drivers.length} drivers - keeping user profiles intact`);
-        }
-        
-      } catch (error) {
-        console.error('Unexpected error during deletion:', error);
-        throw new Error(`Unexpected error: ${error.message}`);
-      }
-      
-      if (results.length > 0) {
-        console.warn('Some deletions failed:', results);
-        throw new Error(`Some deletions failed: ${results.join(', ')}`);
-      }
-      
-      console.log('✅ All dashboard data cleared successfully');
-      return { success: true };
-    },
-    onSuccess: () => {
-      // Invalidate all queries to refetch data
-      queryClient.invalidateQueries();
-      toast({
-        title: "Success!",
-        description: "All dashboard data has been cleared.",
-      });
-    },
-    onError: (error: any) => {
-      console.error('Error clearing dashboard data:', error);
-      toast({
-        title: "Error",
-        description: `Failed to clear all data: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleClearAllData = async () => {
-    const totalRecords = vehicles.length + incidents.length + maintenanceRequests.length;
-    
-    if (totalRecords === 0) {
-      toast({
-        title: "No Data",
-        description: "There is no data to clear.",
-      });
-      return;
-    }
-    
-    const confirmed = confirm(
-      `Are you sure you want to clear dashboard data?\n\nThis will permanently delete:\n- ${vehicles.length} vehicles\n- ${incidents.length} incidents\n- ${maintenanceRequests.length} maintenance requests\n\nDriver profiles will be kept intact.\n\nThis action cannot be undone.`
-    );
-    
-    if (confirmed) {
-      clearAllDataMutation.mutate();
-    }
-  };
+  // Clear All Data functionality removed
 
 
 
@@ -271,18 +165,7 @@ export default function Dashboard() {
           </p>
         </div>
         <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'gap-2'}`}>
-          {(vehicles.length > 0 || incidents.length > 0 || maintenanceRequests.length > 0) && (
-            <Button 
-              onClick={handleClearAllData} 
-              variant="destructive" 
-              className="inline-flex items-center"
-              disabled={clearAllDataMutation.isPending}
-              size={isMobile ? "sm" : "default"}
-            >
-              <Database className={`${isMobile ? 'mr-1' : 'mr-2'} h-4 w-4`} />
-              {clearAllDataMutation.isPending ? 'Clearing...' : (isMobile ? 'Clear Data' : 'Clear All Data')}
-            </Button>
-          )}
+          {/* Clear All Data button removed */}
         </div>
       </div>
 
@@ -290,7 +173,7 @@ export default function Dashboard() {
       {profile?.role === 'admin' && (
         <div className="space-y-4">
           {/* Training Management */}
-          <Card className="border-purple-200 bg-purple-50">
+          <Card className="border-purple-200 bg-purple-50 action-card">
             <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
               <div className={`${isMobile ? 'space-y-3' : 'flex items-center justify-between'}`}>
                 <div className={`flex items-center ${isMobile ? 'space-x-2' : 'space-x-3'}`}>
@@ -306,7 +189,7 @@ export default function Dashboard() {
                   variant="outline" 
                   size="sm"
                   onClick={() => window.location.href = '/admin/training-management'}
-                  className={`border-purple-300 text-purple-700 hover:bg-purple-100 ${isMobile ? 'w-full' : ''}`}
+                  className={`border-purple-300 text-purple-700 hover:bg-purple-100 admin-button-secondary ${isMobile ? 'w-full' : ''}`}
                 >
                   <Award className={`${isMobile ? 'mr-1' : 'mr-2'} h-4 w-4`} />
                   {isMobile ? 'Manage' : 'Manage Training'}
@@ -316,7 +199,7 @@ export default function Dashboard() {
           </Card>
 
           {/* Mechanic Request Management */}
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-blue-200 bg-blue-50 action-card">
             <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
               <div className={`${isMobile ? 'space-y-3' : 'flex items-center justify-between'}`}>
                 <div className={`flex items-center ${isMobile ? 'space-x-2' : 'space-x-3'}`}>
@@ -332,7 +215,7 @@ export default function Dashboard() {
                   variant="outline" 
                   size="sm"
                   onClick={() => window.location.href = '/admin/mechanic-requests'}
-                  className={`border-blue-300 text-blue-700 hover:bg-blue-100 ${isMobile ? 'w-full' : ''}`}
+                  className={`border-blue-300 text-blue-700 hover:bg-blue-100 admin-button-secondary ${isMobile ? 'w-full' : ''}`}
                 >
                   <UserCheck className={`${isMobile ? 'mr-1' : 'mr-2'} h-4 w-4`} />
                   {isMobile ? 'Manage' : 'Manage Requests'}
@@ -345,53 +228,53 @@ export default function Dashboard() {
 
       {/* Key Metrics */}
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'gap-4 md:grid-cols-2 lg:grid-cols-4'}`}>
-        <Card>
+        <Card className="stats-card">
           <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? 'pb-1' : 'pb-2'}`}>
-            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Total Vehicles</CardTitle>
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium stats-label`}>Total Vehicles</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className={isMobile ? 'pt-1' : ''}>
-            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{vehicles.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold stats-number`}>{vehicles.length}</div>
+            <p className="text-xs text-muted-foreground stats-label">
               {activeVehicles} active
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="stats-card">
           <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? 'pb-1' : 'pb-2'}`}>
-            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Active Drivers</CardTitle>
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium stats-label`}>Active Drivers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className={isMobile ? 'pt-1' : ''}>
-            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{activeDrivers}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold stats-number`}>{activeDrivers}</div>
+            <p className="text-xs text-muted-foreground stats-label">
               of {drivers.length} total drivers
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="stats-card">
           <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? 'pb-1' : 'pb-2'}`}>
-            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Pending Maintenance</CardTitle>
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium stats-label`}>Pending Maintenance</CardTitle>
             <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className={isMobile ? 'pt-1' : ''}>
-            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{pendingMaintenance}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold stats-number`}>{pendingMaintenance}</div>
+            <p className="text-xs text-muted-foreground stats-label">
               requests awaiting attention
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="stats-card">
           <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? 'pb-1' : 'pb-2'}`}>
-            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Recent Incidents</CardTitle>
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium stats-label`}>Recent Incidents</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className={isMobile ? 'pt-1' : ''}>
-            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{recentIncidents}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold stats-number`}>{recentIncidents}</div>
+            <p className="text-xs text-muted-foreground stats-label">
               in the last 7 days
             </p>
           </CardContent>
@@ -401,7 +284,7 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className={`grid ${isMobile ? 'gap-4' : 'gap-6 md:grid-cols-2 lg:grid-cols-7'}`}>
         {/* Recent Activity */}
-        <Card className={isMobile ? '' : 'col-span-4'}>
+        <Card className={`${isMobile ? '' : 'col-span-4'} dashboard-card`}>
           <CardHeader className={isMobile ? 'pb-3' : ''}>
             <CardTitle className={`flex items-center space-x-2 ${isMobile ? 'text-lg' : ''}`}>
               <Activity className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
@@ -410,9 +293,9 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="incidents" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="incidents">Recent Incidents</TabsTrigger>
-                <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 tabs-list">
+                <TabsTrigger value="incidents" className="tabs-trigger">Recent Incidents</TabsTrigger>
+                <TabsTrigger value="maintenance" className="tabs-trigger">Maintenance</TabsTrigger>
               </TabsList>
               
               <TabsContent value="incidents" className="space-y-4">

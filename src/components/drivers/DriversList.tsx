@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserCheck } from 'lucide-react';
-// Removed import for deleted component
 import DriversTable from './DriversTable';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -21,12 +21,10 @@ interface DriversListProps {
 }
 
 const DriversList = ({ drivers, isLoading, onPasswordChange }: DriversListProps) => {
-  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
-  const [onboardingDialogOpen, setOnboardingDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const handleViewOnboarding = (driverId: string) => {
-    setSelectedDriverId(driverId);
-    setOnboardingDialogOpen(true);
+  const handleViewDriver = (driverId: string) => {
+    navigate(`/drivers/${driverId}`);
   };
 
   if (isLoading) {
@@ -48,13 +46,13 @@ const DriversList = ({ drivers, isLoading, onPasswordChange }: DriversListProps)
         <CardContent>
           <DriversTable 
             drivers={drivers} 
-            onViewOnboarding={handleViewOnboarding}
+            onViewDriver={handleViewDriver}
             onPasswordChange={onPasswordChange}
           />
         </CardContent>
       </Card>
 
-      {/* Removed DriverOnboardingDialog - component was deleted */}
+      {/* Driver detail page navigation is handled by the table */}
     </>
   );
 };

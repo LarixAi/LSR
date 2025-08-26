@@ -1,533 +1,400 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings as SettingsIcon, Shield, Users, Route, Truck, Bell, Database, Globe } from 'lucide-react';
-import { toast } from 'sonner';
-import { useIsMobile } from '@/hooks/use-mobile';
-import MobileSettings from '@/components/mobile/MobileSettings';
+import { Separator } from '@/components/ui/separator';
+import { useTheme } from '@/contexts/ThemeContext';
+import {
+  Palette,
+  Sun,
+  Moon,
+  Settings as SettingsIcon,
+  User,
+  Bell,
+  Shield,
+  Database,
+  Globe,
+  Smartphone,
+  Eye,
+  EyeOff,
+  Download,
+  Upload,
+  Trash2,
+  Save,
+  RotateCcw,
+  Monitor,
+  Smartphone as MobileIcon,
+  Monitor as DesktopIcon,
+  Zap,
+  Accessibility,
+  Contrast,
+  Type,
+  Sparkles
+} from 'lucide-react';
 
 const Settings = () => {
-  const { user, profile, loading: authLoading } = useAuth();
-  const isMobile = useIsMobile();
+  const { theme, toggleTheme, isDark } = useTheme();
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [highContrast, setHighContrast] = useState(false);
+  const [fontSize, setFontSize] = useState('medium');
   
-  const [settings, setSettings] = React.useState({
-    organizationName: 'Logistics Solution Resources',
-    contactEmail: 'admin@logisticsresources.com',
-    contactPhone: '+27 11 123 4567',
-    address: '123 Transport Street, Johannesburg',
-    requireTwoFactor: false,
-    sessionTimeout: '30',
-    passwordComplexity: 'medium',
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    notificationFrequency: 'immediate',
-    maxRouteCapacity: '50',
-    defaultRouteDuration: '60',
-    allowRouteOverlap: false,
-    requireRouteApproval: true,
-    maxVehicleAge: '10',
-    requireDailyChecks: true,
-    maintenanceReminder: '30',
-    fuelThreshold: '25',
-    maxDriverHours: '8',
-    requireDriverTraining: true,
-    licenseExpiryReminder: '30',
-    backgroundCheckInterval: '12',
-    dataRetentionPeriod: '24',
-    backupFrequency: 'daily',
-    apiRateLimit: '1000',
-    debugMode: false
+  // Debug information
+  console.log('🔍 Theme Debug Info:', {
+    theme,
+    isDark,
+    hasDarkClass: document.documentElement.classList.contains('dark'),
+    localStorage: {
+      theme: localStorage.getItem('theme')
+    }
   });
 
-  // Use mobile settings component on mobile devices
-  if (isMobile) {
-    return <MobileSettings />;
-  }
-
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (profile.role !== 'admin' && profile.role !== 'council') {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  const updateSetting = (key: string, value: string | boolean) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const getThemeIcon = () => {
+    return isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />;
   };
 
-  const handleSaveSettings = () => {
-    toast.success('Settings saved successfully!');
+  const getThemeLabel = () => {
+    return isDark ? 'Dark Mode' : 'Light Mode';
+  };
+
+  const handleFontSizeChange = (size: string) => {
+    setFontSize(size);
+    // Apply font size to document
+    const root = document.documentElement;
+    root.style.fontSize = size === 'small' ? '14px' : size === 'large' ? '18px' : '16px';
+  };
+
+  const handleReducedMotion = (enabled: boolean) => {
+    setReducedMotion(enabled);
+    if (enabled) {
+      document.documentElement.style.setProperty('--reduced-motion', 'reduce');
+    } else {
+      document.documentElement.style.removeProperty('--reduced-motion');
+    }
+  };
+
+  const handleHighContrast = (enabled: boolean) => {
+    setHighContrast(enabled);
+    if (enabled) {
+      document.documentElement.classList.add('high-contrast');
+    } else {
+      document.documentElement.classList.remove('high-contrast');
+    }
+  };
+
+  const resetThemeSettings = () => {
+    localStorage.removeItem('theme');
+    window.location.reload();
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">System Settings</h1>
-          <p className="text-gray-600">Configure and manage your transport system</p>
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+          <p className="text-muted-foreground mt-1">Customize your app experience</p>
         </div>
-
-        <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1 h-auto p-1">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="routes">Routes</TabsTrigger>
-            <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-            <TabsTrigger value="drivers">Drivers</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="general">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Globe className="w-5 h-5" />
-                  <span>General Settings</span>
-                </CardTitle>
-                <CardDescription>Basic organization and contact information</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="orgName">Organization Name</Label>
-                    <Input
-                      id="orgName"
-                      value={settings.organizationName}
-                      onChange={(e) => updateSetting('organizationName', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="contactEmail">Contact Email</Label>
-                    <Input
-                      id="contactEmail"
-                      type="email"
-                      value={settings.contactEmail}
-                      onChange={(e) => updateSetting('contactEmail', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="contactPhone">Contact Phone</Label>
-                    <Input
-                      id="contactPhone"
-                      value={settings.contactPhone}
-                      onChange={(e) => updateSetting('contactPhone', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Textarea
-                      id="address"
-                      value={settings.address}
-                      onChange={(e) => updateSetting('address', e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="security">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5" />
-                  <span>Security Settings</span>
-                </CardTitle>
-                <CardDescription>Authentication and access control settings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="twoFactor">Require Two-Factor Authentication</Label>
-                    <p className="text-sm text-gray-500">Enforce 2FA for all users</p>
-                  </div>
-                  <Switch
-                    id="twoFactor"
-                    checked={settings.requireTwoFactor}
-                    onCheckedChange={(checked) => updateSetting('requireTwoFactor', checked)}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
-                    <Input
-                      id="sessionTimeout"
-                      type="number"
-                      value={settings.sessionTimeout}
-                      onChange={(e) => updateSetting('sessionTimeout', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="passwordComplexity">Password Complexity</Label>
-                    <Select value={settings.passwordComplexity} onValueChange={(value) => updateSetting('passwordComplexity', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="notifications">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Bell className="w-5 h-5" />
-                  <span>Notification Settings</span>
-                </CardTitle>
-                <CardDescription>Configure how users receive notifications</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="emailNotifs">Email Notifications</Label>
-                      <p className="text-sm text-gray-500">Send notifications via email</p>
-                    </div>
-                    <Switch
-                      id="emailNotifs"
-                      checked={settings.emailNotifications}
-                      onCheckedChange={(checked) => updateSetting('emailNotifications', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="smsNotifs">SMS Notifications</Label>
-                      <p className="text-sm text-gray-500">Send notifications via SMS</p>
-                    </div>
-                    <Switch
-                      id="smsNotifs"
-                      checked={settings.smsNotifications}
-                      onCheckedChange={(checked) => updateSetting('smsNotifications', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="pushNotifs">Push Notifications</Label>
-                      <p className="text-sm text-gray-500">Send browser push notifications</p>
-                    </div>
-                    <Switch
-                      id="pushNotifs"
-                      checked={settings.pushNotifications}
-                      onCheckedChange={(checked) => updateSetting('pushNotifications', checked)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="notifFreq">Notification Frequency</Label>
-                  <Select value={settings.notificationFrequency} onValueChange={(value) => updateSetting('notificationFrequency', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="immediate">Immediate</SelectItem>
-                      <SelectItem value="hourly">Hourly Digest</SelectItem>
-                      <SelectItem value="daily">Daily Digest</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="routes">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Route className="w-5 h-5" />
-                  <span>Route Management Settings</span>
-                </CardTitle>
-                <CardDescription>Configure route creation and management rules</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="maxCapacity">Maximum Route Capacity</Label>
-                    <Input
-                      id="maxCapacity"
-                      type="number"
-                      value={settings.maxRouteCapacity}
-                      onChange={(e) => updateSetting('maxRouteCapacity', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="defaultDuration">Default Route Duration (minutes)</Label>
-                    <Input
-                      id="defaultDuration"
-                      type="number"
-                      value={settings.defaultRouteDuration}
-                      onChange={(e) => updateSetting('defaultRouteDuration', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="routeOverlap">Allow Route Time Overlap</Label>
-                      <p className="text-sm text-gray-500">Allow routes to have overlapping schedules</p>
-                    </div>
-                    <Switch
-                      id="routeOverlap"
-                      checked={settings.allowRouteOverlap}
-                      onCheckedChange={(checked) => updateSetting('allowRouteOverlap', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="routeApproval">Require Route Approval</Label>
-                      <p className="text-sm text-gray-500">New routes must be approved by admin</p>
-                    </div>
-                    <Switch
-                      id="routeApproval"
-                      checked={settings.requireRouteApproval}
-                      onCheckedChange={(checked) => updateSetting('requireRouteApproval', checked)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="vehicles">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Truck className="w-5 h-5" />
-                  <span>Vehicle Management Settings</span>
-                </CardTitle>
-                <CardDescription>Configure vehicle maintenance and monitoring</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="maxAge">Maximum Vehicle Age (years)</Label>
-                    <Input
-                      id="maxAge"
-                      type="number"
-                      value={settings.maxVehicleAge}
-                      onChange={(e) => updateSetting('maxVehicleAge', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="maintenanceReminder">Maintenance Reminder (days)</Label>
-                    <Input
-                      id="maintenanceReminder"
-                      type="number"
-                      value={settings.maintenanceReminder}
-                      onChange={(e) => updateSetting('maintenanceReminder', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fuelThreshold">Low Fuel Alert Threshold (%)</Label>
-                    <Input
-                      id="fuelThreshold"
-                      type="number"
-                      value={settings.fuelThreshold}
-                      onChange={(e) => updateSetting('fuelThreshold', e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="dailyChecks">Require Daily Vehicle Checks</Label>
-                      <p className="text-sm text-gray-500">Mandatory daily vehicle inspections</p>
-                    </div>
-                    <Switch
-                      id="dailyChecks"
-                      checked={settings.requireDailyChecks}
-                      onCheckedChange={(checked) => updateSetting('requireDailyChecks', checked)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="drivers">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="w-5 h-5" />
-                  <span>Driver Management Settings</span>
-                </CardTitle>
-                <CardDescription>Configure driver requirements and monitoring</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="maxHours">Maximum Driver Hours per Day</Label>
-                    <Input
-                      id="maxHours"
-                      type="number"
-                      value={settings.maxDriverHours}
-                      onChange={(e) => updateSetting('maxDriverHours', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="licenseReminder">License Expiry Reminder (days)</Label>
-                    <Input
-                      id="licenseReminder"
-                      type="number"
-                      value={settings.licenseExpiryReminder}
-                      onChange={(e) => updateSetting('licenseExpiryReminder', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="backgroundCheck">Background Check Interval (months)</Label>
-                    <Input
-                      id="backgroundCheck"
-                      type="number"
-                      value={settings.backgroundCheckInterval}
-                      onChange={(e) => updateSetting('backgroundCheckInterval', e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="driverTraining">Require Driver Training</Label>
-                      <p className="text-sm text-gray-500">Mandatory training for new drivers</p>
-                    </div>
-                    <Switch
-                      id="driverTraining"
-                      checked={settings.requireDriverTraining}
-                      onCheckedChange={(checked) => updateSetting('requireDriverTraining', checked)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="system">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Database className="w-5 h-5" />
-                  <span>System Settings</span>
-                </CardTitle>
-                <CardDescription>Configure system behavior and performance</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="dataRetention">Data Retention Period (months)</Label>
-                    <Input
-                      id="dataRetention"
-                      type="number"
-                      value={settings.dataRetentionPeriod}
-                      onChange={(e) => updateSetting('dataRetentionPeriod', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="backupFreq">Backup Frequency</Label>
-                    <Select value={settings.backupFrequency} onValueChange={(value) => updateSetting('backupFrequency', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hourly">Hourly</SelectItem>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="apiLimit">API Rate Limit (requests/hour)</Label>
-                    <Input
-                      id="apiLimit"
-                      type="number"
-                      value={settings.apiRateLimit}
-                      onChange={(e) => updateSetting('apiRateLimit', e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="debugMode">Debug Mode</Label>
-                      <p className="text-sm text-gray-500">Enable detailed system logging</p>
-                    </div>
-                    <Switch
-                      id="debugMode"
-                      checked={settings.debugMode}
-                      onCheckedChange={(checked) => updateSetting('debugMode', checked)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="integrations">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <SettingsIcon className="w-5 h-5" />
-                  <span>External Integrations</span>
-                </CardTitle>
-                <CardDescription>Configure third-party service integrations</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="googleMaps">Google Maps API Configuration</Label>
-                    <p className="text-sm text-gray-500 mb-2">Manage Google Maps integration settings</p>
-                    <Button variant="outline">Configure Google Maps</Button>
-                  </div>
-                  <div>
-                    <Label htmlFor="smsProvider">SMS Provider Configuration</Label>
-                    <p className="text-sm text-gray-500 mb-2">Set up SMS notification service</p>
-                    <Button variant="outline">Configure SMS Provider</Button>
-                  </div>
-                  <div>
-                    <Label htmlFor="emailProvider">Email Provider Configuration</Label>
-                    <p className="text-sm text-gray-500 mb-2">Configure email service settings</p>
-                    <Button variant="outline">Configure Email Provider</Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        <div className="flex justify-end mt-8">
-          <Button onClick={handleSaveSettings} size="lg">
-            Save All Settings
+        <div className="flex gap-2">
+          <Button 
+            onClick={toggleTheme}
+            variant="outline"
+            className="text-xs"
+          >
+            {getThemeIcon()} {getThemeLabel()}
+          </Button>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Save className="w-4 h-4 mr-2" />
+            Save Changes
           </Button>
         </div>
       </div>
+
+      {/* Settings Tabs */}
+      <Tabs defaultValue="appearance" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="appearance" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Appearance
+          </TabsTrigger>
+          <TabsTrigger value="account" className="flex items-center gap-2">
+            <User className="w-4 h-4" />
+            Account
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="w-4 h-4" />
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex items-center gap-2">
+            <SettingsIcon className="w-4 h-4" />
+            Advanced
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Appearance Tab */}
+        <TabsContent value="appearance" className="space-y-6">
+          {/* Theme Mode */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Theme Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Theme Toggle */}
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Theme Mode</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Light Mode Preview */}
+                  <div 
+                    className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
+                      !isDark
+                        ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20'
+                        : 'border-border hover:border-border/80 hover:bg-muted/50'
+                    }`}
+                    onClick={toggleTheme}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`p-3 rounded-lg ${
+                        !isDark ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                      }`}>
+                        <Sun className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">Light Mode</div>
+                        <div className="text-sm text-muted-foreground">Bright and clean interface</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-background border border-border rounded"></div>
+                      <div className="h-3 bg-muted rounded w-3/4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                    </div>
+                  </div>
+
+                  {/* Dark Mode Preview */}
+                  <div 
+                    className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
+                      isDark
+                        ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20'
+                        : 'border-border hover:border-border/80 hover:bg-muted/50'
+                    }`}
+                    onClick={toggleTheme}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`p-3 rounded-lg ${
+                        isDark ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                      }`}>
+                        <Moon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">Dark Mode</div>
+                        <div className="text-sm text-muted-foreground">Easy on the eyes</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-background border border-border rounded"></div>
+                      <div className="h-3 bg-muted rounded w-3/4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Current Theme Info */}
+              <div className="space-y-4">
+                <Label className="text-base font-medium text-foreground">Current Theme</Label>
+                <div className="p-4 bg-muted/50 border border-border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">
+                        {isDark ? 'Dark Theme' : 'Light Theme'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Theme: {theme} | Dark Class: {document.documentElement.classList.contains('dark') ? 'Applied' : 'Not Applied'}
+                      </div>
+                    </div>
+                    <Badge variant={isDark ? 'default' : 'secondary'} className="font-medium">
+                      {isDark ? 'Dark' : 'Light'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Accessibility Settings */}
+              <div className="space-y-4">
+                <Label className="text-base font-medium text-foreground flex items-center gap-2">
+                  <Accessibility className="w-4 h-4" />
+                  Accessibility
+                </Label>
+                
+                {/* Font Size */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Font Size</div>
+                      <div className="text-sm text-muted-foreground">Adjust text size for better readability</div>
+                    </div>
+                    <div className="flex gap-2">
+                      {['small', 'medium', 'large'].map((size) => (
+                        <Button
+                          key={size}
+                          variant={fontSize === size ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleFontSizeChange(size)}
+                          className={`capitalize transition-all ${
+                            fontSize === size 
+                              ? 'shadow-md ring-2 ring-primary/20' 
+                              : 'hover:shadow-sm'
+                          }`}
+                        >
+                          {size}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reduced Motion */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-foreground">Reduce Motion</div>
+                    <div className="text-sm text-muted-foreground">Minimize animations and transitions</div>
+                  </div>
+                  <Switch 
+                    checked={reducedMotion} 
+                    onCheckedChange={handleReducedMotion}
+                  />
+                </div>
+
+                {/* High Contrast */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-foreground">High Contrast</div>
+                    <div className="text-sm text-muted-foreground">Increase contrast for better visibility</div>
+                  </div>
+                  <Switch 
+                    checked={highContrast} 
+                    onCheckedChange={handleHighContrast}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Theme Actions */}
+              <div className="flex gap-2">
+                <Button 
+                  onClick={resetThemeSettings}
+                  variant="outline"
+                  className="flex-1 hover:shadow-md transition-all"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Reset Theme
+                </Button>
+                <Button 
+                  onClick={toggleTheme}
+                  className="flex-1 hover:shadow-md transition-all"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Switch Theme
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Theme Preview */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Theme Preview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Sample Components */}
+                <div className="space-y-4">
+                  <h3 className="font-medium text-foreground">Sample Components</h3>
+                  <div className="space-y-3">
+                    <Button>Primary Button</Button>
+                    <Button variant="outline">Outline Button</Button>
+                    <Button variant="secondary">Secondary Button</Button>
+                    <div className="flex gap-2">
+                      <Badge>Default</Badge>
+                      <Badge variant="secondary">Secondary</Badge>
+                      <Badge variant="destructive">Destructive</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sample Text */}
+                <div className="space-y-4">
+                  <h3 className="font-medium text-foreground">Typography</h3>
+                  <div className="space-y-2">
+                    <h1 className="text-2xl font-bold text-foreground">Heading 1</h1>
+                    <h2 className="text-xl font-semibold text-foreground">Heading 2</h2>
+                    <p className="text-foreground">This is regular paragraph text.</p>
+                    <p className="text-muted-foreground">This is muted text for secondary information.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Account Tab */}
+        <TabsContent value="account" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Account Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Account settings will be implemented here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Notification Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Notification settings will be implemented here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Advanced Tab */}
+        <TabsContent value="advanced" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <SettingsIcon className="w-5 h-5" />
+                Advanced Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Advanced settings will be implemented here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

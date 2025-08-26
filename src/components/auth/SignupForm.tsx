@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Shield, UserPlus, Ban, Eye, EyeOff, CheckCircle, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
+import EmailService from '@/services/emailService';
 
 interface SignupFormProps {
   onToggleForm: () => void;
@@ -98,9 +99,23 @@ const SignupForm = ({ onToggleForm, selectedRole, canSignup = true }: SignupForm
         throw signupError;
       }
 
+      // Send welcome email
+      try {
+        await EmailService.sendWelcomeEmail({
+          to: formData.email.trim(),
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim(),
+          loginUrl: `${window.location.origin}/auth`
+        });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't fail the signup if email fails
+      }
+
       toast({
         title: 'Account Created Successfully',
-        description: 'Please check your email to verify your account.',
+        description: 'Please check your email to verify your account and welcome message.',
       });
 
       // Clear form

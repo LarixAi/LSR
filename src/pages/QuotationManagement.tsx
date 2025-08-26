@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -98,28 +98,7 @@ const QuotationManagement: React.FC = () => {
   // Get real quotation data from backend
   const { quotations, isLoading: quotationsLoading, clearAllQuotations, stats, hasData } = useQuotationsData();
 
-  const handleClearQuotations = async () => {
-    const confirmed = confirm(
-      'Are you sure you want to clear all quotation data?\n\nThis will permanently delete:\n- All quotation records\n- All customer quotes\n- All sales pipeline data\n\nThis action cannot be undone.'
-    );
-    
-    if (confirmed) {
-      try {
-        await clearAllQuotations.mutateAsync();
-        toast({
-          title: "Success!",
-          description: "All quotation data has been cleared from the database.",
-        });
-      } catch (error) {
-        console.error('Error clearing quotations:', error);
-        toast({
-          title: "Error",
-          description: "Failed to clear quotation data. Please try again.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
+  // Clear All Data functionality removed
 
   if (loading || quotationsLoading) {
     return (
@@ -403,15 +382,7 @@ const QuotationManagement: React.FC = () => {
           <p className="text-gray-600 mt-1">Create, track, and convert customer quotations</p>
         </div>
         <div className="flex gap-3">
-          <Button 
-            onClick={handleClearQuotations} 
-            variant="destructive" 
-            className="inline-flex items-center"
-            disabled={clearAllQuotations.isPending}
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            {clearAllQuotations.isPending ? 'Clearing...' : 'Clear All Data'}
-          </Button>
+          {/* Clear All Data button removed */}
           <Button variant="outline">
             <Settings className="w-4 h-4 mr-2" />
             Settings
@@ -430,6 +401,9 @@ const QuotationManagement: React.FC = () => {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Quotation</DialogTitle>
+                <DialogDescription>
+                  Create a new quotation for your customers with detailed service information and pricing.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-6">
                 {/* Customer Information */}

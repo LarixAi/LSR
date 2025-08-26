@@ -102,7 +102,7 @@ const VehicleInspectionsPage = () => {
       inspection.driver?.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
-    const matchesStatus = statusFilter === 'all' || inspection.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || inspection.overall_status === statusFilter;
     const matchesType = typeFilter === 'all' || inspection.inspection_type === typeFilter;
     const matchesDriver = driverFilter === 'all' || inspection.driver_id === driverFilter;
     
@@ -118,13 +118,13 @@ const VehicleInspectionsPage = () => {
   const getTabInspections = (tab: string) => {
     switch (tab) {
       case 'pending':
-        return filteredInspections.filter(vi => vi.status === 'pending');
+        return filteredInspections.filter(vi => vi.overall_status === 'pending');
       case 'passed':
-        return filteredInspections.filter(vi => vi.status === 'passed');
+        return filteredInspections.filter(vi => vi.overall_status === 'passed');
       case 'flagged':
-        return filteredInspections.filter(vi => vi.status === 'flagged');
+        return filteredInspections.filter(vi => vi.overall_status === 'flagged');
       case 'failed':
-        return filteredInspections.filter(vi => vi.status === 'failed');
+        return filteredInspections.filter(vi => vi.overall_status === 'failed');
       default:
         return filteredInspections;
     }
@@ -337,10 +337,10 @@ const VehicleInspectionsPage = () => {
                           <h3 className="text-lg font-semibold">
                             {inspection.vehicle?.vehicle_number} - {inspection.vehicle?.make} {inspection.vehicle?.model}
                           </h3>
-                          <Badge className={getStatusBadge(inspection.status)}>
-                            {getStatusIcon(inspection.status)}
-                            {inspection.status}
-                          </Badge>
+                                          <Badge className={getStatusBadge(inspection.overall_status)}>
+                  {getStatusIcon(inspection.overall_status)}
+                  {inspection.overall_status}
+                </Badge>
                           <Badge className={getTypeBadge(inspection.inspection_type)}>
                             {inspection.inspection_type.replace('_', ' ')}
                           </Badge>
@@ -443,10 +443,10 @@ const VehicleInspectionsPage = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Status</label>
-                  <Badge className={getStatusBadge(selectedInspection.status)}>
-                    {getStatusIcon(selectedInspection.status)}
-                    {selectedInspection.status}
-                  </Badge>
+                                  <Badge className={getStatusBadge(selectedInspection.overall_status)}>
+                  {getStatusIcon(selectedInspection.overall_status)}
+                  {selectedInspection.overall_status}
+                </Badge>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Type</label>

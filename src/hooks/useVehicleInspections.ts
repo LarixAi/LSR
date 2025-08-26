@@ -149,7 +149,7 @@ export const useVehicleInspections = (organizationId?: string, driverId?: string
       try {
         let query = supabase
           .from('vehicle_inspections')
-          .select('status, inspection_type, defects_found, created_at');
+          .select('overall_status, inspection_type, defects_found, created_at, notes');
 
         if (driverId) {
           query = query.eq('driver_id', driverId);
@@ -165,10 +165,10 @@ export const useVehicleInspections = (organizationId?: string, driverId?: string
         const stats: InspectionStats = {
           total: inspectionData?.length || 0,
           byStatus: {
-            pending: inspectionData?.filter(vi => vi.status === 'pending').length || 0,
-            passed: inspectionData?.filter(vi => vi.status === 'passed').length || 0,
-            flagged: inspectionData?.filter(vi => vi.status === 'flagged').length || 0,
-            failed: inspectionData?.filter(vi => vi.status === 'failed').length || 0
+            pending: inspectionData?.filter(vi => vi.overall_status === 'pending').length || 0,
+            passed: inspectionData?.filter(vi => vi.overall_status === 'passed').length || 0,
+            flagged: inspectionData?.filter(vi => vi.overall_status === 'flagged').length || 0,
+            failed: inspectionData?.filter(vi => vi.overall_status === 'failed').length || 0
           },
           byType: {
             daily_check: inspectionData?.filter(vi => vi.inspection_type === 'daily_check').length || 0,
@@ -180,7 +180,7 @@ export const useVehicleInspections = (organizationId?: string, driverId?: string
             recheck: inspectionData?.filter(vi => vi.inspection_type === 'recheck').length || 0,
             breakdown: inspectionData?.filter(vi => vi.inspection_type === 'breakdown').length || 0
           },
-          defectsFound: inspectionData?.filter(vi => vi.defects_found).length || 0,
+          defectsFound: inspectionData?.filter(vi => vi.defects_found && vi.defects_found.length > 0).length || 0,
           recentInspections: inspectionData?.filter(vi => {
             const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);

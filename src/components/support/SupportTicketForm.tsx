@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateSupportTicket } from '@/hooks/useSupportTickets';
 
 interface TicketFormData {
   type: 'support' | 'suggestion';
@@ -44,6 +45,8 @@ export default function SupportTicketForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [ticketId, setTicketId] = useState('');
+  
+  const createSupportTicket = useCreateSupportTicket();
 
   const [formData, setFormData] = useState<TicketFormData>({
     type: 'support',
@@ -137,32 +140,50 @@ export default function SupportTicketForm() {
 
   const sendEmail = async (ticketData: TicketFormData, ticketId: string) => {
     try {
-      const response = await fetch('/functions/v1/send-support-ticket', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
-          ticketData,
-          ticketId
-        })
-      });
+      // Create support ticket in database
+      const supportTicketData = {
+        ticket_id: ticketId,
+        type: ticketData.type === 'support' ? 'technical' : 'feature_request',
+        priority: ticketData.priority === 'urgent' ? 'critical' : ticketData.priority,
+        subject: ticketData.subject,
+        description: ticketData.description,
+        user_email: ticketData.userEmail,
+        user_name: ticketData.userName,
+        user_phone: ticketData.userPhone,
+        app_version: ticketData.appVersion,
+        device_info: ticketData.deviceInfo,
+        tags: [ticketData.type]
+      };
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send ticket');
+      await createSupportTicket.mutateAsync(supportTicketData);
+
+      // Also send email notification (optional)
+      try {
+        const response = await fetch('/functions/v1/send-support-ticket', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            ticketData,
+            ticketId
+          })
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          console.warn('Email notification failed:', result.error);
+        }
+      } catch (emailError) {
+        console.warn('Email notification failed:', emailError);
       }
 
-      return result.success;
-    } catch (error) {
-      console.error('Error sending ticket:', error);
-      
-      // Fallback: simulate email sending for development
-      console.log('Using fallback email simulation');
-      await new Promise(resolve => setTimeout(resolve, 2000));
       return true;
+    } catch (error) {
+      console.error('Error creating support ticket:', error);
+      throw error;
     }
   };
 

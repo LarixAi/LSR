@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, Menu, X } from "lucide-react";
+import { ChevronLeft, Menu, X, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface MobileHeaderProps {
   title: string;
@@ -22,6 +23,7 @@ export const MobileHeader = ({
   className
 }: MobileHeaderProps) => {
   const navigate = useNavigate();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   return (
     <header className={cn(
@@ -57,11 +59,21 @@ export const MobileHeader = ({
           <h1 className="text-lg font-semibold truncate">{title}</h1>
         </div>
         
-        {actions && (
-          <div className="flex items-center gap-2">
-            {actions}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Theme Toggle Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="h-8 w-8 p-0"
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+          
+          {actions && actions}
+        </div>
       </div>
     </header>
   );

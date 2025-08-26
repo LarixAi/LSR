@@ -20,11 +20,11 @@ import {
   Wrench,
   Fuel,
   Circle,
-  XCircle,
   RefreshCw
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,11 +54,12 @@ interface VehicleCheck {
 const VehicleChecks: React.FC = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('new-check');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [showEnhancedCheck, setShowEnhancedCheck] = useState(false);
+
 
   // Fetch real data from backend
   const { data: vehicleChecks = [], isLoading: checksLoading, refetch: refetchChecks } = useVehicleChecks();
@@ -78,11 +79,11 @@ const VehicleChecks: React.FC = () => {
       license_plate: vehicle?.license_plate || 'Unknown',
       check_date: check.created_at ? format(new Date(check.created_at), 'yyyy-MM-dd') : '',
       status: check.status as 'completed' | 'pending' | 'failed' || 'pending',
-      issues_found: check.defects_found ? Array(check.defects_found).fill('Issue found') : [],
+      issues_found: Array.isArray((check as any).defects_found) ? (check as any).defects_found : (Array.isArray(check.issues_found) ? check.issues_found : []),
       notes: check.notes || '',
       created_at: check.created_at || '',
       driver_name: driver ? `${driver.first_name} ${driver.last_name}` : 'Unknown Driver',
-      check_type: check.check_type as 'daily' | 'weekly' | 'comprehensive' || 'daily'
+      check_type: ((check as any).check_type as 'daily' | 'weekly' | 'comprehensive') || 'daily'
     };
   });
 
@@ -301,7 +302,7 @@ const VehicleChecks: React.FC = () => {
               
               <Button 
                 className="w-full mobile-button" 
-                onClick={() => setShowEnhancedCheck(true)}
+                onClick={() => navigate('/driver/enhanced-vehicle-check')}
                 size="lg"
               >
                 <Shield className="w-5 h-5 mr-2" />
@@ -527,27 +528,7 @@ const VehicleChecks: React.FC = () => {
 
       </Tabs>
 
-      {/* Enhanced Check Dialog - Mobile Optimized */}
-      {showEnhancedCheck && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-6xl h-[95vh] sm:h-[90vh] bg-white rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between p-3 sm:p-4 border-b">
-              <h2 className="text-lg sm:text-xl font-semibold">Enhanced Vehicle Check</h2>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowEnhancedCheck(false)}
-                className="mobile-touch-target"
-              >
-                <XCircle className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="h-full overflow-y-auto">
-              <EnhancedVehicleCheck />
-            </div>
-          </div>
-        </div>
-      )}
+
 
 
     </div>

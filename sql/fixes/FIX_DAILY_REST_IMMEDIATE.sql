@@ -65,3 +65,5 @@ SELECT 'daily_rest table created successfully' as status;
 SELECT COUNT(*) as record_count FROM public.daily_rest;
 
 
+
+

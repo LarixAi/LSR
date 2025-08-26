@@ -1,127 +1,122 @@
 
 import React from 'react';
-import { Truck, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Shield, Mail, ExternalLink } from 'lucide-react';
 
-const Footer = () => {
-  const footerSections = [
-    {
-      title: 'Platform',
-      links: [
-        { name: 'Admin Dashboard', href: '#' },
-        { name: 'Driver Portal', href: '#' },
-        { name: 'Parent Portal', href: '#' },
-        { name: 'Route Management', href: '#' },
-      ]
-    },
-    {
-      title: 'Features',
-      links: [
-        { name: 'Real-time Tracking', href: '#' },
-        { name: 'Safety Monitoring', href: '#' },
-        { name: 'Fleet Management', href: '#' },
-        { name: 'Analytics & Reports', href: '#' },
-      ]
-    },
-    {
-      title: 'Resources',
-      links: [
-        { name: 'Documentation', href: '#' },
-        { name: 'API Reference', href: '#' },
-        { name: 'Support Center', href: '#' },
-        { name: 'Training', href: '#' },
-      ]
-    },
-    {
-      title: 'Company',
-      links: [
-        { name: 'About Us', href: '#' },
-        { name: 'Careers', href: '#' },
-        { name: 'Privacy Policy', href: '#' },
-        { name: 'Terms of Service', href: '#' },
-      ]
-    }
-  ];
-
-  const socialLinks = [
-    { name: 'Facebook', icon: Facebook, href: '#' },
-    { name: 'Twitter', icon: Twitter, href: '#' },
-    { name: 'LinkedIn', icon: Linkedin, href: '#' },
-    { name: 'Instagram', icon: Instagram, href: '#' },
-  ];
+const Footer: React.FC = () => {
+  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* Brand Section */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Truck className="w-6 h-6 text-white" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    {/* Company Info */}
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold">Logistics Solution Resources</span>
+              <h3 className="text-xl font-bold">Logistics Solution Resources</h3>
             </div>
-            <p className="text-gray-400 mb-6">
-              Modern transport management platform for safety, efficiency, and communication.
+            <p className="text-gray-300 text-base leading-relaxed mb-6">
+              Comprehensive transport management platform for schools, businesses, and organizations.
+              Streamlining logistics operations with real-time tracking and compliance management.
             </p>
-            
-            <div className="space-y-2 text-sm text-gray-400">
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4" />
-                <span>support@logisticsresources.com</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4" />
-                <span>+1 (555) 123-4567</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4" />
-                <span>San Francisco, CA</span>
-              </div>
+            <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+              <Shield className="w-5 h-5 text-blue-400" />
+              <span className="text-sm font-medium text-gray-300">ICO Application: C1752755 (Processing)</span>
             </div>
           </div>
 
-          {/* Footer Links */}
-          {footerSections.map((section, index) => (
-            <div key={index}>
-              <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
-              <ul className="space-y-2">
-                {section.links.map((link, linkIndex) => (
-                  <li key={linkIndex}>
-                    <a
-                      href={link.href}
-                      className="text-gray-400 hover:text-white transition-colors duration-200"
-                    >
-                      {link.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Quick Links */}
+          <div>
+            <h4 className="text-md font-semibold mb-4">Quick Links</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">
+                  Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/vehicles" className="text-gray-300 hover:text-white transition-colors">
+                  Vehicles
+                </Link>
+              </li>
+              <li>
+                <Link to="/drivers" className="text-gray-300 hover:text-white transition-colors">
+                  Drivers
+                </Link>
+              </li>
+              <li>
+                <Link to="/jobs" className="text-gray-300 hover:text-white transition-colors">
+                  Jobs
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal & Privacy */}
+          <div>
+            <h4 className="text-md font-semibold mb-4">Legal & Privacy</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/privacy-policy" className="text-gray-300 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/data-rights" className="text-gray-300 hover:text-white transition-colors">
+                  Your Data Rights
+                </Link>
+              </li>
+              <li>
+                <Link to="/dpia" className="text-gray-300 hover:text-white transition-colors">
+                  Data Protection Assessment
+                </Link>
+              </li>
+              <li>
+                <Link to="/location-consent" className="text-gray-300 hover:text-white transition-colors">
+                  Location Services
+                </Link>
+              </li>
+              <li>
+                <a 
+                  href="https://ico.org.uk/make-a-complaint/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
+                >
+                  ICO Complaints
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </li>
+                           <li>
+               <a 
+                 href="mailto:transport@logisticssolutionresources.com"
+                 className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
+               >
+                 <Mail className="w-3 h-3" />
+                 Contact DPO
+               </a>
+             </li>
+            </ul>
+          </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2024 Logistics Solution Resources. All rights reserved.
-            </div>
-            
-            <div className="flex space-x-4">
-              {socialLinks.map((social, index) => {
-                const Icon = social.icon;
-                return (
-                  <a
-                    key={index}
-                    href={social.href}
-                    className="text-gray-400 hover:text-white transition-colors duration-200"
-                    aria-label={social.name}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </a>
-                );
-              })}
-            </div>
+        {/* Bottom Bar */}
+        <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center">
+          <p className="text-gray-400 text-sm">
+            © {currentYear} Logistics Solution Resources. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4 mt-4 sm:mt-0">
+            <span className="text-gray-400 text-sm">Data Protection Officer</span>
+                         <a 
+               href="mailto:transport@logisticssolutionresources.com"
+               className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
+             >
+               <Mail className="w-3 h-3" />
+               transport@logisticssolutionresources.com
+             </a>
           </div>
         </div>
       </div>

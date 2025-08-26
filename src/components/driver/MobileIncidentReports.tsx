@@ -189,15 +189,15 @@ export default function MobileIncidentReports() {
         </div>
 
         {/* Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="incidents" className="text-xs">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mobile-tabs">
+          <TabsList className="grid w-full grid-cols-3 mb-6 gap-1">
+            <TabsTrigger value="incidents" className="text-xs sm:text-sm px-1 sm:px-3 py-2">
               My Incidents
             </TabsTrigger>
-            <TabsTrigger value="emergency" className="text-xs">
+            <TabsTrigger value="emergency" className="text-xs sm:text-sm px-1 sm:px-3 py-2">
               Emergency Contact
             </TabsTrigger>
-            <TabsTrigger value="guidelines" className="text-xs">
+            <TabsTrigger value="guidelines" className="text-xs sm:text-sm px-1 sm:px-3 py-2">
               Safety Guidelines
             </TabsTrigger>
           </TabsList>
@@ -209,7 +209,7 @@ export default function MobileIncidentReports() {
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <Input
                       placeholder="Search incidents"
                       value={searchTerm}
@@ -239,9 +239,9 @@ export default function MobileIncidentReports() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No incidents found</h3>
-                    <p className="text-gray-600 mb-4">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">No incidents found</h3>
+                    <p className="text-muted-foreground mb-4">
                       {searchTerm || statusFilter !== 'all' 
                         ? 'No incidents match your search criteria'
                         : 'You haven\'t reported any incidents yet'
@@ -249,7 +249,7 @@ export default function MobileIncidentReports() {
                     </p>
                     <Button>
                       <Plus className="w-4 h-4 mr-2" />
-                      Report First Incident
+                      Report New Incident
                     </Button>
                   </div>
                 </CardContent>
@@ -257,109 +257,96 @@ export default function MobileIncidentReports() {
             ) : (
               <div className="space-y-4">
                 {filteredIncidents.map((incident) => (
-                  <Card key={incident.id} className="overflow-hidden">
-                    <CardContent className="p-4 space-y-4">
-                      {/* BLOCK 1: Title and Badges Row */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 pr-6 min-w-0">
-                          <h3 className="text-lg font-semibold text-gray-900 leading-tight break-words">
-                            {incident.title}
-                          </h3>
-                        </div>
-                        <div className="flex flex-col gap-1 flex-shrink-0 ml-2">
-                          <Badge 
-                            variant={getSeverityColor(incident.severity)} 
-                            className="h-6 px-2 text-xs whitespace-nowrap"
-                          >
-                            {incident.severity}
-                          </Badge>
-                          <Badge 
-                            variant={getStatusColor(incident.status)} 
-                            className="h-6 px-2 text-xs whitespace-nowrap"
-                          >
-                            {incident.status.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* BLOCK 2: Date and Location Row */}
-                      <div className="flex items-center justify-between mb-3 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span>
-                            {incident.incident_date ? format(parseISO(incident.incident_date), 'yyyy-MM-dd') : 'Not specified'} at {incident.incident_time || '00:00'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="max-w-[120px] truncate">
-                            {incident.location_address || 'Location not specified'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* BLOCK 3: Description */}
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 leading-relaxed break-words max-h-[80px] overflow-hidden">
-                          {incident.description}
-                        </p>
-                      </div>
-
-                      {/* BLOCK 4: Bottom Info Row */}
+                  <Card key={incident.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="pt-6">
                       <div className="space-y-3">
-                        {/* Info Items Row */}
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">Vehicle:</span>
-                            <span className="truncate max-w-[80px]">{incident.vehicles?.vehicle_number || 'Not specified'}</span>
+                        {/* BLOCK 1: Title and Status Row */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 pr-6 min-w-0">
+                            <h3 className="text-lg font-semibold text-foreground leading-tight break-words">
+                              {incident.title}
+                            </h3>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">Passengers:</span>
-                            <span>{incident.people_involved?.length || 0}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">Damage:</span>
-                            <span>Reported</span>
-                            <Eye className="w-3 h-3 text-gray-400" />
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Badge variant={getStatusColor(incident.status)}>
+                              {getStatusIcon(incident.status)}
+                              <span className="ml-1 capitalize">{incident.status}</span>
+                            </Badge>
+                            {incident.severity && (
+                              <Badge variant={getSeverityColor(incident.severity)}>
+                                {incident.severity}
+                              </Badge>
+                            )}
                           </div>
                         </div>
-                        
-                        {/* Action Button Row */}
-                        <div className="flex justify-end">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex items-center gap-2 px-4 py-2 h-8 min-w-[120px]"
-                          >
-                            <Eye className="w-3 h-3" />
-                            <span className="text-xs">View Details</span>
-                          </Button>
+
+                        {/* BLOCK 2: Date and Location Row */}
+                        <div className="flex items-center justify-between mb-3 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span>
+                              {incident.incident_date ? format(parseISO(incident.incident_date), 'yyyy-MM-dd') : 'Not specified'} at {incident.incident_time || '00:00'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-muted-foreground" />
+                            <span className="max-w-[120px] truncate">
+                              {incident.location_address || 'Location not specified'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* BLOCK 3: Description */}
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground leading-relaxed break-words max-h-[80px] overflow-hidden">
+                            {incident.description}
+                          </p>
+                        </div>
+
+                        {/* BLOCK 4: Info Items and Actions */}
+                        <div className="space-y-3">
+                          {/* Info Items Row */}
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">Vehicle:</span>
+                              <span>{incident.vehicle_id || 'Not specified'}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">Damage:</span>
+                              <span>Reported</span>
+                              <Eye className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          </div>
+                          
+                          {/* Actions Row */}
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>ID: {incident.id}</span>
+                              <span>•</span>
+                              <span>Updated: {format(parseISO(incident.updated_at), 'MMM dd, yyyy')}</span>
+                            </div>
+                            <Button size="sm" variant="outline">
+                              View Details
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <Button variant="outline" className="w-full">
+                        <FileText className="w-4 h-4 mr-2" />
+                        View All Reports
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
-
-            {/* Quick Actions */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <Button className="w-full h-12">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Report New Incident
-                  </Button>
-                  <Button variant="outline" className="w-full h-12">
-                    <FileText className="w-4 h-4 mr-2" />
-                    View All Reports
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Emergency Contact Tab */}
@@ -376,7 +363,7 @@ export default function MobileIncidentReports() {
                   <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                     <div>
                       <h4 className="font-medium">Emergency Services</h4>
-                      <p className="text-sm text-gray-600">Police, Fire, Ambulance</p>
+                      <p className="text-sm text-muted-foreground">Police, Fire, Ambulance</p>
                     </div>
                     <Button size="sm" variant="destructive">
                       <Phone className="w-4 h-4 mr-2" />
@@ -387,7 +374,7 @@ export default function MobileIncidentReports() {
                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                     <div>
                       <h4 className="font-medium">Control Room</h4>
-                      <p className="text-sm text-gray-600">24/7 Support</p>
+                      <p className="text-sm text-muted-foreground">24/7 Support</p>
                     </div>
                     <Button size="sm" variant="outline">
                       <Phone className="w-4 h-4 mr-2" />
@@ -398,7 +385,7 @@ export default function MobileIncidentReports() {
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                     <div>
                       <h4 className="font-medium">Manager</h4>
-                      <p className="text-sm text-gray-600">Direct Line</p>
+                      <p className="text-sm text-muted-foreground">Direct Line</p>
                     </div>
                     <Button size="sm" variant="outline">
                       <Phone className="w-4 h-4 mr-2" />

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -88,28 +88,7 @@ const InvoiceManagement: React.FC = () => {
   // Get real invoice data from backend
   const { invoices, isLoading: invoicesLoading, clearAllInvoices, stats, hasData } = useInvoicesData();
 
-  const handleClearInvoices = async () => {
-    const confirmed = confirm(
-      'Are you sure you want to clear all invoice data?\n\nThis will permanently delete:\n- All invoice records\n- All payment history\n- All customer invoicing data\n\nThis action cannot be undone.'
-    );
-    
-    if (confirmed) {
-      try {
-        await clearAllInvoices.mutateAsync();
-        toast({
-          title: "Success!",
-          description: "All invoice data has been cleared from the database.",
-        });
-      } catch (error) {
-        console.error('Error clearing invoices:', error);
-        toast({
-          title: "Error",
-          description: "Failed to clear invoice data. Please try again.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
+  // Clear All Data functionality removed
 
   if (loading || invoicesLoading) {
     return (
@@ -331,15 +310,7 @@ const InvoiceManagement: React.FC = () => {
           <p className="text-gray-600 mt-1">Create, send, track, and manage customer invoices</p>
         </div>
         <div className="flex gap-3">
-          <Button 
-            onClick={handleClearInvoices} 
-            variant="destructive" 
-            className="inline-flex items-center"
-            disabled={clearAllInvoices.isPending}
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            {clearAllInvoices.isPending ? 'Clearing...' : 'Clear All Data'}
-          </Button>
+          {/* Clear All Data button removed */}
           <Button variant="outline">
             <Settings className="w-4 h-4 mr-2" />
             Settings
@@ -358,6 +329,9 @@ const InvoiceManagement: React.FC = () => {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Invoice</DialogTitle>
+                <DialogDescription>
+                  Create a new invoice for your customers with detailed service information and billing details.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-6">
                 {/* Customer Information */}

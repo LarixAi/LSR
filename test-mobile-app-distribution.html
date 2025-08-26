@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile App Distribution Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .driver-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .driver-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .driver-item:hover {
+            background: #f8f9fa;
+        }
+
+        .driver-item.selected {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .driver-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .driver-info {
+            flex: 1;
+        }
+
+        .driver-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .driver-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status-inactive {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .download-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .link-item input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976d2;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #2196f3;
+            border: 1px solid #2196f3;
+        }
+
+        .btn-outline:hover {
+            background: #f3f8ff;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #388e3c;
+        }
+
+        .message-area {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .send-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .send-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2196f3;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #4caf50;
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Mobile App Distribution</h1>
+            <p>Send app download links to your drivers</p>
+        </div>
+
+        <div class="content">
+            <div class="grid">
+                <!-- Left Column -->
+                <div>
+                    <!-- Driver Selection -->
+                    <div class="card">
+                        <h3>👥 Select Drivers</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button class="btn btn-outline" onclick="selectAllActive()">Select All Active</button>
+                            <button class="btn btn-outline" onclick="clearAll()">Clear All</button>
+                        </div>
+                        <div class="driver-list" id="driverList">
+                            <!-- Drivers will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Download Links -->
+                    <div class="card">
+                        <h3>📥 Download Links</h3>
+                        <div class="download-links">
+                            <div class="link-item">
+                                <label>iOS App Store:</label>
+                                <input type="text" value="https://apps.apple.com/app/vehicle-check-app" readonly>
+                                <button class="btn btn-primary" onclick="copyToClipboard('https://apps.apple.com/app/vehicle-check-app')">Copy</button>
+                            </div>
+                            <div class="link-item">
+                                <label>Google Play:</label>
+                                <input type="text" value="https://play.google.com/store/apps/details?id=com.vehiclecheck.app" readonly>
+                                <button class="btn btn-primary" onclick="copyToClipboard('https://play.google.com/store/apps/details?id=com.vehiclecheck.app')">Copy</button>
+                            </div>
+                            <div class="link-item">
+                                <label>Web Download:</label>
+                                <input type="text" value="https://yourdomain.com/driver-app-download" readonly>
+                                <button class="btn btn-primary" onclick="copyToClipboard('https://yourdomain.com/driver-app-download')">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Message Template -->
+                    <div class="card">
+                        <h3>✉️ Message Template</h3>
+                        <textarea class="message-area" id="messageArea" placeholder="Enter your message here..."></textarea>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-outline" onclick="useDefaultTemplate()">Use Default Template</button>
+                            <button class="btn btn-outline" onclick="clearMessage()">Clear Message</button>
+                        </div>
+                    </div>
+
+                    <!-- Send Options -->
+                    <div class="card">
+                        <h3>📤 Send Options</h3>
+                        <div class="send-options">
+                            <div class="option-item">
+                                <input type="checkbox" id="sendEmail" checked>
+                                <label for="sendEmail">Send via Email</label>
+                            </div>
+                            <div class="option-item">
+                                <input type="checkbox" id="sendSMS">
+                                <label for="sendSMS">Send via SMS</label>
+                            </div>
+                        </div>
+                        <button class="send-button" id="sendButton" onclick="sendAppLinks()">
+                            📤 Send to 0 Drivers
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">5,000+</div>
+                    <div class="stat-label">Drivers Using App</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">56</div>
+                    <div class="stat-label">Safety Questions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">5 min</div>
+                    <div class="stat-label">Average Check Time</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Mock driver data
+        const drivers = [
+            { id: '1', name: 'John Smith', email: 'john.smith@company.com', phone: '+44 7700 900123', status: 'active' },
+            { id: '2', name: 'Sarah Johnson', email: 'sarah.johnson@company.com', phone: '+44 7700 900124', status: 'active' },
+            { id: '3', name: 'Mike Wilson', email: 'mike.wilson@company.com', phone: '+44 7700 900125', status: 'active' },
+            { id: '4', name: 'Emma Davis', email: 'emma.davis@company.com', phone: '+44 7700 900126', status: 'inactive' },
+            { id: '5', name: 'David Brown', email: 'david.brown@company.com', phone: '+44 7700 900127', status: 'active' },
+            { id: '6', name: 'Lisa Anderson', email: 'lisa.anderson@company.com', phone: '+44 7700 900128', status: 'active' }
+        ];
+
+        let selectedDrivers = [];
+
+        // Initialize the page
+        function init() {
+            renderDriverList();
+            useDefaultTemplate();
+        }
+
+        // Render driver list
+        function renderDriverList() {
+            const driverList = document.getElementById('driverList');
+            driverList.innerHTML = '';
+
+            drivers.forEach(driver => {
+                const driverItem = document.createElement('div');
+                driverItem.className = `driver-item ${selectedDrivers.includes(driver.id) ? 'selected' : ''}`;
+                driverItem.onclick = () => toggleDriver(driver.id);
+
+                driverItem.innerHTML = `
+                    <input type="checkbox" ${selectedDrivers.includes(driver.id) ? 'checked' : ''}>
+                    <div class="driver-info">
+                        <div class="driver-name">${driver.name}</div>
+                        <div class="driver-details">${driver.email} • ${driver.phone}</div>
+                    </div>
+                    <span class="status-badge status-${driver.status}">${driver.status}</span>
+                `;
+
+                driverList.appendChild(driverItem);
+            });
+
+            updateSendButton();
+        }
+
+        // Toggle driver selection
+        function toggleDriver(driverId) {
+            if (selectedDrivers.includes(driverId)) {
+                selectedDrivers = selectedDrivers.filter(id => id !== driverId);
+            } else {
+                selectedDrivers.push(driverId);
+            }
+            renderDriverList();
+        }
+
+        // Select all active drivers
+        function selectAllActive() {
+            selectedDrivers = drivers.filter(d => d.status === 'active').map(d => d.id);
+            renderDriverList();
+        }
+
+        // Clear all selections
+        function clearAll() {
+            selectedDrivers = [];
+            renderDriverList();
+        }
+
+        // Update send button text
+        function updateSendButton() {
+            const sendButton = document.getElementById('sendButton');
+            sendButton.textContent = `📤 Send to ${selectedDrivers.length} Driver${selectedDrivers.length !== 1 ? 's' : ''}`;
+            sendButton.disabled = selectedDrivers.length === 0;
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showNotification('Copied to clipboard!', 'success');
+        }
+
+        // Use default template
+        function useDefaultTemplate() {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.value = `Hi [Driver Name],
+
+We're excited to announce that our new Vehicle Check App is now available for download!
+
+📱 Download the app:
+• iOS: https://apps.apple.com/app/vehicle-check-app
+• Android: https://play.google.com/store/apps/details?id=com.vehiclecheck.app
+• Web: https://yourdomain.com/driver-app-download
+
+🔑 Your login details:
+• Driver ID: [DRIVER_ID]
+• Organization Code: [ORG_CODE]
+
+The app includes:
+✅ 56 comprehensive safety questions
+✅ Photo documentation
+✅ Real-time sync with management
+✅ Offline capability
+✅ GPS location tracking
+
+Please download the app and start using it for your daily vehicle checks. If you need any help, please contact support.
+
+Best regards,
+[Your Name]
+Transport Manager`;
+        }
+
+        // Clear message
+        function clearMessage() {
+            document.getElementById('messageArea').value = '';
+        }
+
+        // Send app links
+        async function sendAppLinks() {
+            if (selectedDrivers.length === 0) {
+                showNotification('Please select at least one driver', 'error');
+                return;
+            }
+
+            const sendButton = document.getElementById('sendButton');
+            const originalText = sendButton.textContent;
+            
+            sendButton.disabled = true;
+            sendButton.textContent = '📤 Sending...';
+
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            showNotification(`App download links sent to ${selectedDrivers.length} driver(s)!`, 'success');
+            
+            selectedDrivers = [];
+            renderDriverList();
+            clearMessage();
+
+            sendButton.disabled = false;
+            sendButton.textContent = originalText;
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
+

@@ -81,7 +81,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (checkError) {
         console.error('Error checking profile existence:', checkError);
-        return;
+        // Don't return on error, continue with profile creation attempt
+        // This allows the app to work even if there are temporary network issues
       }
 
       if (!existing) {
@@ -130,7 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Profile fetch error:', error);
         
         // If we get an access control error, try to use emergency profile
-        if (error.message.includes('Load failed') || error.message.includes('access control') || error.message.includes('CORS')) {
+        if (error.message.includes('Load failed') || error.message.includes('access control') || error.message.includes('CORS') || error.message.includes('TypeError')) {
           console.log('🚨 Access control/CORS error detected, checking for emergency profile');
           const emergencyProfile = sessionStorage.getItem('user_profile');
           if (emergencyProfile) {

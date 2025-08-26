@@ -15,6 +15,8 @@ import {
 import { Calendar, MapPin, MessageSquare } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateCustomerBooking } from '@/hooks/useCustomerBookings';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MockRoute {
   id: string;
@@ -25,13 +27,16 @@ interface MockRoute {
 }
 
 const ParentBookingRequest = () => {
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const createCustomerBooking = useCreateCustomerBooking();
+  
   const [selectedRoute, setSelectedRoute] = useState('');
   const [requestDate, setRequestDate] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
   const [dropoffLocation, setDropoffLocation] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const { data: availableRoutes } = useQuery({
     queryKey: ['available-routes'],
@@ -72,20 +77,30 @@ const ParentBookingRequest = () => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Generate booking number
+      const bookingNumber = `BK-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       
-      console.log('Mock booking request submitted:', {
-        selectedRoute,
-        requestDate,
-        pickupLocation,
-        dropoffLocation,
-        specialRequests
-      });
+      // Create customer booking in database
+      const bookingData = {
+        booking_number: bookingNumber,
+        customer_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(),
+        customer_email: profile?.email,
+        customer_phone: profile?.phone,
+        customer_id: profile?.id,
+        pickup_location: pickupLocation,
+        dropoff_location: dropoffLocation,
+        service_type: 'school_transport',
+        passengers: 1,
+        special_requirements: specialRequests,
+        booking_date: requestDate,
+        estimated_price: 25.00 // Default price, could be calculated based on route
+      };
+
+      await createCustomerBooking.mutateAsync(bookingData);
 
       toast({
         title: "Booking Request Submitted",
-        description: "Your transport booking request has been submitted for review.",
+        description: `Your transport booking request (${bookingNumber}) has been submitted for review.`,
       });
 
       // Reset form
@@ -95,6 +110,7 @@ const ParentBookingRequest = () => {
       setDropoffLocation('');
       setSpecialRequests('');
     } catch (error) {
+      console.error('Booking submission error:', error);
       toast({
         title: "Submission Failed",
         description: "Failed to submit booking request. Please try again.",

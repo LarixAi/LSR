@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Notification System Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-profile {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-info p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .nav-section {
+            padding: 16px 0;
+        }
+
+        .nav-title {
+            padding: 0 20px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .nav-item.active {
+            background: #eff6ff;
+            color: #3b82f6;
+            border-right: 3px solid #3b82f6;
+        }
+
+        .nav-item svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .nav-subsection {
+            margin-left: 20px;
+        }
+
+        .nav-subitem {
+            padding: 8px 20px 8px 32px;
+            font-size: 13px;
+        }
+
+        .sign-out {
+            margin-top: auto;
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .sign-out-btn {
+            width: 100%;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sign-out-btn:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .company-logo {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .location-info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            width: 32px;
+            height: 32px;
+            background: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .header-icon:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        /* Page Content */
+        .page-content {
+            flex: 1;
+            padding: 24px;
+            background: #f8f9fa;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .page-description {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .compose-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .compose-btn:hover {
+            background: #2563eb;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: white;
+            border-radius: 8px;
+            padding: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        /* Two Column Layout */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        /* Notification Templates */
+        .template-item {
+            padding: 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .template-item:hover {
+            border-color: #3b82f6;
+            background: #f8f9fa;
+        }
+
+        .template-item.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .template-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .template-description {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            border: 1px solid;
+        }
+
+        .priority-high {
+            background: #fef3c7;
+            color: #d97706;
+            border-color: #fbbf24;
+        }
+
+        .priority-normal {
+            background: #dbeafe;
+            color: #2563eb;
+            border-color: #93c5fd;
+        }
+
+        .priority-emergency {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #f87171;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-card.blue {
+            background: #dbeafe;
+        }
+
+        .stat-card.green {
+            background: #dcfce7;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-card.blue .stat-number {
+            color: #2563eb;
+        }
+
+        .stat-card.green .stat-number {
+            color: #16a34a;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .stat-card.blue .stat-label {
+            color: #1e40af;
+        }
+
+        .stat-card.green .stat-label {
+            color: #15803d;
+        }
+
+        .stats-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .stats-detail.orange {
+            background: #fef3c7;
+        }
+
+        .stats-detail.red {
+            background: #fee2e2;
+        }
+
+        .stats-detail-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .stats-detail.orange .stats-detail-label {
+            color: #d97706;
+        }
+
+        .stats-detail.red .stats-detail-label {
+            color: #dc2626;
+        }
+
+        .stats-badge {
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 500;
+            border: 1px solid;
+        }
+
+        .stats-detail.orange .stats-badge {
+            background: #fbbf24;
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+
+        .stats-detail.red .stats-badge {
+            background: #f87171;
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+
+        /* Compose Form */
+        .compose-form {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            margin-top: 24px;
+        }
+
+        .form-content {
+            padding: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select {
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .form-textarea {
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #666;
+            border: 1px solid #d1d5db;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">TransManager</div>
+            </div>
+
+            <div class="user-profile">
+                <div class="avatar">TM</div>
+                <div class="user-info">
+                    <h3>Transport Manager</h3>
+                    <p>Admin</p>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Navigation</div>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Overview
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Fleet Management
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    Operations
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    Financial
+                </a>
+                <a href="#" class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Communication
+                </a>
+                <div class="nav-subsection">
+                    <a href="#" class="nav-item nav-subitem">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        Email Management
+                    </a>
+                    <a href="#" class="nav-item nav-subitem active">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        Advanced Notifications
+                    </a>
+                </div>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 12l2 2 4-4"></path>
+                        <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path>
+                        <path d="M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z"></path>
+                        <path d="M12 3c0 1-1 2-2 2s-2 1-2 2 1 2 2 2 2-1 2-2 1-2 2-2 2-1 2-2-1-2-2-2z"></path>
+                    </svg>
+                    Compliance
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 20V10"></path>
+                        <path d="M6 20V10"></path>
+                        <path d="M18 10V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v6"></path>
+                        <path d="M6 20h12"></path>
+                    </svg>
+                    Reports
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Additional</div>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                    </svg>
+                    Staff Directory
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    API Management
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Profile
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Settings
+                </a>
+            </div>
+
+            <div class="sign-out">
+                <button class="sign-out-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 8px;">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16,17 21,12 16,7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="company-logo">LSR Logistics Solution Resources</div>
+                    <div class="location-info">TransManager Current Location</div>
+                </div>
+                <div class="header-right">
+                    <div class="header-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                    </div>
+                    <div class="header-icon">TM</div>
+                </div>
+            </div>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">Advanced Notification System</h1>
+                    <p class="page-description">Send and manage notifications across your organization</p>
+                </div>
+
+                <div class="action-bar">
+                    <button class="compose-btn" onclick="toggleComposeForm()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Compose Notification
+                    </button>
+
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('compose')">Compose</button>
+                        <button class="tab" onclick="switchTab('sent')">Sent (2)</button>
+                        <button class="tab" onclick="switchTab('received')">Received (1)</button>
+                    </div>
+                </div>
+
+                <!-- Compose Tab Content -->
+                <div id="compose-content">
+                    <div class="content-grid">
+                        <!-- Notification Templates -->
+                        <div class="card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #3b82f6;">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                </svg>
+                                <div class="card-title">Notification Templates</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="template-item" onclick="selectTemplate('safety')">
+                                    <div class="template-header">
+                                        <div class="template-title">Safety Alert</div>
+                                        <div class="priority-badge priority-high">high</div>
+                                    </div>
+                                    <div class="template-description">Safety Alert - Immediate Action Required</div>
+                                </div>
+
+                                <div class="template-item" onclick="selectTemplate('schedule')">
+                                    <div class="template-header">
+                                        <div class="template-title">Schedule Change</div>
+                                        <div class="priority-badge priority-normal">normal</div>
+                                    </div>
+                                    <div class="template-description">Schedule Update</div>
+                                </div>
+
+                                <div class="template-item" onclick="selectTemplate('maintenance')">
+                                    <div class="template-header">
+                                        <div class="template-title">Maintenance Reminder</div>
+                                        <div class="priority-badge priority-normal">normal</div>
+                                    </div>
+                                    <div class="template-description">Vehicle Maintenance Due</div>
+                                </div>
+
+                                <div class="template-item" onclick="selectTemplate('emergency')">
+                                    <div class="template-header">
+                                        <div class="template-title">Emergency Notice</div>
+                                        <div class="priority-badge priority-emergency">emergency</div>
+                                    </div>
+                                    <div class="template-description">EMERGENCY - Immediate Response Required</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notification Stats -->
+                        <div class="card">
+                            <div class="card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #3b82f6;">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                </svg>
+                                <div class="card-title">Notification Stats</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="stats-grid">
+                                    <div class="stat-card blue">
+                                        <div class="stat-number">2</div>
+                                        <div class="stat-label">Sent Today</div>
+                                    </div>
+                                    <div class="stat-card green">
+                                        <div class="stat-number">0</div>
+                                        <div class="stat-label">Unread</div>
+                                    </div>
+                                </div>
+
+                                <div class="stats-detail orange">
+                                    <span class="stats-detail-label">High Priority</span>
+                                    <span class="stats-badge">1</span>
+                                </div>
+
+                                <div class="stats-detail red">
+                                    <span class="stats-detail-label">Emergency</span>
+                                    <span class="stats-badge">1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Compose Form -->
+                    <div id="compose-form" class="compose-form hidden">
+                        <div class="form-content">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" class="form-input" id="notification-title" placeholder="Notification title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Priority</label>
+                                    <select class="form-select" id="notification-priority">
+                                        <option value="low">Low</option>
+                                        <option value="normal" selected>Normal</option>
+                                        <option value="high">High</option>
+                                        <option value="emergency">Emergency</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Recipients</label>
+                                <select class="form-select" id="notification-recipients">
+                                    <option value="">Select recipients</option>
+                                    <option value="all">All Staff</option>
+                                    <option value="drivers">Drivers Only</option>
+                                    <option value="mechanics">Mechanics Only</option>
+                                    <option value="admin">Administrators Only</option>
+                                    <option value="custom">Custom Selection</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Message</label>
+                                <textarea class="form-textarea" id="notification-message" placeholder="Enter your notification message..."></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button class="btn-primary" onclick="sendNotification()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                                        <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                                    </svg>
+                                    Send Notification
+                                </button>
+                                <button class="btn-secondary" onclick="cancelCompose()">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sent Tab Content -->
+                <div id="sent-content" class="hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Sent Notifications</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="template-item">
+                                <div class="template-header">
+                                    <div class="template-title">Safety Alert</div>
+                                    <div class="priority-badge priority-high">High</div>
+                                </div>
+                                <div class="template-description">Sent to all drivers • 2 hours ago</div>
+                            </div>
+                            <div class="template-item">
+                                <div class="template-header">
+                                    <div class="template-title">Schedule Update</div>
+                                    <div class="priority-badge priority-normal">Normal</div>
+                                </div>
+                                <div class="template-description">Sent to all staff • 4 hours ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Received Tab Content -->
+                <div id="received-content" class="hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Received Notifications</div>
+                        </div>
+                        <div class="card-content">
+                            <div style="text-align: center; padding: 40px; color: #666;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 48px; height: 48px; margin: 0 auto 16px; color: #ccc;">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                </svg>
+                                <p>No unread notifications</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedTemplate = null;
+
+        function selectTemplate(type) {
+            // Remove previous selection
+            document.querySelectorAll('.template-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Add selection to clicked item
+            event.currentTarget.classList.add('selected');
+            selectedTemplate = type;
+
+            // Show compose form
+            document.getElementById('compose-form').classList.remove('hidden');
+
+            // Populate form based on template
+            const templates = {
+                safety: {
+                    title: 'Safety Alert',
+                    priority: 'high',
+                    message: 'URGENT: Safety protocol violation detected. All drivers must review safety guidelines immediately.'
+                },
+                schedule: {
+                    title: 'Schedule Change',
+                    priority: 'normal',
+                    message: 'Important schedule changes for tomorrow. Please check your updated routes.'
+                },
+                maintenance: {
+                    title: 'Maintenance Reminder',
+                    priority: 'normal',
+                    message: 'Vehicle maintenance is due. Please schedule service appointment.'
+                },
+                emergency: {
+                    title: 'Emergency Notice',
+                    priority: 'emergency',
+                    message: 'EMERGENCY: Immediate response required. Contact dispatch immediately.'
+                }
+            };
+
+            const template = templates[type];
+            if (template) {
+                document.getElementById('notification-title').value = template.title;
+                document.getElementById('notification-priority').value = template.priority;
+                document.getElementById('notification-message').value = template.message;
+            }
+        }
+
+        function toggleComposeForm() {
+            const form = document.getElementById('compose-form');
+            form.classList.toggle('hidden');
+        }
+
+        function cancelCompose() {
+            document.getElementById('compose-form').classList.add('hidden');
+            document.querySelectorAll('.template-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            selectedTemplate = null;
+        }
+
+        function sendNotification() {
+            const title = document.getElementById('notification-title').value;
+            const message = document.getElementById('notification-message').value;
+            
+            if (!title || !message) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            alert('Notification sent successfully!');
+            cancelCompose();
+        }
+
+        function switchTab(tab) {
+            // Hide all content
+            document.getElementById('compose-content').classList.add('hidden');
+            document.getElementById('sent-content').classList.add('hidden');
+            document.getElementById('received-content').classList.add('hidden');
+
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+            // Show selected content and activate tab
+            if (tab === 'compose') {
+                document.getElementById('compose-content').classList.remove('hidden');
+            } else if (tab === 'sent') {
+                document.getElementById('sent-content').classList.remove('hidden');
+            } else if (tab === 'received') {
+                document.getElementById('received-content').classList.remove('hidden');
+            }
+
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
+
+

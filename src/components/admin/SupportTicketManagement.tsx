@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSupportTickets, useUpdateSupportTicket } from '@/hooks/useSupportTickets';
 import { 
   Ticket, 
   User, 
@@ -54,39 +55,14 @@ const SupportTicketManagement = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
   // Fetch all support tickets for the organization
-  const { data: tickets = [], isLoading, refetch } = useQuery({
-    queryKey: ['admin-support-tickets', profile?.organization_id, statusFilter, priorityFilter],
-    queryFn: async () => {
-      if (!profile?.organization_id) return [];
-      
-      // Mock support tickets (table doesn't exist yet)
-      return [] as any[];
-    },
-    enabled: !!profile?.organization_id && (profile?.role === 'admin' || profile?.role === 'council')
-  });
+  const { supportTickets: tickets = [], isLoading, refetch } = useSupportTickets(
+    profile?.organization_id,
+    statusFilter === 'all' ? undefined : statusFilter,
+    priorityFilter === 'all' ? undefined : priorityFilter
+  );
 
   // Update ticket status/assignment mutation
-  const updateTicketMutation = useMutation({
-    mutationFn: async ({ ticketId, updates }: { ticketId: string; updates: any }) => {
-      // Mock update (table doesn't exist yet)
-      console.log('Ticket would be updated:', { ticketId, updates });
-      return {};
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-support-tickets'] });
-      toast({
-        title: "Ticket Updated",
-        description: "Support ticket has been updated successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update support ticket.",
-        variant: "destructive",
-      });
-    }
-  });
+  const updateTicketMutation = useUpdateSupportTicket();
 
   const getStatusColor = (status: string) => {
     const statusColors: Record<string, string> = {

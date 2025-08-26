@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, Link } from 'react-router-dom';
 import { useAdminAccess, AdminOnly } from '@/utils/adminAccess';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   Sidebar,
   SidebarContent,
@@ -48,7 +49,9 @@ import {
   Package,
   Bell,
   Train,
-  UserPlus
+  UserPlus,
+  Ticket,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -63,6 +66,7 @@ const TransportSidebar = () => {
   const location = useLocation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   const handleSignOut = async () => {
@@ -271,13 +275,13 @@ const TransportSidebar = () => {
               },
               {
                 title: 'Inspections',
-                url: '/compliance',
+                url: '/inspections',
                 icon: CheckSquare,
                 description: 'Vehicle inspections'
               },
               {
-                title: 'Smart Inspections',
-                url: '/vehicle-inspections',
+                title: 'Vehicle Check Questions',
+                url: '/admin/smart-inspections',
                 icon: CheckSquare,
                 description: 'Advanced inspection system'
               },
@@ -315,6 +319,23 @@ const TransportSidebar = () => {
                 url: '/reports/compliance',
                 icon: Shield,
                 description: 'Compliance analytics'
+              }
+            ]
+          },
+          {
+            title: 'Support & Help',
+            items: [
+              {
+                title: 'Support Tickets',
+                url: '/admin/support-tickets',
+                icon: Ticket,
+                description: 'Manage support tickets and requests'
+              },
+              {
+                title: 'Help & Documentation',
+                url: '/help-support',
+                icon: HelpCircle,
+                description: 'Help center and documentation'
               }
             ]
           }
@@ -522,34 +543,56 @@ const TransportSidebar = () => {
 
   return (
     <Sidebar 
-      className="border-r"
+      className="border-r border-border bg-background sidebar"
       collapsible="offcanvas"
     >
-      <SidebarHeader className="p-3 border-b border-border/50">
+      <SidebarHeader 
+        className="p-3 border-b border-border bg-card sidebar-header"
+      >
         <Link to="/dashboard" className="flex items-center space-x-2 group-data-[collapsible=icon]:justify-center">
-          <div className="w-7 h-7 bg-gradient-to-r from-blue-600 to-green-600 rounded-lg flex items-center justify-center">
-            <Truck className="w-4 h-4 text-white" />
+          <div 
+            className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-r from-primary to-primary/80"
+          >
+            <Truck className="w-4 h-4 text-primary-foreground" />
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-bold text-foreground">TransManager</span>
+            <span 
+              className="text-sm font-bold text-foreground"
+            >
+              Logistics Solution Resources
+            </span>
           </div>
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-y-auto py-2">
+      <SidebarContent 
+        className="overflow-y-auto py-2 bg-background sidebar-content"
+      >
         {/* User Profile Section - Compact */}
         {profile && (
           <div className="px-2 mb-3">
-            <div className="flex items-center space-x-2 p-2 bg-accent/30 rounded-lg group-data-[collapsible=icon]:px-1">
+            <div 
+              className="flex items-center space-x-2 p-2 rounded-lg group-data-[collapsible=icon]:px-1 border border-border bg-card user-profile-section"
+            >
               <Avatar className="h-7 w-7 flex-shrink-0">
                 <AvatarImage src={profile?.avatar_url || ''} alt={getFullName()} />
-                <AvatarFallback className="bg-gradient-to-r from-blue-600 to-green-600 text-white text-xs">
+                <AvatarFallback 
+                  className="text-primary-foreground text-xs bg-gradient-to-r from-primary to-primary/80"
+                >
                   {getUserInitials()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                <p className="text-xs font-medium text-foreground truncate">{getFullName()}</p>
-                <p className="text-xs text-muted-foreground capitalize">{profile.role}</p>
+                <p 
+                  className="text-xs font-medium truncate text-foreground"
+                >
+                  {getFullName()}
+                </p>
+                <p 
+                  className="text-xs capitalize text-muted-foreground"
+                >
+                  {profile.role}
+                </p>
               </div>
             </div>
           </div>
@@ -565,13 +608,16 @@ const TransportSidebar = () => {
               <Collapsible key={section.title} open={isOpen} onOpenChange={() => toggleSection(section.title)}>
                 <CollapsibleTrigger asChild>
                   <button className={`
-                    w-full flex items-center justify-between px-2 py-2 rounded-md text-left transition-colors
-                    ${hasActiveItem ? 'bg-primary/10 text-primary' : 'hover:bg-accent/50 text-foreground'}
+                    w-full flex items-center justify-between px-2 py-2 rounded-md text-left transition-all duration-200 collapsible-trigger
+                    ${hasActiveItem 
+                      ? 'active' 
+                      : ''
+                    }
                     group-data-[collapsible=icon]:justify-center
                   `}>
                     <span className="text-xs font-medium group-data-[collapsible=icon]:hidden">{section.title}</span>
                     <div className="group-data-[collapsible=icon]:hidden">
-                      {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      {isOpen ? <ChevronDown className="w-3 h-3 text-gray-600" /> : <ChevronRight className="w-3 h-3 text-gray-600" />}
                     </div>
                   </button>
                 </CollapsibleTrigger>
@@ -583,14 +629,14 @@ const TransportSidebar = () => {
                         key={item.title}
                         to={item.url}
                         className={`
-                          flex items-center space-x-2 px-3 py-1.5 ml-2 rounded-md transition-colors text-xs
+                          flex items-center space-x-2 px-3 py-1.5 ml-2 rounded-md transition-all duration-200 text-xs sidebar-item
                           ${isActive 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                            ? 'active' 
+                            : ''
                           }
                         `}
                       >
-                        <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                        <item.icon className={`w-3.5 h-3.5 flex-shrink-0 nav-icon ${isActive ? 'active' : ''}`} />
                         <span className="truncate font-medium">{item.title}</span>
                         {item.badge && (
                           <Badge variant={item.badge.variant as any} className="text-xs h-4">
@@ -612,30 +658,36 @@ const TransportSidebar = () => {
             <div className="space-y-0.5">
               <Link 
                 to="/staff-directory" 
-                className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
-                  location.pathname === '/staff-directory' ? 'bg-orange-100 text-orange-700' : 'hover:bg-accent text-muted-foreground'
+                className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-all duration-200 sidebar-item ${
+                  location.pathname === '/staff-directory' 
+                    ? 'active' 
+                    : ''
                 }`}
               >
-                <Building2 className="w-3.5 h-3.5" />
+                <Building2 className="w-3.5 h-3.5 nav-icon" />
                 <span className="group-data-[collapsible=icon]:hidden">Staff Directory</span>
               </Link>
               <Link 
                 to="/admin/api-management" 
-                className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
-                  location.pathname === '/admin/api-management' ? 'bg-orange-100 text-orange-700' : 'hover:bg-accent text-muted-foreground'
+                className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-all duration-200 sidebar-item ${
+                  location.pathname === '/admin/api-management' 
+                    ? 'active' 
+                    : ''
                 }`}
               >
-                <Network className="w-3.5 h-3.5" />
+                <Network className="w-3.5 h-3.5 nav-icon" />
                 <span className="group-data-[collapsible=icon]:hidden">API Management</span>
               </Link>
             </div>
           </AdminOnly>
           
-          <div className="border-t pt-2 space-y-0.5">
+          <div className="border-t border-border pt-2 space-y-0.5">
             <Link 
               to="/profile" 
-              className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
-                location.pathname === '/profile' ? 'bg-accent text-foreground' : 'hover:bg-accent text-muted-foreground'
+              className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-all duration-200 ${
+                location.pathname === '/profile' 
+                  ? 'bg-accent text-accent-foreground border border-border' 
+                  : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
               }`}
             >
               <User className="w-3.5 h-3.5" />
@@ -643,8 +695,10 @@ const TransportSidebar = () => {
             </Link>
             <Link 
               to={profile?.role === 'driver' ? '/driver/settings' : '/settings'} 
-              className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
-                (profile?.role === 'driver' ? location.pathname === '/driver/settings' : location.pathname === '/settings') ? 'bg-accent text-foreground' : 'hover:bg-accent text-muted-foreground'
+              className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-all duration-200 ${
+                (profile?.role === 'driver' ? location.pathname === '/driver/settings' : location.pathname === '/settings') 
+                  ? 'bg-accent text-accent-foreground border border-border' 
+                  : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
               }`}
             >
               <Settings className="w-3.5 h-3.5" />
@@ -655,12 +709,12 @@ const TransportSidebar = () => {
       </SidebarContent>
 
       {/* Sign Out Footer */}
-      <SidebarFooter className="p-2 border-t border-border/50">
+      <SidebarFooter className="p-2 border-t border-border bg-muted/50 sidebar-footer">
         <Button
           onClick={handleSignOut}
           variant="outline"
           size="sm"
-          className="w-full flex items-center justify-center space-x-2 text-destructive border-destructive/20 hover:bg-destructive/10 hover:border-destructive/30 h-8 text-xs"
+          className="w-full flex items-center justify-center space-x-2 text-muted-foreground border-border hover:bg-accent hover:border-border/80 h-8 text-xs transition-all duration-200"
         >
           <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>

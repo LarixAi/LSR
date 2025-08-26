@@ -28,6 +28,12 @@ export interface Database {
           must_change_password: boolean | null;
           password_changed_at: string | null;
           organization_id: string | null;
+          terms_accepted: boolean | null;
+          terms_accepted_date: string | null;
+          terms_version: string | null;
+          privacy_policy_accepted: boolean | null;
+          privacy_policy_accepted_date: string | null;
+          privacy_policy_version: string | null;
         };
         Insert: {
           id: string;
@@ -52,6 +58,12 @@ export interface Database {
           must_change_password?: boolean | null;
           password_changed_at?: string | null;
           organization_id?: string | null;
+          terms_accepted?: boolean | null;
+          terms_accepted_date?: string | null;
+          terms_version?: string | null;
+          privacy_policy_accepted?: boolean | null;
+          privacy_policy_accepted_date?: string | null;
+          privacy_policy_version?: string | null;
         };
         Update: {
           id?: string;
@@ -76,6 +88,12 @@ export interface Database {
           must_change_password?: boolean | null;
           password_changed_at?: string | null;
           organization_id?: string | null;
+          terms_accepted?: boolean | null;
+          terms_accepted_date?: string | null;
+          terms_version?: string | null;
+          privacy_policy_accepted?: boolean | null;
+          privacy_policy_accepted_date?: string | null;
+          privacy_policy_version?: string | null;
         };
       };
       fuel_purchases: {

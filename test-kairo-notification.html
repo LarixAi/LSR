@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairo Notification Test</title>
+    <style>
+        /* From Uiverse.io by akshat-patel28 */ 
+        .card {
+          width: 330px;
+          height: 80px;
+          border-radius: 8px;
+          box-sizing: border-box;
+          padding: 10px 15px;
+          background-color: #ffffff;
+          box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          gap: 15px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .card:hover {
+          transform: translateY(-2px);
+          box-shadow: rgba(149, 157, 165, 0.3) 0px 12px 32px;
+        }
+
+        .wave {
+          position: absolute;
+          transform: rotate(90deg);
+          left: -31px;
+          top: 32px;
+          width: 80px;
+          fill: #04e4003a;
+        }
+
+        .icon-container {
+          width: 35px;
+          height: 35px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background-color: #04e40048;
+          border-radius: 50%;
+          margin-left: 8px;
+        }
+
+        .icon {
+          width: 17px;
+          height: 17px;
+          color: #269b24;
+        }
+
+        .message-text-container {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: flex-start;
+          flex-grow: 1;
+        }
+
+        .message-text,
+        .sub-text {
+          margin: 0;
+          cursor: default;
+        }
+
+        .message-text {
+          color: #269b24;
+          font-size: 17px;
+          font-weight: 700;
+        }
+
+        .sub-text {
+          font-size: 14px;
+          color: #555;
+        }
+
+        .cross-icon {
+          width: 18px;
+          height: 18px;
+          color: #555;
+          cursor: pointer;
+          transition: color 0.2s ease;
+        }
+
+        .cross-icon:hover {
+          color: #333;
+        }
+
+        /* Animation classes */
+        .notification-enter {
+          animation: slideIn 0.3s ease-out;
+        }
+
+        .notification-exit {
+          animation: slideOut 0.3s ease-in;
+        }
+
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideOut {
+          from {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+        }
+
+        /* Test page styles */
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+          margin: 0;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
+        }
+
+        .test-container {
+          background: white;
+          padding: 30px;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+          max-width: 600px;
+          width: 100%;
+        }
+
+        .test-button {
+          background: #269b24;
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          margin: 10px;
+        }
+
+        .test-button:hover {
+          background: #1f7a1f;
+          transform: translateY(-1px);
+        }
+
+        .notification-container {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 1000;
+        }
+
+        .message-input {
+          width: 100%;
+          padding: 12px;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 16px;
+          margin: 10px 0;
+          transition: border-color 0.2s ease;
+        }
+
+        .message-input:focus {
+          outline: none;
+          border-color: #269b24;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎉 Kairo Notification Test</h1>
+        <p>Test the notification system that appears when messages are sent in the Kairo AI interface.</p>
+        
+        <div>
+            <label for="messageInput">Enter a test message:</label>
+            <input type="text" id="messageInput" class="message-input" placeholder="Type your message here..." value="Hello Kairo! Can you help me optimize my fleet routes?">
+        </div>
+        
+        <div>
+            <button class="test-button" onclick="showNotification()">📤 Send Message & Show Notification</button>
+            <button class="test-button" onclick="showNotification('This is a longer message to test how the notification handles text truncation and display.')">📝 Test Long Message</button>
+            <button class="test-button" onclick="clearNotifications()">🗑️ Clear All Notifications</button>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <h3>✨ Features:</h3>
+            <ul>
+                <li><strong>Auto-hide:</strong> Notifications disappear after 5 seconds</li>
+                <li><strong>Click to open:</strong> Click the notification to focus on the message</li>
+                <li><strong>Close button:</strong> Click the X to dismiss immediately</li>
+                <li><strong>Hover effects:</strong> Smooth animations and visual feedback</li>
+                <li><strong>Text truncation:</strong> Long messages are truncated with "..."</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <script>
+        let notificationCount = 0;
+
+        function showNotification(customMessage = null) {
+            const message = customMessage || document.getElementById('messageInput').value || 'Test message sent!';
+            
+            const notification = document.createElement('div');
+            notification.className = 'card notification-enter';
+            notification.id = `notification-${notificationCount}`;
+            
+            notification.innerHTML = `
+                <svg class="wave" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                
+                <div class="icon-container">
+                    <svg class="icon" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                </div>
+                
+                <div class="message-text-container">
+                    <p class="message-text">Message Sent</p>
+                    <p class="sub-text">${message.length > 50 ? message.substring(0, 50) + '...' : message}</p>
+                </div>
+                
+                <svg class="cross-icon" fill="currentColor" viewBox="0 0 24 24" onclick="closeNotification('${notification.id}')">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            `;
+            
+            // Add click handler to open message
+            notification.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('cross-icon')) {
+                    openMessage(message);
+                }
+            });
+            
+            document.getElementById('notificationContainer').appendChild(notification);
+            notificationCount++;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                closeNotification(notification.id);
+            }, 5000);
+        }
+
+        function closeNotification(notificationId) {
+            const notification = document.getElementById(notificationId);
+            if (notification) {
+                notification.classList.remove('notification-enter');
+                notification.classList.add('notification-exit');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }
+
+        function clearNotifications() {
+            const container = document.getElementById('notificationContainer');
+            container.innerHTML = '';
+            notificationCount = 0;
+        }
+
+        function openMessage(message) {
+            // Focus on the input field and set the message
+            const input = document.getElementById('messageInput');
+            input.value = message;
+            input.focus();
+            
+            // Show a brief feedback
+            const originalValue = input.value;
+            input.style.borderColor = '#269b24';
+            input.style.backgroundColor = '#f0fff4';
+            
+            setTimeout(() => {
+                input.style.borderColor = '#e5e7eb';
+                input.style.backgroundColor = 'white';
+            }, 2000);
+            
+            console.log('Opening message:', message);
+        }
+
+        // Allow Enter key to send message
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                showNotification();
+            }
+        });
+    </script>
+</body>
+</html>
+
+

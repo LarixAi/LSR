@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,8 @@ import {
   Save,
   Info,
   Clock,
-  User
+  User,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -126,7 +127,7 @@ const MobileVehicleCheck: React.FC = () => {
   const createVehicleCheck = useCreateVehicleCheck();
   const { data: vehicles = [], isLoading: vehiclesLoading } = useVehicles();
   
-  const [currentStep, setCurrentStep] = useState<'vehicle-selection' | 'questions' | 'review'>('vehicle-selection');
+  const [currentStep, setCurrentStep] = useState<'vehicle-selection' | 'questions' | 'review' | 'success'>('vehicle-selection');
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -134,9 +135,32 @@ const MobileVehicleCheck: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [currentQuestionInfo, setCurrentQuestionInfo] = useState<string>('');
+  const [successCountdown, setSuccessCountdown] = useState(6);
 
   // Use real vehicles from database
   const availableVehicles = vehicles.filter(v => v.is_active !== false); // Consider undefined/null as active
+
+  const handleClose = useCallback(() => {
+    // Reset form and go back to vehicle selection
+    setCurrentStep('vehicle-selection');
+    setSelectedVehicle('');
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    setNotes('');
+    setSuccessCountdown(6);
+  }, []);
+
+  // Auto-close success screen after 6 seconds
+  useEffect(() => {
+    if (currentStep === 'success' && successCountdown > 0) {
+      const timer = setTimeout(() => {
+        setSuccessCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (currentStep === 'success' && successCountdown === 0) {
+      handleClose();
+    }
+  }, [currentStep, successCountdown, handleClose]);
 
   const handleAnswerChange = useCallback((questionId: string, answer: any) => {
     setAnswers(prev => ({
@@ -203,12 +227,9 @@ const MobileVehicleCheck: React.FC = () => {
         description: "Vehicle check completed successfully",
       });
 
-      // Reset form
-      setCurrentStep('vehicle-selection');
-      setSelectedVehicle('');
-      setCurrentQuestionIndex(0);
-      setAnswers({});
-      setNotes('');
+      // Show success screen for 6 seconds
+      setCurrentStep('success');
+      setSuccessCountdown(6);
 
     } catch (error) {
       toast({
@@ -391,10 +412,57 @@ const MobileVehicleCheck: React.FC = () => {
     </div>
   );
 
+  const renderSuccess = () => {
+    return (
+      <Card className="mobile-card">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center">
+              <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+              Check Completed
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Vehicle Check Submitted Successfully!
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Your daily vehicle inspection has been recorded. The system will automatically close in {successCountdown} seconds.
+            </p>
+            <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+              <Clock className="w-4 h-4" />
+              <span>Auto-close in {successCountdown}s</span>
+            </div>
+          </div>
+          <Button
+            onClick={handleClose}
+            className="w-full mobile-button"
+            variant="outline"
+          >
+            Close Now
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
-    <div className="space-y-4 p-4">
+    <div className="min-h-screen bg-background p-4 space-y-4">
       {/* Header */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3">
         <Button
           variant="ghost"
           size="sm"
@@ -404,6 +472,8 @@ const MobileVehicleCheck: React.FC = () => {
               setCurrentQuestionIndex(0);
             } else if (currentStep === 'review') {
               setCurrentStep('questions');
+            } else if (currentStep === 'success') {
+              handleClose();
             }
           }}
           disabled={currentStep === 'vehicle-selection'}
@@ -411,7 +481,7 @@ const MobileVehicleCheck: React.FC = () => {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-xl font-bold">Vehicle Check</h1>
+          <h1 className="text-xl font-bold text-foreground">Vehicle Check</h1>
           <p className="text-sm text-muted-foreground">
             Daily safety inspection
           </p>
@@ -433,62 +503,65 @@ const MobileVehicleCheck: React.FC = () => {
       {currentStep === 'vehicle-selection' && renderVehicleSelection()}
       {currentStep === 'questions' && renderQuestion()}
       {currentStep === 'review' && renderReview()}
+      {currentStep === 'success' && renderSuccess()}
 
       {/* Navigation */}
-      <div className="flex space-x-4 pt-4">
-        {currentStep === 'vehicle-selection' && (
-          <Button
-            className="flex-1 mobile-button"
-            onClick={() => setCurrentStep('questions')}
-            disabled={!selectedVehicle}
-          >
-            Start Check
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        )}
-
-        {currentStep === 'questions' && (
-          <>
-            <Button
-              variant="outline"
-              className="flex-1 mobile-button"
-              onClick={handlePrevious}
-              disabled={currentQuestionIndex === 0}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Previous
-            </Button>
+      {currentStep !== 'success' && (
+        <div className="flex space-x-4 pt-4">
+          {currentStep === 'vehicle-selection' && (
             <Button
               className="flex-1 mobile-button"
-              onClick={handleNext}
-              disabled={!answers[currentQuestion.id]}
+              onClick={() => setCurrentStep('questions')}
+              disabled={!selectedVehicle}
             >
-              {currentQuestionIndex === mobileQuestions.length - 1 ? 'Review' : 'Next'}
+              Start Check
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          </>
-        )}
+          )}
 
-        {currentStep === 'review' && (
-          <Button
-            className="flex-1 mobile-button"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Submit Check
-              </>
-            )}
-          </Button>
-        )}
-      </div>
+          {currentStep === 'questions' && (
+            <>
+              <Button
+                variant="outline"
+                className="flex-1 mobile-button"
+                onClick={handlePrevious}
+                disabled={currentQuestionIndex === 0}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Previous
+              </Button>
+              <Button
+                className="flex-1 mobile-button"
+                onClick={handleNext}
+                disabled={!answers[currentQuestion.id]}
+              >
+                {currentQuestionIndex === mobileQuestions.length - 1 ? 'Review' : 'Next'}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </>
+          )}
+
+          {currentStep === 'review' && (
+            <Button
+              className="flex-1 mobile-button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Submit Check
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -7,13 +7,13 @@ import { Car, Plus, Wrench, AlertTriangle, CheckCircle, Database, Settings, Shie
 import { useVehicles, useDeleteVehicle, useVehicleStats, type Vehicle } from '@/hooks/useVehicles';
 import VehiclesList from '@/components/vehicles/VehiclesList';
 import EditVehicleDialog from '@/components/vehicles/EditVehicleDialog';
-import AddVehicleDialog from '@/components/vehicles/AddVehicleDialog';
+import VehicleCreationWithInspections from '@/components/vehicles/VehicleCreationWithInspections';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 export default function VehicleManagement() {
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const navigate = useNavigate();
   
   // Use new React Query hooks
@@ -22,10 +22,11 @@ export default function VehicleManagement() {
   const deleteVehicle = useDeleteVehicle();
 
   const handleAddVehicle = () => {
-    setShowAddDialog(true);
+    setShowAddForm(true);
   };
 
   const handleVehicleAdded = () => {
+    setShowAddForm(false);
     // React Query will automatically refetch
   };
 
@@ -101,6 +102,27 @@ export default function VehicleManagement() {
     );
   }
 
+  // Show the enhanced vehicle creation form
+  if (showAddForm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Vehicle Management</h1>
+            <p className="text-gray-600 mt-1">Fleet management with ORV & BOR roadworthiness compliance</p>
+          </div>
+          <Button 
+            variant="outline"
+            onClick={() => setShowAddForm(false)}
+          >
+            Back to Vehicle List
+          </Button>
+        </div>
+        <VehicleCreationWithInspections />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -133,13 +155,14 @@ export default function VehicleManagement() {
 
       {/* ORV & BOR Compliance Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-orange-200 bg-orange-50">
+        {/* Add vehicle-card class to all cards in this section */}
+        <Card className="border-orange-200 bg-orange-50 vehicle-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Shield className="h-4 w-4 text-orange-600" />
               ORV (Off-Road Vehicle) Status
             </CardTitle>
-            <Badge variant={vehiclesOffRoad > 0 ? "destructive" : "default"}>
+            <Badge variant={vehiclesOffRoad > 0 ? "destructive" : "default"} className="badge">
               {vehiclesOffRoad} Off-Road
             </Badge>
           </CardHeader>
@@ -158,13 +181,13 @@ export default function VehicleManagement() {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-blue-200 bg-blue-50 vehicle-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Scale className="h-4 w-4 text-blue-600" />
               BOR (Back On Road) Status
             </CardTitle>
-            <Badge variant={vehiclesReturningSoon > 0 ? "default" : "secondary"}>
+            <Badge variant={vehiclesReturningSoon > 0 ? "default" : "secondary"} className="badge">
               {vehiclesReturningSoon} Returning Soon
             </Badge>
           </CardHeader>
@@ -186,40 +209,40 @@ export default function VehicleManagement() {
 
       {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="stats-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Vehicles</CardTitle>
+            <CardTitle className="text-sm font-medium stats-label">Total Vehicles</CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalVehicles}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold stats-number">{totalVehicles}</div>
+            <p className="text-xs text-muted-foreground mt-1 stats-label">
               Fleet size
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="stats-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-sm font-medium stats-label">Active</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeVehicles}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold stats-number">{activeVehicles}</div>
+            <p className="text-xs text-muted-foreground mt-1 stats-label">
               {totalVehicles > 0 ? Math.round((activeVehicles / totalVehicles) * 100) : 0}% of fleet
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="stats-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Maintenance</CardTitle>
+            <CardTitle className="text-sm font-medium stats-label">In Maintenance</CardTitle>
             <Wrench className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{maintenanceVehicles}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold stats-number">{maintenanceVehicles}</div>
+            <p className="text-xs text-muted-foreground mt-1 stats-label">
               ORV: Planned/Unplanned
             </p>
           </CardContent>
@@ -283,7 +306,7 @@ export default function VehicleManagement() {
               <Car className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Vehicles Found</h3>
               <p className="text-gray-600 mb-6">
-                You haven't added any vehicles to your fleet yet. Start by adding your first vehicle to get started with vehicle management and ORV/BOR compliance tracking.
+                You haven't added any vehicles to your fleet yet. Start by adding your first vehicle with mandatory inspection schedules to get started with vehicle management and ORV/BOR compliance tracking.
               </p>
               <div className="flex gap-2 justify-center">
                 <Button onClick={handleAddVehicle} className="inline-flex items-center">
@@ -299,21 +322,8 @@ export default function VehicleManagement() {
           </CardContent>
         </Card>
       ) : (
-        <VehiclesList 
-          vehicles={vehicles}
-          isLoading={loading}
-          onAddVehicle={handleAddVehicle}
-          onEditVehicle={handleEditVehicle}
-          onDeleteVehicle={handleDeleteVehicle}
-        />
+        <VehiclesList />
       )}
-
-      {/* Add Vehicle Dialog */}
-      <AddVehicleDialog 
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onSuccess={handleVehicleAdded}
-      />
 
       {/* Edit Vehicle Dialog */}
       <EditVehicleDialog

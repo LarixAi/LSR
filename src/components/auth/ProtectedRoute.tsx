@@ -16,6 +16,8 @@ const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
+  
+
 
   if (loading) {
     return (

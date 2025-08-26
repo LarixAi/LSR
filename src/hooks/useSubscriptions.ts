@@ -245,7 +245,9 @@ function getDefaultPlans(): SubscriptionPlan[] {
         'Up to 10 vehicles',
         'Basic reporting',
         'Email support',
-        'Mobile app access'
+        'Mobile app access',
+        'Daily Pre-Trip Inspection questions',
+        'Vehicle check completion for drivers'
       ],
       limits: {
         drivers: 5,
@@ -268,7 +270,12 @@ function getDefaultPlans(): SubscriptionPlan[] {
         'Priority support',
         'API access',
         'Custom integrations',
-        'Real-time tracking'
+        'Real-time tracking',
+        'Daily Pre-Trip Inspection questions',
+        'Vehicle check completion for drivers',
+        'Edit and customize questions',
+        'Create custom question sets',
+        'Drag-and-drop question reordering'
       ],
       limits: {
         drivers: 25,
@@ -293,7 +300,15 @@ function getDefaultPlans(): SubscriptionPlan[] {
         'Full API access',
         'White-label options',
         'Advanced analytics',
-        'Custom integrations'
+        'Custom integrations',
+        'Daily Pre-Trip Inspection questions',
+        'Vehicle check completion for drivers',
+        'Edit and customize questions',
+        'Create custom question sets',
+        'Drag-and-drop question reordering',
+        'Advanced customization options',
+        'Custom compliance standards',
+        'White-label vehicle checks'
       ],
       limits: {
         drivers: -1,

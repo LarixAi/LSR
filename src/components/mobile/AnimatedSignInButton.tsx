@@ -31,21 +31,21 @@ const AnimatedSignInButton: React.FC<AnimatedSignInButtonProps> = ({
   return (
     <button
       type="submit"
-      className={`Btn ${isExpanded ? 'expanded' : ''} ${className}`}
+      className={`w-full h-12 bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-600 dark:to-gray-700 hover:from-gray-900 hover:to-black dark:hover:from-gray-500 dark:hover:to-gray-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 touch-target mobile-button-improved mobile-touch-improved ${isExpanded ? 'scale-95' : ''} ${className}`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       title={text}
       disabled={isLoading}
     >
-      <div className="sign">
+      <div className="flex items-center justify-center">
         {isLoading ? (
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
         ) : (
-          <LogIn size={17} />
+          <LogIn size={17} className="mr-2" />
         )}
       </div>
-      <div className="text">
+      <div className="text-sm font-medium">
         {isLoading ? "Signing in..." : text}
       </div>
     </button>

@@ -26,6 +26,12 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Check if Stripe key is configured
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY is not configured");
+    }
+
     const { planId, isAnnual = false } = await req.json();
     if (!planId) throw new Error("Plan ID is required");
 
@@ -36,17 +42,36 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get plan details
-    const { data: plan, error: planError } = await supabaseClient
+    // Get plan details - handle both UUID and string plan IDs
+    let plan;
+    let planError;
+    
+    // First try to find by UUID
+    const { data: planByUuid, error: uuidError } = await supabaseClient
       .from('subscription_plans')
       .select('*')
       .eq('id', planId)
       .single();
+    
+    if (planByUuid) {
+      plan = planByUuid;
+    } else {
+      // If not found by UUID, try to find by name and billing cycle
+      const { data: planByName, error: nameError } = await supabaseClient
+        .from('subscription_plans')
+        .select('*')
+        .eq('name', planId.charAt(0).toUpperCase() + planId.slice(1)) // Capitalize first letter
+        .eq('billing_cycle', isAnnual ? 'yearly' : 'monthly')
+        .single();
+      
+      plan = planByName;
+      planError = nameError;
+    }
 
     if (planError || !plan) throw new Error("Plan not found");
-    logStep("Plan found", { planId, planName: plan.name, tier: plan.tier });
+    logStep("Plan found", { planId, planName: plan.name, billingCycle: plan.billing_cycle });
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     
@@ -64,18 +89,20 @@ serve(async (req) => {
       logStep("New customer created", { customerId });
     }
 
-    const price = isAnnual ? plan.annual_price : plan.monthly_price;
-    const interval = isAnnual ? "year" : "month";
+    // For now, we'll use the plan price and billing cycle
+    // In the future, we can add separate annual/monthly price fields
+    const price = plan.price;
+    const interval = isAnnual ? "year" : plan.billing_cycle;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: "gbp",
             product_data: { 
               name: plan.name,
-              description: plan.description 
+              description: `Monthly subscription for ${plan.name} plan` 
             },
             unit_amount: Math.round(price * 100),
             recurring: { interval: interval },
@@ -84,8 +111,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/subscriptions?success=true`,
-      cancel_url: `${req.headers.get("origin")}/subscriptions?canceled=true`,
+      success_url: `${req.headers.get("origin")}/payment-result?success=true`,
+      cancel_url: `${req.headers.get("origin")}/payment-result?canceled=true`,
       metadata: {
         plan_id: planId,
         user_id: user.id,

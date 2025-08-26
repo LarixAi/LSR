@@ -6,7 +6,7 @@ export const CSP_DIRECTIVES = {
     "'self'",
     "'unsafe-inline'", // Required for some React features
     "https://maps.googleapis.com",
-    "https://gvbbxbjvwnacemanluhc.supabase.co"
+    "https://dznbihypzmvcmradijqn.supabase.co"
   ],
   'style-src': [
     "'self'",
@@ -25,9 +25,11 @@ export const CSP_DIRECTIVES = {
   ],
   'connect-src': [
     "'self'",
-    "https://gvbbxbjvwnacemanluhc.supabase.co",
+    "https://dznbihypzmvcmradijqn.supabase.co",
+    "https://*.supabase.co",
     "https://maps.googleapis.com",
-    "wss://gvbbxbjvwnacemanluhc.supabase.co"
+    "wss://dznbihypzmvcmradijqn.supabase.co",
+    "wss://*.supabase.co"
   ],
   'frame-src': [
     "'self'",
@@ -49,7 +51,7 @@ export const generateCSPHeader = (): string => {
 };
 
 // Apply CSP meta tag (for client-side enforcement)
-export const applyCSP = (): void => {
+export const applyCSP = () => {
   if (typeof document === 'undefined') return;
 
   const existingMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');

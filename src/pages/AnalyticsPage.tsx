@@ -60,58 +60,7 @@ const AnalyticsPage: React.FC = () => {
   // Get real analytics data from backend
   const { metrics, revenueData, serviceData, performanceMetrics, rawData, isLoading: analyticsLoading } = useAnalyticsData();
 
-  const handleClearAnalyticsData = () => {
-    const confirmed = confirm(
-      'Are you sure you want to clear all analytics data?\n\nThis will permanently delete:\n- All vehicle records\n- All job records\n- All route records\n- All driver profiles\n\nThis action cannot be undone.'
-    );
-    
-    if (confirmed) {
-      // Clear all the data from the database
-      clearAllAnalyticsData();
-    }
-  };
-
-  const clearAllAnalyticsData = async () => {
-    try {
-      // Clear vehicles
-      if (rawData.vehicles.length > 0) {
-        for (const vehicle of rawData.vehicles) {
-          await supabase.from('vehicles').delete().eq('id', vehicle.id);
-        }
-      }
-      
-      // Clear jobs
-      if (rawData.jobs.length > 0) {
-        for (const job of rawData.jobs) {
-          await supabase.from('jobs').delete().eq('id', job.id);
-        }
-      }
-      
-      // Clear routes
-      if (rawData.routes.length > 0) {
-        for (const route of rawData.routes) {
-          await supabase.from('routes').delete().eq('id', route.id);
-        }
-      }
-      
-      toast({
-        title: "Analytics Data Cleared",
-        description: "All analytics data has been cleared from the database.",
-      });
-      
-      // Reload to show empty state
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } catch (error) {
-      console.error('Error clearing analytics data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to clear analytics data.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Clear All Data functionality removed
 
   if (loading) {
     return (
@@ -326,14 +275,7 @@ const AnalyticsPage: React.FC = () => {
               <SelectItem value="1y">Last year</SelectItem>
             </SelectContent>
           </Select>
-          <Button 
-            onClick={handleClearAnalyticsData} 
-            variant="destructive" 
-            className="inline-flex items-center"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Clear All Data
-          </Button>
+          {/* Clear All Data button removed */}
           <Button className="bg-blue-600 hover:bg-blue-700">
             <Download className="w-4 h-4 mr-2" />
             Export Report

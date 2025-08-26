@@ -7,20 +7,13 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https'
   },
-  bundledWebRuntime: false,
   plugins: {
-    Camera: {
-      permissions: ['camera', 'photos']
-    },
-    Geolocation: {
-      permissions: ['location']
-    },
-    BluetoothLe: {
-      permissions: ['bluetooth', 'bluetoothAdmin', 'accessCoarseLocation']
-    }
+    Camera: {},
+    Geolocation: {},
+    BluetoothLe: {}
   },
   ios: {
-    scheme: 'LSR Driver'
+    scheme: 'App'
   },
   android: {
     allowMixedContent: true

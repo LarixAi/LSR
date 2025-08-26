@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useAdminAccess } from '@/utils/adminAccess';
 import {
   LayoutDashboard,
@@ -18,7 +19,9 @@ import {
   Truck,
   FileText,
   User,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -34,6 +37,7 @@ const MobileNavigation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
   const { isAdmin, hasAdminPrivileges } = useAdminAccess();
 
   if (!isMobile) return null;
@@ -54,8 +58,8 @@ const MobileNavigation: React.FC = () => {
     if (userRole === 'parent') {
       return [
         { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/parent/dashboard' },
-        { id: 'children', label: 'Children', icon: Users, path: '/parent/children' },
         { id: 'tracking', label: 'Tracking', icon: MapPin, path: '/parent/tracking' },
+        { id: 'children', label: 'Children', icon: Users, path: '/parent/children' },
         { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/parent/schedule' },
         { id: 'notifications', label: 'Alerts', icon: Bell, path: '/parent/notifications' },
       ];
@@ -64,9 +68,9 @@ const MobileNavigation: React.FC = () => {
     if (userRole === 'mechanic') {
       return [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/mechanic-dashboard' },
-        { id: 'fleet', label: 'Fleet', icon: Truck, path: '/vehicles' },
         { id: 'work-orders', label: 'Orders', icon: FileText, path: '/work-orders' },
-        { id: 'inventory', label: 'Inventory', icon: Briefcase, path: '/inventory' },
+        { id: 'fleet', label: 'Fleet', icon: Truck, path: '/vehicles' },
+        { id: 'documents', label: 'Documents', icon: FileText, path: '/documents' },
         { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
       ];
     }
@@ -79,6 +83,28 @@ const MobileNavigation: React.FC = () => {
       { id: 'jobs', label: 'Jobs', icon: FileText, path: '/jobs' },
       { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
     ];
+  };
+
+  const handleNavigation = (path: string) => {
+    const userRole = profile?.role;
+    
+    // Security check: Prevent parents from accessing admin routes
+    if (userRole === 'parent') {
+      const adminRoutes = [
+        '/dashboard', '/admin', '/vehicles', '/drivers', '/jobs', '/settings',
+        '/mechanic-dashboard', '/work-orders', '/defect-reports', '/parts-supplies',
+        '/fuel-management', '/mechanics', '/route-planning', '/invoice-management',
+        '/analytics', '/routes', '/staff-directory', '/compliance-reports'
+      ];
+      
+      if (adminRoutes.some(route => path.startsWith(route))) {
+        // Redirect parents to their dashboard if they try to access admin routes
+        navigate('/parent/dashboard');
+        return;
+      }
+    }
+    
+    navigate(path);
   };
 
   const navigationItems = getNavigationItems();
@@ -101,7 +127,7 @@ const MobileNavigation: React.FC = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => navigate(item.path)}
+                onClick={() => handleNavigation(item.path)}
                 data-vehicle-check={isVehicleCheck}
                 title={`Go to ${item.label.toLowerCase()}`}
                 className={cn(
@@ -125,6 +151,22 @@ const MobileNavigation: React.FC = () => {
               </button>
             );
           })}
+          
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            className={cn(
+              "professional-nav-button inline-flex items-center p-2.5 text-sm",
+              "theme-toggle-button"
+            )}
+          >
+            {isDark ? (
+              <Sun className="w-5 h-5 transition-colors duration-200 nav-icon" />
+            ) : (
+              <Moon className="w-5 h-5 transition-colors duration-200 nav-icon" />
+            )}
+          </button>
         </div>
       </div>
     </nav>

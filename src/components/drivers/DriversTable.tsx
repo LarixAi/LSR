@@ -34,7 +34,7 @@ interface Driver {
 
 interface DriversTableProps {
   drivers?: Driver[];
-  onViewOnboarding: (driverId: string) => void;
+  onViewDriver: (driverId: string) => void;
   onPasswordChange?: (driver: {
     id: string;
     email: string;
@@ -44,7 +44,7 @@ interface DriversTableProps {
   }) => void;
 }
 
-const DriversTable = ({ drivers, onViewOnboarding, onPasswordChange }: DriversTableProps) => {
+const DriversTable = ({ drivers, onViewDriver, onPasswordChange }: DriversTableProps) => {
   const { canManagePasswords, organizationId } = useAdminPermissions();
 
   return (
@@ -107,7 +107,7 @@ const DriversTable = ({ drivers, onViewOnboarding, onPasswordChange }: DriversTa
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onViewOnboarding(driver.id)}
+                    onClick={() => onViewDriver(driver.id)}
                     className="flex items-center space-x-1"
                   >
                     <Eye className="w-4 h-4" />

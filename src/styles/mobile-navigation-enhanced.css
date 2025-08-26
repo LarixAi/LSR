@@ -337,6 +337,779 @@ button[data-vehicle-check="true"].active svg {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Enhanced Mobile Dark Mode Styling */
+.dark {
+  /* Enhanced text readability */
+  --text-primary: hsl(210 40% 100%);
+  --text-secondary: hsl(215 20.2% 95%);
+  --text-muted: hsl(215 20.2% 80%);
+  --text-accent: hsl(217.2 91.2% 75%);
+  
+  /* Enhanced surface colors */
+  --surface-elevated: hsl(217.2 32.6% 15%);
+  --surface-hover: hsl(217.2 32.6% 18%);
+  --surface-active: hsl(217.2 32.6% 22%);
+  
+  /* Enhanced border colors */
+  --border-subtle: hsl(217.2 32.6% 20%);
+  --border-strong: hsl(217.2 32.6% 30%);
+  
+  /* Enhanced shadow colors */
+  --shadow-light: 0 2px 4px 0 hsl(0 0% 0% / 0.4);
+  --shadow-medium: 0 4px 8px -1px hsl(0 0% 0% / 0.5);
+  --shadow-heavy: 0 10px 20px -3px hsl(0 0% 0% / 0.6);
+}
+
+/* Dark mode text enhancements for mobile */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: hsl(210 40% 98%);
+  font-weight: 600;
+  text-shadow: 0 1px 3px hsl(0 0% 0% / 0.2);
+}
+
+.dark p, .dark span, .dark div {
+  color: hsl(210 40% 98%);
+}
+
+.dark .text-muted-foreground {
+  color: hsl(215 20.2% 85%) !important;
+  font-weight: 500;
+}
+
+.dark .text-foreground {
+  color: hsl(210 40% 100%) !important;
+  font-weight: 600;
+}
+
+/* Enhanced mobile card styling in dark mode */
+.dark .mobile-card {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+  box-shadow: 0 4px 12px 0 hsl(0 0% 0% / 0.4);
+}
+
+.dark .mobile-card:hover {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 10%) 0%, hsl(217.2 32.6% 15%) 100%);
+  border-color: hsl(217.2 32.6% 30%);
+  box-shadow: 0 8px 20px 0 hsl(0 0% 0% / 0.5);
+  transform: translateY(-2px);
+}
+
+/* Enhanced mobile button styling in dark mode */
+.dark .mobile-button {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%);
+  color: hsl(222.2 84% 4.9%);
+  border: 1px solid hsl(217.2 91.2% 65%);
+  box-shadow: 0 3px 6px 0 hsl(217.2 91.2% 55% / 0.3);
+  transition: all 0.2s ease;
+}
+
+.dark .mobile-button:hover {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 60%) 0%, hsl(217.2 91.2% 65%) 100%);
+  border-color: hsl(217.2 91.2% 70%);
+  box-shadow: 0 6px 12px 0 hsl(217.2 91.2% 60% / 0.4);
+  transform: translateY(-1px);
+}
+
+.dark .mobile-button[data-variant="outline"] {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%);
+  color: hsl(210 40% 95%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+  box-shadow: 0 2px 4px 0 hsl(0 0% 0% / 0.2);
+}
+
+.dark .mobile-button[data-variant="outline"]:hover {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 15%) 0%, hsl(217.2 32.6% 20%) 100%);
+  border-color: hsl(217.2 32.6% 30%);
+  box-shadow: 0 4px 8px 0 hsl(0 0% 0% / 0.3);
+  transform: translateY(-1px);
+}
+
+/* Enhanced mobile input styling in dark mode */
+.dark input, .dark textarea, .dark select {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+  color: hsl(210 40% 98%);
+  box-shadow: 0 2px 4px 0 hsl(0 0% 0% / 0.2);
+}
+
+.dark input:focus, .dark textarea:focus, .dark select:focus {
+  border-color: hsl(217.2 91.2% 59.8%);
+  box-shadow: 0 0 0 3px hsl(217.2 91.2% 59.8% / 0.3);
+  background: linear-gradient(135deg, hsl(217.2 32.6% 15%) 0%, hsl(217.2 32.6% 20%) 100%);
+}
+
+/* Enhanced mobile badge styling in dark mode */
+.dark .badge {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%);
+  color: hsl(210 40% 95%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+  box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.2);
+}
+
+.dark .badge-primary {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%);
+  color: hsl(222.2 84% 4.9%);
+  border-color: hsl(217.2 91.2% 65%);
+  box-shadow: 0 2px 4px 0 hsl(217.2 91.2% 55% / 0.3);
+}
+
+.dark .badge-destructive {
+  background: linear-gradient(135deg, hsl(0 84% 60%) 0%, hsl(0 84% 65%) 100%);
+  color: hsl(210 40% 98%);
+  border-color: hsl(0 84% 70%);
+  box-shadow: 0 2px 4px 0 hsl(0 84% 60% / 0.3);
+}
+
+/* Enhanced mobile navigation styling in dark mode */
+.dark .professional-nav-container {
+  background: linear-gradient(180deg, hsl(222.2 84% 2%) 0%, hsl(217.2 32.6% 6%) 100%);
+  border-top: 1px solid hsl(217.2 32.6% 20%);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3), 0 -1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .professional-nav-button {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+  color: hsl(210 40% 95%);
+  box-shadow: 0 2px 4px 0 hsl(0 0% 0% / 0.2);
+}
+
+.dark .professional-nav-button:hover {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 15%) 0%, hsl(217.2 32.6% 20%) 100%);
+  border-color: hsl(217.2 32.6% 30%);
+  color: hsl(210 40% 100%);
+  box-shadow: 0 4px 8px 0 hsl(0 0% 0% / 0.3);
+  transform: translateY(-1px);
+}
+
+.dark .professional-nav-button.active {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%);
+  color: hsl(222.2 84% 4.9%);
+  border-color: hsl(217.2 91.2% 65%);
+  box-shadow: 0 4px 8px 0 hsl(217.2 91.2% 55% / 0.3);
+}
+
+/* Enhanced vehicle check special styling for dark mode */
+.dark .vehicle-check-special {
+  background: linear-gradient(135deg, hsl(0 84% 60%) 0%, hsl(0 84% 65%) 100%);
+  border: 1px solid hsl(0 84% 70%);
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
+}
+
+.dark .vehicle-check-special:hover {
+  background: linear-gradient(135deg, hsl(0 84% 65%) 0%, hsl(0 84% 70%) 100%);
+  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.4);
+}
+
+.dark .vehicle-check-special.active {
+  background: linear-gradient(135deg, hsl(0 84% 70%) 0%, hsl(0 84% 75%) 100%);
+  box-shadow: 0 8px 32px rgba(220, 38, 38, 0.5);
+  border: 1px solid hsl(0 84% 80%);
+}
+
+/* Enhanced mobile layout styling in dark mode */
+.dark .mobile-optimized-layout {
+  background: linear-gradient(135deg, hsl(222.2 84% 1%) 0%, hsl(217.2 32.6% 6%) 100%);
+}
+
+.dark .mobile-content-wrapper {
+  background: transparent;
+}
+
+.dark .mobile-safe-area-top {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%);
+  border-bottom: 1px solid hsl(217.2 32.6% 25%);
+}
+
+/* Enhanced mobile progress bar in dark mode */
+.dark .progress {
+  background: hsl(217.2 32.6% 15%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+}
+
+.dark .progress-indicator {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%);
+  box-shadow: 0 2px 4px 0 hsl(217.2 91.2% 55% / 0.3);
+}
+
+/* Enhanced mobile success screen in dark mode */
+.dark .success-screen {
+  background: linear-gradient(135deg, hsl(142 70% 45%) 0%, hsl(142 70% 50%) 100%);
+  border: 1px solid hsl(142 70% 55%);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.3);
+}
+
+.dark .success-icon {
+  color: hsl(142 70% 60%);
+  filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5));
+}
+
+/* Enhanced mobile touch targets in dark mode */
+.dark .mobile-touch-target {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+  color: hsl(210 40% 95%);
+  box-shadow: 0 2px 4px 0 hsl(0 0% 0% / 0.2);
+}
+
+.dark .mobile-touch-target:hover {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 15%) 0%, hsl(217.2 32.6% 20%) 100%);
+  border-color: hsl(217.2 32.6% 30%);
+  color: hsl(210 40% 100%);
+  box-shadow: 0 4px 8px 0 hsl(0 0% 0% / 0.3);
+  transform: translateY(-1px);
+}
+
+/* Enhanced mobile dialog/modal in dark mode */
+.dark .mobile-dialog {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+  box-shadow: 0 25px 50px -12px hsl(0 0% 0% / 0.7);
+}
+
+.dark .mobile-dialog-header {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 10%) 0%, hsl(217.2 32.6% 15%) 100%);
+  border-bottom: 1px solid hsl(217.2 32.6% 30%);
+}
+
+/* Enhanced mobile tabs in dark mode */
+.dark .mobile-tabs-list {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%);
+  border: 1px solid hsl(217.2 32.6% 25%);
+}
+
+.dark .mobile-tabs-trigger {
+  color: hsl(215 20.2% 80%);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.dark .mobile-tabs-trigger:hover {
+  color: hsl(210 40% 100%);
+  background: hsl(217.2 32.6% 15%);
+  border-color: hsl(217.2 32.6% 30%);
+}
+
+.dark .mobile-tabs-trigger[data-state="active"] {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%);
+  color: hsl(222.2 84% 4.9%);
+  border-color: hsl(217.2 91.2% 65%);
+  box-shadow: 0 2px 4px 0 hsl(217.2 91.2% 55% / 0.3);
+}
+
+/* Enhanced mobile status indicators in dark mode */
+.dark .status-indicator.online {
+  color: hsl(142 70% 60%);
+  filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.5));
+}
+
+.dark .status-indicator.offline {
+  color: hsl(38 90% 60%);
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+}
+
+/* Enhanced mobile sync pending in dark mode */
+.dark .sync-pending {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 45%) 0%, hsl(217.2 91.2% 50%) 100%);
+  border: 1px solid hsl(217.2 91.2% 55%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Enhanced mobile logout button in dark mode */
+.dark .logout-button:hover {
+  color: hsl(0 84% 60%);
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.5));
+}
+
+/* Enhanced mobile active indicators in dark mode */
+.dark .active-indicator.vehicle-check {
+  background: linear-gradient(135deg, hsl(0 84% 60%) 0%, hsl(0 84% 65%) 100%);
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.6);
+}
+
+.dark .active-indicator.default {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* Enhanced mobile vehicle check icons in dark mode */
+.dark .vehicle-check-icon {
+  color: hsl(0 84% 60%);
+  filter: drop-shadow(0 2px 4px rgba(220, 38, 38, 0.4));
+}
+
+.dark .vehicle-check-icon:hover {
+  color: hsl(0 84% 70%);
+  filter: drop-shadow(0 4px 8px rgba(220, 38, 38, 0.6));
+}
+
+.dark .vehicle-check-icon.active {
+  color: hsl(0 84% 75%);
+  filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.8));
+}
+
+/* Enhanced mobile navigation icons in dark mode */
+.dark .nav-icon {
+  color: hsl(215 20.2% 80%);
+  transition: all 0.2s ease;
+}
+
+.dark .nav-icon:hover {
+  color: hsl(210 40% 100%);
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+}
+
+.dark .nav-icon.active {
+  color: hsl(217.2 91.2% 65%);
+  filter: drop-shadow(0 0 4px hsl(217.2 91.2% 65% / 0.5));
+}
+
+/* Enhanced mobile scrollbar in dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(217.2 32.6% 15%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(217.2 32.6% 35%);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(217.2 32.6% 45%);
+}
+
+/* Enhanced mobile focus states in dark mode */
+.dark *:focus {
+  outline-color: hsl(217.2 91.2% 59.8%);
+}
+
+.dark *:focus-visible {
+  outline: 2px solid hsl(217.2 91.2% 59.8%);
+  outline-offset: 2px;
+}
+
+/* Enhanced mobile animations in dark mode */
+@keyframes dark-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.dark .animate-pulse {
+  animation: dark-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Enhanced mobile shadows in dark mode */
+.dark .shadow-box-up {
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3), 0 -1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-button-flat-nopressed {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-button-flat-pressed {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced mobile text colors in dark mode */
+.dark .text-light-blue-light {
+  color: hsl(217.2 91.2% 65%);
+}
+
+.dark .bg-light-secondary {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%);
+}
+
+/* ===== UNIVERSAL DARK MODE FIXES FOR ALL PAGES ===== */
+
+/* Universal background fixes */
+.dark body,
+.dark #root,
+.dark .app,
+.dark .main,
+.dark .container,
+.dark .wrapper,
+.dark .page,
+.dark .screen {
+  background: linear-gradient(135deg, hsl(222.2 84% 1%) 0%, hsl(217.2 32.6% 6%) 100%) !important;
+  color: hsl(210 40% 100%) !important;
+}
+
+/* Universal text color fixes */
+.dark * {
+  color: hsl(210 40% 100%);
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
+.dark .title, .dark .heading, .dark .text-title, .dark .text-heading {
+  color: hsl(210 40% 100%) !important;
+  font-weight: 600;
+  text-shadow: 0 1px 3px hsl(0 0% 0% / 0.2);
+}
+
+.dark p, .dark span, .dark div, .dark label, .dark .text,
+.dark .description, .dark .content, .dark .body-text {
+  color: hsl(210 40% 100%) !important;
+}
+
+.dark .text-muted, .dark .text-secondary, .dark .text-gray,
+.dark .text-light, .dark .text-dimmed {
+  color: hsl(215 20.2% 85%) !important;
+}
+
+/* Universal card and container fixes */
+.dark .card, .dark .container, .dark .box, .dark .panel,
+.dark .section, .dark .block, .dark .item, .dark .tile {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+  box-shadow: 0 4px 12px 0 hsl(0 0% 0% / 0.4) !important;
+}
+
+.dark .card:hover, .dark .container:hover, .dark .box:hover,
+.dark .panel:hover, .dark .section:hover, .dark .block:hover,
+.dark .item:hover, .dark .tile:hover {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 10%) 0%, hsl(217.2 32.6% 15%) 100%) !important;
+  border-color: hsl(217.2 32.6% 30%) !important;
+  box-shadow: 0 8px 20px 0 hsl(0 0% 0% / 0.5) !important;
+  transform: translateY(-2px);
+}
+
+/* Universal button fixes */
+.dark button, .dark .btn, .dark .button, .dark input[type="button"],
+.dark input[type="submit"], .dark input[type="reset"] {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  border: 1px solid hsl(217.2 91.2% 65%) !important;
+  box-shadow: 0 3px 6px 0 hsl(217.2 91.2% 55% / 0.3) !important;
+  transition: all 0.2s ease;
+}
+
+.dark button:hover, .dark .btn:hover, .dark .button:hover,
+.dark input[type="button"]:hover, .dark input[type="submit"]:hover,
+.dark input[type="reset"]:hover {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 60%) 0%, hsl(217.2 91.2% 65%) 100%) !important;
+  border-color: hsl(217.2 91.2% 70%) !important;
+  box-shadow: 0 6px 12px 0 hsl(217.2 91.2% 60% / 0.4) !important;
+  transform: translateY(-1px);
+}
+
+/* Universal input and form fixes */
+.dark input, .dark textarea, .dark select, .dark .input,
+.dark .form-input, .dark .form-control, .dark .field {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+  color: hsl(210 40% 98%) !important;
+  box-shadow: 0 2px 4px 0 hsl(0 0% 0% / 0.2) !important;
+}
+
+.dark input:focus, .dark textarea:focus, .dark select:focus,
+.dark .input:focus, .dark .form-input:focus, .dark .form-control:focus,
+.dark .field:focus {
+  border-color: hsl(217.2 91.2% 59.8%) !important;
+  box-shadow: 0 0 0 3px hsl(217.2 91.2% 59.8% / 0.3) !important;
+  background: linear-gradient(135deg, hsl(217.2 32.6% 15%) 0%, hsl(217.2 32.6% 20%) 100%) !important;
+}
+
+/* Universal list and table fixes */
+.dark ul, .dark ol, .dark li, .dark .list, .dark .list-item {
+  background: transparent !important;
+  color: hsl(210 40% 100%) !important;
+}
+
+.dark table, .dark .table, .dark .data-table {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+}
+
+.dark th, .dark .table-header, .dark .header-cell {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%) !important;
+  color: hsl(210 40% 100%) !important;
+  border-color: hsl(217.2 32.6% 30%) !important;
+}
+
+.dark td, .dark .table-cell, .dark .cell {
+  border-color: hsl(217.2 32.6% 25%) !important;
+  color: hsl(210 40% 100%) !important;
+}
+
+.dark tr:hover, .dark .table-row:hover {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 10%) 0%, hsl(217.2 32.6% 15%) 100%) !important;
+}
+
+/* Universal navigation fixes */
+.dark nav, .dark .nav, .dark .navigation, .dark .navbar,
+.dark .header, .dark .top-bar, .dark .menu-bar {
+  background: linear-gradient(180deg, hsl(222.2 84% 2%) 0%, hsl(217.2 32.6% 6%) 100%) !important;
+  border-color: hsl(217.2 32.6% 20%) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3), 0 -1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .nav-item, .dark .nav-link, .dark .menu-item, .dark .nav-button {
+  color: hsl(210 40% 95%) !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+}
+
+.dark .nav-item:hover, .dark .nav-link:hover, .dark .menu-item:hover,
+.dark .nav-button:hover {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%) !important;
+  border-color: hsl(217.2 32.6% 30%) !important;
+  color: hsl(210 40% 100%) !important;
+  box-shadow: 0 2px 4px 0 hsl(0 0% 0% / 0.2) !important;
+}
+
+.dark .nav-item.active, .dark .nav-link.active, .dark .menu-item.active,
+.dark .nav-button.active {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  border-color: hsl(217.2 91.2% 65%) !important;
+  box-shadow: 0 4px 8px 0 hsl(217.2 91.2% 55% / 0.3) !important;
+}
+
+/* Universal modal and dialog fixes */
+.dark .modal, .dark .dialog, .dark .popup, .dark .overlay,
+.dark .drawer, .dark .sidebar, .dark .panel {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+  box-shadow: 0 25px 50px -12px hsl(0 0% 0% / 0.7) !important;
+}
+
+.dark .modal-header, .dark .dialog-header, .dark .popup-header {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 10%) 0%, hsl(217.2 32.6% 15%) 100%) !important;
+  border-bottom: 1px solid hsl(217.2 32.6% 30%) !important;
+}
+
+/* Universal badge and tag fixes */
+.dark .badge, .dark .tag, .dark .label, .dark .chip {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%) !important;
+  color: hsl(210 40% 95%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+  box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.2) !important;
+}
+
+.dark .badge-primary, .dark .tag-primary, .dark .label-primary {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  border-color: hsl(217.2 91.2% 65%) !important;
+  box-shadow: 0 2px 4px 0 hsl(217.2 91.2% 55% / 0.3) !important;
+}
+
+.dark .badge-success, .dark .tag-success, .dark .label-success {
+  background: linear-gradient(135deg, hsl(142 70% 45%) 0%, hsl(142 70% 50%) 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  border-color: hsl(142 70% 55%) !important;
+  box-shadow: 0 2px 4px 0 hsl(142 70% 45% / 0.3) !important;
+}
+
+.dark .badge-warning, .dark .tag-warning, .dark .label-warning {
+  background: linear-gradient(135deg, hsl(38 90% 60%) 0%, hsl(38 90% 65%) 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  border-color: hsl(38 90% 70%) !important;
+  box-shadow: 0 2px 4px 0 hsl(38 90% 60% / 0.3) !important;
+}
+
+.dark .badge-danger, .dark .tag-danger, .dark .label-danger,
+.dark .badge-error, .dark .tag-error, .dark .label-error {
+  background: linear-gradient(135deg, hsl(0 84% 60%) 0%, hsl(0 84% 65%) 100%) !important;
+  color: hsl(210 40% 98%) !important;
+  border-color: hsl(0 84% 70%) !important;
+  box-shadow: 0 2px 4px 0 hsl(0 84% 60% / 0.3) !important;
+}
+
+/* Universal progress and status fixes */
+.dark .progress, .dark .progress-bar, .dark .meter {
+  background: hsl(217.2 32.6% 15%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+}
+
+.dark .progress-fill, .dark .progress-indicator, .dark .meter-fill {
+  background: linear-gradient(135deg, hsl(217.2 91.2% 55%) 0%, hsl(217.2 91.2% 60%) 100%) !important;
+  box-shadow: 0 2px 4px 0 hsl(217.2 91.2% 55% / 0.3) !important;
+}
+
+/* Universal icon fixes */
+.dark svg, .dark .icon, .dark .svg-icon {
+  color: hsl(210 40% 95%) !important;
+  fill: hsl(210 40% 95%) !important;
+}
+
+.dark .icon-primary, .dark .svg-primary {
+  color: hsl(217.2 91.2% 65%) !important;
+  fill: hsl(217.2 91.2% 65%) !important;
+  filter: drop-shadow(0 0 4px hsl(217.2 91.2% 65% / 0.5)) !important;
+}
+
+.dark .icon-success, .dark .svg-success {
+  color: hsl(142 70% 60%) !important;
+  fill: hsl(142 70% 60%) !important;
+  filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.5)) !important;
+}
+
+.dark .icon-warning, .dark .svg-warning {
+  color: hsl(38 90% 60%) !important;
+  fill: hsl(38 90% 60%) !important;
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5)) !important;
+}
+
+.dark .icon-danger, .dark .svg-danger, .dark .icon-error, .dark .svg-error {
+  color: hsl(0 84% 60%) !important;
+  fill: hsl(0 84% 60%) !important;
+  filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.5)) !important;
+}
+
+/* Universal link fixes */
+.dark a, .dark .link, .dark .anchor {
+  color: hsl(217.2 91.2% 65%) !important;
+  text-decoration: none !important;
+}
+
+.dark a:hover, .dark .link:hover, .dark .anchor:hover {
+  color: hsl(217.2 91.2% 75%) !important;
+  text-decoration: underline !important;
+}
+
+/* Universal divider and border fixes */
+.dark hr, .dark .divider, .dark .separator, .dark .border {
+  border-color: hsl(217.2 32.6% 25%) !important;
+  background-color: hsl(217.2 32.6% 25%) !important;
+}
+
+/* Universal shadow fixes */
+.dark .shadow, .dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg {
+  box-shadow: 0 4px 12px 0 hsl(0 0% 0% / 0.4) !important;
+}
+
+.dark .shadow-xl, .dark .shadow-2xl {
+  box-shadow: 0 8px 20px 0 hsl(0 0% 0% / 0.5) !important;
+}
+
+/* Universal focus and selection fixes */
+.dark *:focus {
+  outline-color: hsl(217.2 91.2% 59.8%) !important;
+}
+
+.dark *:focus-visible {
+  outline: 2px solid hsl(217.2 91.2% 59.8%) !important;
+  outline-offset: 2px !important;
+}
+
+.dark ::selection {
+  background: hsl(217.2 91.2% 59.8% / 0.3) !important;
+  color: hsl(210 40% 100%) !important;
+}
+
+/* Universal placeholder fixes */
+.dark ::placeholder {
+  color: hsl(215 20.2% 70%) !important;
+  opacity: 1 !important;
+}
+
+/* Universal disabled state fixes */
+.dark *:disabled, .dark .disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Universal loading and spinner fixes */
+.dark .loading, .dark .spinner, .dark .loader {
+  border-color: hsl(217.2 32.6% 25%) !important;
+  border-top-color: hsl(217.2 91.2% 65%) !important;
+}
+
+/* Universal tooltip fixes */
+.dark .tooltip, .dark .popover, .dark .hint {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 12%) 0%, hsl(217.2 32.6% 16%) 100%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+  color: hsl(210 40% 100%) !important;
+  box-shadow: 0 10px 25px -3px hsl(0 0% 0% / 0.6) !important;
+}
+
+/* Universal notification fixes */
+.dark .notification, .dark .alert, .dark .message, .dark .toast {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+  color: hsl(210 40% 100%) !important;
+  box-shadow: 0 4px 12px 0 hsl(0 0% 0% / 0.4) !important;
+}
+
+.dark .notification-success, .dark .alert-success {
+  background: linear-gradient(135deg, hsl(142 70% 45%) 0%, hsl(142 70% 50%) 100%) !important;
+  border-color: hsl(142 70% 55%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  box-shadow: 0 4px 12px 0 hsl(142 70% 45% / 0.3) !important;
+}
+
+.dark .notification-warning, .dark .alert-warning {
+  background: linear-gradient(135deg, hsl(38 90% 60%) 0%, hsl(38 90% 65%) 100%) !important;
+  border-color: hsl(38 90% 70%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  box-shadow: 0 4px 12px 0 hsl(38 90% 60% / 0.3) !important;
+}
+
+.dark .notification-error, .dark .alert-error, .dark .notification-danger, .dark .alert-danger {
+  background: linear-gradient(135deg, hsl(0 84% 60%) 0%, hsl(0 84% 65%) 100%) !important;
+  border-color: hsl(0 84% 70%) !important;
+  color: hsl(210 40% 98%) !important;
+  box-shadow: 0 4px 12px 0 hsl(0 84% 60% / 0.3) !important;
+}
+
+/* Universal grid and flex fixes */
+.dark .grid, .dark .flex, .dark .flexbox {
+  background: transparent !important;
+}
+
+.dark .grid-item, .dark .flex-item {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%) !important;
+  border: 1px solid hsl(217.2 32.6% 25%) !important;
+}
+
+/* Universal responsive fixes */
+@media (max-width: 768px) {
+  .dark .mobile-card, .dark .mobile-container, .dark .mobile-panel {
+    background: linear-gradient(135deg, hsl(217.2 32.6% 6%) 0%, hsl(217.2 32.6% 10%) 100%) !important;
+    border: 1px solid hsl(217.2 32.6% 20%) !important;
+    box-shadow: 0 2px 8px 0 hsl(0 0% 0% / 0.3) !important;
+  }
+}
+
+/* Force override any conflicting styles */
+.dark * {
+  color: hsl(210 40% 100%) !important;
+}
+
+.dark *:not(button):not(.btn):not(.button):not(input):not(textarea):not(select) {
+  background-color: transparent !important;
+}
+
+.dark .bg-white, .dark .bg-gray-50, .dark .bg-gray-100, .dark .bg-gray-200 {
+  background: linear-gradient(135deg, hsl(217.2 32.6% 8%) 0%, hsl(217.2 32.6% 12%) 100%) !important;
+}
+
+.dark .text-gray-900, .dark .text-gray-800, .dark .text-gray-700, .dark .text-gray-600 {
+  color: hsl(210 40% 100%) !important;
+}
+
+.dark .text-gray-500, .dark .text-gray-400, .dark .text-gray-300 {
+  color: hsl(215 20.2% 85%) !important;
+}
+
+/* ===== LIGHT MODE STYLES ===== */
+
 /* Professional navigation container */
 .professional-nav-container {
   background: transparent;
@@ -438,130 +1211,16 @@ button[data-vehicle-check="true"].active svg {
   color: white;
 }
 
-/* Animated Sign-In Button from Uiverse.io */
-.Btn {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  width: 45px;
-  height: 45px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition-duration: .3s;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
-  background-color: rgb(255, 65, 65);
+/* Theme toggle button styling */
+.theme-toggle-button {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px solid #e2e8f0;
+  color: #64748b;
 }
 
-/* plus sign */
-.sign {
-  width: 100%;
-  transition-duration: .3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sign svg {
-  width: 17px;
-}
-
-.sign svg path {
-  fill: white;
-}
-
-/* text */
-.text {
-  position: absolute;
-  right: 0%;
-  width: 0%;
-  opacity: 0;
-  color: white;
-  font-size: 1.2em;
-  font-weight: 600;
-  transition-duration: .3s;
-}
-
-/* hover effect on button width */
-.Btn:hover {
-  width: 125px;
-  border-radius: 40px;
-  transition-duration: .3s;
-}
-
-.Btn:hover .sign {
-  width: 30%;
-  transition-duration: .3s;
-  padding-left: 20px;
-}
-
-/* hover effect button's text */
-.Btn:hover .text {
-  opacity: 1;
-  width: 70%;
-  transition-duration: .3s;
-  padding-right: 10px;
-}
-
-/* button click effect*/
-.Btn:active {
-  transform: translate(2px ,2px);
-}
-
-/* Mobile-specific adjustments for the animated button */
-@media (max-width: 768px) {
-  .Btn {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .Btn:hover {
-    width: 110px;
-  }
-  
-  .sign svg {
-    width: 15px;
-  }
-  
-  .text {
-    font-size: 1em;
-  }
-}
-
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .Btn:hover {
-    width: 45px;
-    border-radius: 50%;
-  }
-  
-  .Btn:hover .sign {
-    width: 100%;
-    padding-left: 0;
-  }
-  
-  .Btn:hover .text {
-    opacity: 0;
-    width: 0%;
-    padding-right: 0;
-  }
-  
-  /* Show expanded state on touch */
-  .Btn.expanded {
-    width: 110px;
-    border-radius: 40px;
-  }
-  
-  .Btn.expanded .sign {
-    width: 30%;
-    padding-left: 20px;
-  }
-  
-  .Btn.expanded .text {
-    opacity: 1;
-    width: 70%;
-    padding-right: 10px;
-  }
+.theme-toggle-button:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-color: #cbd5e1;
+  color: #475569;
+  transform: scale(1.05);
 }

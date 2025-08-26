@@ -81,11 +81,11 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className={className}>
+      <DialogContent className={className} aria-describedby={description ? "mobile-sheet-description" : undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && (
-            <DialogDescription>{description}</DialogDescription>
+            <DialogDescription id="mobile-sheet-description">{description}</DialogDescription>
           )}
         </DialogHeader>
         {children}

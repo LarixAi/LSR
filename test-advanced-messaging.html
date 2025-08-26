@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Messaging System Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .demo-section {
+            margin-bottom: 40px;
+        }
+
+        .demo-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .demo-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .messaging-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 600px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin: 20px 0;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 320px;
+            border-right: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .new-message-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .new-message-btn:hover {
+            background: #2563eb;
+        }
+
+        .search-container {
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 28px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            width: 16px;
+            height: 16px;
+        }
+
+        .conversation-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .conversation-item:hover {
+            background: #f9fafb;
+        }
+
+        .conversation-item.active {
+            background: #eff6ff;
+        }
+
+        .conversation-content {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #6b7280;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .online-indicator {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .conversation-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .conversation-name {
+            font-weight: 600;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        .conversation-time {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .conversation-preview {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .online-status {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+        }
+
+        .unread-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #6b7280;
+            position: relative;
+        }
+
+        .chat-user-details h3 {
+            font-weight: 600;
+            color: #111827;
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+        }
+
+        .message.outgoing {
+            justify-content: flex-end;
+        }
+
+        .message.incoming {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            max-width: 70%;
+        }
+
+        .message.outgoing .message-content {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .message.outgoing .message-bubble {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .message.incoming .message-bubble {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .message-time {
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .message.outgoing .message-time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .message.incoming .message-time {
+            color: #6b7280;
+        }
+
+        .input-area {
+            padding: 16px;
+            border-top: 1px solid #e9ecef;
+            background: white;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .input-action-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            transition: all 0.2s ease;
+        }
+
+        .input-action-btn:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 14px;
+            resize: none;
+            min-height: 40px;
+            max-height: 120px;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+        }
+
+        .send-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .send-btn:hover {
+            background: #2563eb;
+        }
+
+        .send-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .test-btn {
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .test-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .features-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .features-list h3 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .features-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features-list li {
+            padding: 4px 0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .features-list li::before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="header">
+            <h1>💬 Advanced Messaging System</h1>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="toggleMessaging()">Open Messaging</button>
+                <button class="test-btn" onclick="addTestMessage()">Add Test Message</button>
+                <button class="test-btn" onclick="switchConversation()">Switch Conversation</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="demo-section">
+                <h2 class="demo-title">Modern Messaging Interface</h2>
+                <p class="demo-description">
+                    This demonstrates a clean, professional messaging interface with conversation threads, 
+                    real-time chat, and modern UI elements matching the reference design.
+                </p>
+
+                <div class="features-list">
+                    <h3>✨ Features Included:</h3>
+                    <ul>
+                        <li>Two-column layout with conversation list and chat area</li>
+                        <li>Search functionality for conversations</li>
+                        <li>User avatars with online/offline status indicators</li>
+                        <li>Real-time message sending and receiving</li>
+                        <li>Message bubbles with timestamps</li>
+                        <li>Unread message badges</li>
+                        <li>Video and voice call buttons</li>
+                        <li>File attachment and emoji support</li>
+                        <li>Responsive design with hover effects</li>
+                        <li>Auto-scroll to latest messages</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Messaging System Demo -->
+            <div id="messagingSystem" class="messaging-container hidden">
+                <div class="sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-title">Messages</div>
+                        <button class="new-message-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            New message
+                        </button>
+                    </div>
+
+                    <div class="search-container">
+                        <div style="position: relative;">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            <input type="text" class="search-input" placeholder="Search messages" id="searchInput">
+                        </div>
+                    </div>
+
+                    <div class="conversation-list" id="conversationList">
+                        <!-- Conversations will be populated here -->
+                    </div>
+                </div>
+
+                <div class="chat-area">
+                    <div class="chat-header">
+                        <div class="chat-user-info">
+                            <div class="chat-avatar">
+                                K
+                                <div class="online-indicator"></div>
+                            </div>
+                            <div class="chat-user-details">
+                                <h3>Kotlin Thomas</h3>
+                                <div class="online-status">
+                                    <div class="online-dot"></div>
+                                    Online
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-actions">
+                            <button class="action-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="23,7 16,12 23,17 23,7"></polygon>
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                </svg>
+                            </button>
+                            <button class="action-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                </svg>
+                            </button>
+                            <button class="action-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="1"></circle>
+                                    <circle cx="19" cy="12" r="1"></circle>
+                                    <circle cx="5" cy="12" r="1"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="messages-container" id="messagesContainer">
+                        <!-- Messages will be populated here -->
+                    </div>
+
+                    <div class="input-area">
+                        <div class="input-container">
+                            <div class="input-actions">
+                                <button class="input-action-btn">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div style="flex: 1; position: relative;">
+                                <textarea 
+                                    class="message-input" 
+                                    placeholder="Type a message..." 
+                                    id="messageInput"
+                                    rows="1"
+                                ></textarea>
+                                <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; gap: 4px;">
+                                    <button class="input-action-btn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                                        </svg>
+                                    </button>
+                                    <button class="input-action-btn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversations = [
+            {
+                id: '1',
+                name: 'George Patrick',
+                avatar: 'G',
+                lastMessage: 'Thanks for the update!',
+                timestamp: '12.55pm',
+                isOnline: false,
+                unreadCount: 0,
+                messages: [
+                    { id: '1', content: 'Hi there! How are you doing?', timestamp: '11.30', isOutgoing: false },
+                    { id: '2', content: 'I\'m doing great, thanks for asking!', timestamp: '12.40', isOutgoing: true }
+                ]
+            },
+            {
+                id: '2',
+                name: 'Kotlin Thomas',
+                avatar: 'K',
+                lastMessage: 'Hallo! Great question. In order to copy a survey, you\'ll just want to right click on thw lower corner of yout survey on ythe home screen. From there you\'ll get a menu eith a few different options, one of those will be to make a copy.',
+                timestamp: '12.45pm',
+                isOnline: true,
+                unreadCount: 0,
+                messages: [
+                    { id: '1', content: 'Hi there! Thanks for getting in touch. How can I help?', timestamp: '11.30', isOutgoing: false },
+                    { id: '2', content: 'Hi Kotlin!. I\'m trying to copy a survey in my account. Can you give me some direction on how to do that?', timestamp: '12.40', isOutgoing: true },
+                    { id: '3', content: 'Hallo! Great question. In order to copy a survey, you\'ll just want to right click on thw lower corner of yout survey on ythe home screen. From there you\'ll get a menu eith a few different options, one of those will be to make a copy.', timestamp: '12.45', isOutgoing: false }
+                ]
+            },
+            {
+                id: '3',
+                name: 'Jessey Adword',
+                avatar: 'J',
+                lastMessage: 'Perfect! I\'ll get that sorted for you.',
+                timestamp: '12.25pm',
+                isOnline: false,
+                unreadCount: 2,
+                messages: []
+            },
+            {
+                id: '4',
+                name: 'Steve Madani',
+                avatar: 'S',
+                lastMessage: 'Looking forward to our meeting tomorrow.',
+                timestamp: '11.04pm',
+                isOnline: true,
+                unreadCount: 0,
+                messages: []
+            },
+            {
+                id: '5',
+                name: 'Peter Qarashy',
+                avatar: 'P',
+                lastMessage: 'The project is progressing well.',
+                timestamp: '10.30pm',
+                isOnline: false,
+                unreadCount: 1,
+                messages: []
+            }
+        ];
+
+        let selectedConversation = conversations[1]; // Kotlin Thomas by default
+        let currentConversationIndex = 1;
+
+        function toggleMessaging() {
+            const system = document.getElementById('messagingSystem');
+            system.classList.toggle('hidden');
+            if (!system.classList.contains('hidden')) {
+                renderConversations();
+                renderMessages();
+            }
+        }
+
+        function renderConversations() {
+            const list = document.getElementById('conversationList');
+            list.innerHTML = conversations.map((conv, index) => `
+                <div class="conversation-item ${conv.id === selectedConversation.id ? 'active' : ''}" 
+                     onclick="selectConversation(${index})">
+                    <div class="conversation-content">
+                        <div class="avatar">
+                            ${conv.avatar}
+                            ${conv.isOnline ? '<div class="online-indicator"></div>' : ''}
+                        </div>
+                        <div class="conversation-details">
+                            <div class="conversation-header">
+                                <div class="conversation-name">${conv.name}</div>
+                                <div class="conversation-time">${conv.timestamp}</div>
+                            </div>
+                            <div class="conversation-preview">${conv.lastMessage}</div>
+                            ${conv.id === selectedConversation.id && conv.isOnline ? 
+                                '<div class="online-status"><div class="online-dot"></div>Online</div>' : ''}
+                        </div>
+                        ${conv.unreadCount > 0 ? `<div class="unread-badge">${conv.unreadCount}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = selectedConversation.messages.map(message => `
+                <div class="message ${message.isOutgoing ? 'outgoing' : 'incoming'}">
+                    <div class="message-content">
+                        ${!message.isOutgoing ? `<div class="message-avatar">${selectedConversation.avatar}</div>` : ''}
+                        <div class="message-bubble">
+                            <div>${message.content}</div>
+                            <div class="message-time">${message.timestamp}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function selectConversation(index) {
+            currentConversationIndex = index;
+            selectedConversation = conversations[index];
+            renderConversations();
+            renderMessages();
+            updateChatHeader();
+        }
+
+        function updateChatHeader() {
+            const header = document.querySelector('.chat-user-info');
+            header.innerHTML = `
+                <div class="chat-avatar">
+                    ${selectedConversation.avatar}
+                    ${selectedConversation.isOnline ? '<div class="online-indicator"></div>' : ''}
+                </div>
+                <div class="chat-user-details">
+                    <h3>${selectedConversation.name}</h3>
+                    ${selectedConversation.isOnline ? 
+                        '<div class="online-status"><div class="online-dot"></div>Online</div>' : ''}
+                </div>
+            `;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            const newMessage = {
+                id: Date.now().toString(),
+                content: message,
+                timestamp: new Date().toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                }).toLowerCase(),
+                isOutgoing: true
+            };
+
+            selectedConversation.messages.push(newMessage);
+            selectedConversation.lastMessage = message;
+            selectedConversation.timestamp = newMessage.timestamp;
+
+            input.value = '';
+            renderConversations();
+            renderMessages();
+        }
+
+        function addTestMessage() {
+            const testMessage = {
+                id: Date.now().toString(),
+                content: 'This is a test message to demonstrate the messaging system!',
+                timestamp: new Date().toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                }).toLowerCase(),
+                isOutgoing: false
+            };
+
+            selectedConversation.messages.push(testMessage);
+            selectedConversation.lastMessage = testMessage.content;
+            selectedConversation.timestamp = testMessage.timestamp;
+
+            renderConversations();
+            renderMessages();
+        }
+
+        function switchConversation() {
+            const nextIndex = (currentConversationIndex + 1) % conversations.length;
+            selectConversation(nextIndex);
+        }
+
+        // Handle Enter key for sending messages
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Handle search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            const items = document.querySelectorAll('.conversation-item');
+            
+            items.forEach((item, index) => {
+                const name = conversations[index].name.toLowerCase();
+                if (name.includes(query)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize
+        updateChatHeader();
+    </script>
+</body>
+</html>
+
+

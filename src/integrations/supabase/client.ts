@@ -83,7 +83,6 @@ export const supabase = createClient<Database>(url, key, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false, // Disable on mobile
-    flowType: 'pkce',
     debug: isMobile, // Enable debug mode on mobile
   },
   global: {
@@ -98,29 +97,4 @@ export const supabase = createClient<Database>(url, key, {
       eventsPerSecond: 10,
     },
   },
-  // Add network configuration for mobile
-  ...(isMobile && {
-    fetch: (url, options = {}) => {
-      // Add mobile-specific headers and CORS handling
-      const mobileOptions = {
-        ...options,
-        headers: {
-          ...options.headers,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, X-Client-Info, X-Platform',
-        },
-        // Increase timeout for mobile networks
-        signal: AbortSignal.timeout(30000), // 30 second timeout
-        // Add mode for CORS
-        mode: 'cors' as RequestMode,
-        credentials: 'omit' as RequestCredentials,
-      };
-      
-      console.log('🔗 Mobile fetch request:', url);
-      return fetch(url, mobileOptions);
-    }
-  }),
 });

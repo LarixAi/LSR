@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSchedules, useScheduleStats, useCreateSchedule } from '@/hooks/useSchedules';
 import { useDrivers } from '@/hooks/useDrivers';
@@ -175,9 +175,12 @@ const AdminSchedule = () => {
                 Schedule Event
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md" aria-describedby="dialog-description">
               <DialogHeader>
                 <DialogTitle>Schedule New Event</DialogTitle>
+                <DialogDescription id="dialog-description">
+                  Create a new schedule event for drivers, vehicles, or maintenance.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>

@@ -82,23 +82,64 @@ export const useLicenses = (organizationId?: string) => {
       console.log('🔍 Fetching licenses for organization:', organizationId);
 
       try {
-        // Use the database function we created
-        const { data, error } = await supabase
-          .rpc('get_licenses_with_drivers', { org_id: organizationId });
+        // Fetch licenses directly
+        const { data: licenses, error: licensesError } = await supabase
+          .from('driver_licenses')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching licenses:', error);
+        if (licensesError) {
+          console.error('Error fetching licenses:', licensesError);
           return [];
         }
 
-        console.log('📋 Licenses data from RPC:', data);
-        return (data || []).map((license: any) => ({
-          ...license,
-          driver_name: license.driver_name || 'Unknown Driver',
-          driver_email: license.driver_email || ''
-        }));
+        if (!licenses || licenses.length === 0) {
+          return [];
+        }
+
+        // Get the driver IDs from the licenses
+        const driverIds = licenses.map(license => license.driver_id);
+
+        // Fetch driver information separately
+        const { data: drivers, error: driversError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .in('id', driverIds);
+
+        if (driversError) {
+          console.error('Error fetching drivers:', driversError);
+          // Return licenses without driver info if driver fetch fails
+          return licenses.map(license => ({
+            ...license,
+            driver_name: 'Unknown Driver',
+            driver_email: ''
+          }));
+        }
+
+        // Create a map of driver information
+        const driverMap = new Map();
+        drivers?.forEach(driver => {
+          driverMap.set(driver.id, driver);
+        });
+
+        // Combine license and driver information
+        const result = licenses.map(license => {
+          const driver = driverMap.get(license.driver_id);
+          return {
+            ...license,
+            driver_name: driver 
+              ? `${driver.first_name} ${driver.last_name}`
+              : 'Unknown Driver',
+            driver_email: driver?.email || ''
+          };
+        });
+
+        console.log('📋 Licenses data:', result);
+        return result;
+
       } catch (error) {
-        console.error('Exception in useLicenses:', error);
+        console.error('Error in useLicenses:', error);
         return [];
       }
     },
@@ -310,34 +351,67 @@ export const useExpiringLicenses = (organizationId?: string, daysThreshold: numb
       const thresholdDate = new Date();
       thresholdDate.setDate(thresholdDate.getDate() + daysThreshold);
 
-      const { data, error } = await supabase
-        .from('driver_licenses')
-        .select(`
-          *,
-          profiles:driver_id (
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .eq('organization_id', organizationId)
-        .eq('status', 'active')
-        .lte('expiry_date', thresholdDate.toISOString().split('T')[0])
-        .gte('expiry_date', new Date().toISOString().split('T')[0])
-        .order('expiry_date', { ascending: true });
+      try {
+        // First, get the expiring licenses
+        const { data: licenses, error: licensesError } = await supabase
+          .from('driver_licenses')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('status', 'active')
+          .lte('expiry_date', thresholdDate.toISOString().split('T')[0])
+          .gte('expiry_date', new Date().toISOString().split('T')[0])
+          .order('expiry_date', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching expiring licenses:', error);
+        if (licensesError) {
+          console.error('Error fetching expiring licenses:', licensesError);
+          return [];
+        }
+
+        if (!licenses || licenses.length === 0) {
+          return [];
+        }
+
+        // Get the driver IDs from the licenses
+        const driverIds = licenses.map(license => license.driver_id);
+
+        // Fetch driver information separately
+        const { data: drivers, error: driversError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .in('id', driverIds);
+
+        if (driversError) {
+          console.error('Error fetching drivers:', driversError);
+          // Return licenses without driver info if driver fetch fails
+          return licenses.map(license => ({
+            ...license,
+            driver_name: 'Unknown Driver',
+            driver_email: ''
+          }));
+        }
+
+        // Create a map of driver information
+        const driverMap = new Map();
+        drivers?.forEach(driver => {
+          driverMap.set(driver.id, driver);
+        });
+
+        // Combine license and driver information
+        return licenses.map(license => {
+          const driver = driverMap.get(license.driver_id);
+          return {
+            ...license,
+            driver_name: driver 
+              ? `${driver.first_name} ${driver.last_name}`
+              : 'Unknown Driver',
+            driver_email: driver?.email || ''
+          };
+        });
+
+      } catch (error) {
+        console.error('Error in useExpiringLicenses:', error);
         return [];
       }
-
-      return (data || []).map(license => ({
-        ...license,
-        driver_name: license.profiles 
-          ? `${license.profiles.first_name} ${license.profiles.last_name}`
-          : 'Unknown Driver',
-        driver_email: license.profiles?.email || ''
-      }));
     },
     enabled: !!organizationId,
   });

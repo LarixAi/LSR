@@ -13,7 +13,8 @@ export const generateSecureCSP = () => {
       "'unsafe-inline'",
       "'unsafe-eval'",
       "https://maps.googleapis.com",
-      "https://maps.gstatic.com"
+      "https://maps.gstatic.com",
+      "https://dznbihypzmvcmradijqn.supabase.co"
     ],
     'style-src': [
       "'self'",
@@ -31,7 +32,9 @@ export const generateSecureCSP = () => {
     ],
     'connect-src': [
       "'self'",
+      "https://dznbihypzmvcmradijqn.supabase.co",
       "https://*.supabase.co",
+      "wss://dznbihypzmvcmradijqn.supabase.co",
       "wss://*.supabase.co"
     ],
     'frame-src': ["'none'"],

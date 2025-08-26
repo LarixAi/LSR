@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
@@ -7,6 +7,17 @@ import BrandingSection from './BrandingSection';
 
 const LandingNavigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -27,38 +38,46 @@ const LandingNavigation = () => {
   ];
 
   return (
-    <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+    <nav className={`${isScrolled ? 'bg-white/95 shadow-lg border-b border-gray-200' : 'bg-gradient-to-r from-black/20 to-black/10'} backdrop-blur-sm sticky top-0 z-50 transition-all duration-300`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16">
-          <BrandingSection />
+        <div className="flex justify-between items-center h-16 sm:h-20">
+          {/* Left - Branding */}
+          <div className="flex-shrink-0">
+            <BrandingSection isScrolled={isScrolled} />
+          </div>
           
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className="text-gray-700 hover:text-primary transition-colors text-sm xl:text-base font-medium hover:scale-105 transition-transform duration-200"
-              >
-                {item.name}
-              </button>
-            ))}
-            <div className="flex items-center space-x-2 xl:space-x-3">
-              <Link to="/auth">
-                <Button className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white h-9 px-3 text-sm xl:h-10 xl:px-4 xl:text-base transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
-                  Sign In
-                </Button>
-              </Link>
+          {/* Center - Navigation Items */}
+          <div className="hidden lg:flex items-center justify-center flex-1">
+            <div className="flex items-center space-x-6 xl:space-x-8">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  className={`${isScrolled ? 'text-gray-900 hover:text-gray-700' : 'text-white hover:text-gray-200'} transition-all duration-200 text-sm xl:text-base font-medium hover:scale-105 relative group`}
+                >
+                  {item.name}
+                  <span className={`absolute -bottom-1 left-0 w-0 h-0.5 ${isScrolled ? 'bg-gray-900' : 'bg-white'} transition-all duration-300 group-hover:w-full`}></span>
+                </button>
+              ))}
             </div>
           </div>
 
+          {/* Right - Sign In Button */}
+          <div className="flex items-center space-x-2 xl:space-x-3 flex-shrink-0">
+            <Link to="/auth">
+              <Button className={`${isScrolled ? 'bg-gray-900 hover:bg-gray-800 text-white' : 'bg-white/20 hover:bg-white/30 text-white border border-white/30'} h-10 px-6 text-sm xl:h-11 xl:px-8 xl:text-base transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl rounded-xl font-semibold backdrop-blur-sm`}>
+                Sign In
+              </Button>
+            </Link>
+          </div>
+
           {/* Mobile menu button */}
-          <div className="lg:hidden">
+          <div className="lg:hidden flex-shrink-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="h-8 w-8 p-0"
+              className={`h-10 w-10 p-0 ${isScrolled ? 'bg-gray-100 hover:bg-gray-200 text-gray-900' : 'bg-white/20 hover:bg-white/30 text-white border border-white/30'} backdrop-blur-sm rounded-xl`}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -67,20 +86,20 @@ const LandingNavigation = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 py-4 bg-white/95 backdrop-blur-sm animate-fade-in">
+          <div className="lg:hidden border-t border-gray-200 py-6 bg-white/95 backdrop-blur-md rounded-b-2xl shadow-2xl animate-fade-in mb-4">
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className="text-gray-700 hover:text-primary transition-colors text-left py-2 text-base font-medium hover:bg-gray-50 px-2 rounded-lg"
+                  className="text-gray-900 hover:text-gray-700 transition-all duration-200 text-left py-3 text-base font-medium hover:bg-gray-50 px-4 rounded-xl"
                 >
                   {item.name}
                 </button>
               ))}
               <div className="flex flex-col space-y-3 pt-4 border-t border-gray-200">
                 <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white h-11 text-base shadow-lg">
+                  <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white h-12 text-base shadow-lg rounded-xl font-semibold">
                     Sign In
                   </Button>
                 </Link>

@@ -4,27 +4,42 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface WorkOrder {
   id: string;
-  defect_number: string;
-  work_order_number?: string;
+  organization_id: string;
   vehicle_id: string;
-  reported_by: string;
   assigned_mechanic_id?: string;
+  work_order_number: string;
   title: string;
   description?: string;
-  defect_type: 'safety' | 'mechanical' | 'electrical' | 'cosmetic' | 'other';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  status: 'reported' | 'investigating' | 'repairing' | 'resolved' | 'closed';
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  location?: string;
-  reported_date: string;
-  resolved_date?: string;
-  start_date?: string;
-  completion_date?: string;
-  estimated_cost: number;
-  actual_cost: number;
+  priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
+  status: 'open' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+  work_type: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'modification' | 'other';
   estimated_hours?: number;
   actual_hours?: number;
-  work_notes?: string;
+  parts_required?: string[];
+  labor_cost?: number;
+  parts_cost?: number;
+  total_cost?: number;
+  scheduled_date?: string;
+  started_date?: string;
+  completed_date?: string;
+  due_date?: string;
+  location?: string;
+  work_area?: string;
+  tools_required?: string[];
+  safety_requirements?: string[];
+  quality_check_required?: boolean;
+  quality_check_completed?: boolean;
+  quality_check_by?: string;
+  quality_check_date?: string;
+  customer_approval_required?: boolean;
+  customer_approval_received?: boolean;
+  customer_approval_date?: string;
+  warranty_work?: boolean;
+  warranty_details?: string;
+  photos_before?: string[];
+  photos_after?: string[];
+  notes?: string;
+  created_by?: string;
   created_at: string;
   updated_at: string;
   vehicle?: {
@@ -34,12 +49,13 @@ export interface WorkOrder {
     model: string;
     license_plate: string;
   };
-  reported_by_profile?: {
+  assigned_mechanic?: {
     id: string;
     first_name: string;
     last_name: string;
+    email: string;
   };
-  assigned_mechanic?: {
+  created_by_profile?: {
     id: string;
     first_name: string;
     last_name: string;
@@ -47,125 +63,228 @@ export interface WorkOrder {
 }
 
 export interface CreateWorkOrderData {
+  vehicle_id: string;
+  assigned_mechanic_id?: string;
+  work_order_number: string;
   title: string;
   description?: string;
-  vehicle_id: string;
-  defect_type: 'safety' | 'mechanical' | 'electrical' | 'cosmetic' | 'other';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  location?: string;
-  estimated_cost?: number;
+  priority?: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
+  status?: 'open' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+  work_type: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'modification' | 'other';
   estimated_hours?: number;
-  work_notes?: string;
+  parts_required?: string[];
+  scheduled_date?: string;
+  due_date?: string;
+  location?: string;
+  work_area?: string;
+  tools_required?: string[];
+  safety_requirements?: string[];
+  notes?: string;
 }
 
 export interface UpdateWorkOrderData {
+  assigned_mechanic_id?: string;
   title?: string;
   description?: string;
-  defect_type?: 'safety' | 'mechanical' | 'electrical' | 'cosmetic' | 'other';
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-  status?: 'reported' | 'investigating' | 'repairing' | 'resolved' | 'closed';
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  assigned_mechanic_id?: string;
-  location?: string;
-  estimated_cost?: number;
-  actual_cost?: number;
+  priority?: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
+  status?: 'open' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+  work_type?: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'modification' | 'other';
   estimated_hours?: number;
   actual_hours?: number;
-  work_notes?: string;
-  start_date?: string;
-  completion_date?: string;
-  resolved_date?: string;
+  parts_required?: string[];
+  labor_cost?: number;
+  parts_cost?: number;
+  total_cost?: number;
+  scheduled_date?: string;
+  started_date?: string;
+  completed_date?: string;
+  due_date?: string;
+  location?: string;
+  work_area?: string;
+  tools_required?: string[];
+  safety_requirements?: string[];
+  notes?: string;
 }
 
-export const useWorkOrders = (organizationId?: string) => {
+export const useWorkOrders = (organizationId?: string, status?: string, priority?: string) => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
 
   // Fetch work orders with related data
   const { data: workOrders = [], isLoading, error } = useQuery({
-    queryKey: ['work-orders', organizationId],
+    queryKey: ['work-orders', organizationId, status, priority],
     queryFn: async () => {
       if (!organizationId) return [];
 
       try {
-        // First, get the defect reports (work orders)
-        const { data: defectReports, error: defectError } = await supabase
-          .from('defect_reports')
-          .select('*')
+        let query = supabase
+          .from('work_orders')
+          .select(`
+            *,
+            vehicle:vehicles!work_orders_vehicle_id_fkey(id, vehicle_number, make, model, license_plate),
+            assigned_mechanic:profiles!work_orders_assigned_mechanic_id_fkey(id, first_name, last_name, email),
+            created_by_profile:profiles!work_orders_created_by_fkey(id, first_name, last_name)
+          `)
+          .eq('organization_id', organizationId)
           .order('created_at', { ascending: false });
 
-        if (defectError) {
-          console.error('Error fetching defect reports:', defectError);
+        // Filter by status if specified
+        if (status && status !== 'all') {
+          query = query.eq('status', status);
+        }
+
+        // Filter by priority if specified
+        if (priority && priority !== 'all') {
+          query = query.eq('priority', priority);
+        }
+
+        const { data, error: fetchError } = await query;
+
+        if (fetchError) {
+          console.error('Error fetching work orders:', fetchError);
           return [];
         }
 
-        if (!defectReports || defectReports.length === 0) {
-          return [];
-        }
-
-        // Extract unique IDs for related data
-        const vehicleIds = [...new Set(defectReports.map(dr => dr.vehicle_id).filter(Boolean))];
-        const reportedByIds = [...new Set(defectReports.map(dr => dr.reported_by).filter(Boolean))];
-        const assignedMechanicIds = [...new Set(defectReports.map(dr => dr.assigned_mechanic_id).filter(Boolean))];
-
-        // Fetch related data in parallel
-        const [vehiclesData, reportedByData, assignedMechanicsData] = await Promise.all([
-          vehicleIds.length > 0 ? supabase
-            .from('vehicles')
-            .select('id, vehicle_number, make, model, license_plate')
-            .in('id', vehicleIds)
-            .eq('organization_id', organizationId) : { data: [] },
-          reportedByIds.length > 0 ? supabase
-            .from('profiles')
-            .select('id, first_name, last_name')
-            .in('id', reportedByIds) : { data: [] },
-          assignedMechanicIds.length > 0 ? supabase
-            .from('profiles')
-            .select('id, first_name, last_name')
-            .in('id', assignedMechanicIds) : { data: [] }
-        ]);
-
-        // Create maps for efficient lookup
-        const vehiclesMap = new Map(
-          (vehiclesData.data || []).map(v => [v.id, v])
-        );
-        const reportedByMap = new Map(
-          (reportedByData.data || []).map(p => [p.id, p])
-        );
-        const assignedMechanicsMap = new Map(
-          (assignedMechanicsData.data || []).map(p => [p.id, p])
-        );
-
-        // Combine the data
-        const workOrdersWithRelations = defectReports.map(defect => ({
-          ...defect,
-          vehicle: vehiclesMap.get(defect.vehicle_id),
-          reported_by_profile: reportedByMap.get(defect.reported_by),
-          assigned_mechanic: assignedMechanicsMap.get(defect.assigned_mechanic_id)
-        }));
-
-        return workOrdersWithRelations as WorkOrder[];
+        return data || [];
       } catch (error) {
         console.error('Error in work orders query:', error);
         return [];
       }
     },
-    enabled: !!organizationId && !!profile?.id
+    enabled: !!organizationId,
   });
 
-  // Create work order mutation
-  const createWorkOrderMutation = useMutation({
-    mutationFn: async (workOrderData: CreateWorkOrderData) => {
+  // Calculate statistics
+  const calculateStats = () => {
+    if (!workOrders || workOrders.length === 0) {
+      return {
+        total: 0,
+        byStatus: {
+          open: 0,
+          assigned: 0,
+          in_progress: 0,
+          on_hold: 0,
+          completed: 0,
+          cancelled: 0,
+        },
+        byPriority: {
+          low: 0,
+          medium: 0,
+          high: 0,
+          urgent: 0,
+          critical: 0,
+        },
+        byType: {
+          preventive: 0,
+          corrective: 0,
+          emergency: 0,
+          inspection: 0,
+          modification: 0,
+          other: 0,
+        },
+        totalCost: 0,
+        totalHours: 0,
+        overdue: 0,
+      };
+    }
+
+    const stats = {
+      total: workOrders.length,
+      byStatus: {
+        open: 0,
+        assigned: 0,
+        in_progress: 0,
+        on_hold: 0,
+        completed: 0,
+        cancelled: 0,
+      },
+      byPriority: {
+        low: 0,
+        medium: 0,
+        high: 0,
+        urgent: 0,
+        critical: 0,
+      },
+      byType: {
+        preventive: 0,
+        corrective: 0,
+        emergency: 0,
+        inspection: 0,
+        modification: 0,
+        other: 0,
+      },
+      totalCost: 0,
+      totalHours: 0,
+      overdue: 0,
+    };
+
+    const today = new Date();
+
+    workOrders.forEach(order => {
+      // Count by status
+      if (order.status) {
+        stats.byStatus[order.status as keyof typeof stats.byStatus]++;
+      }
+
+      // Count by priority
+      if (order.priority) {
+        stats.byPriority[order.priority as keyof typeof stats.byPriority]++;
+      }
+
+      // Count by type
+      if (order.work_type) {
+        stats.byType[order.work_type as keyof typeof stats.byType]++;
+      }
+
+      // Sum costs
+      if (order.total_cost) {
+        stats.totalCost += order.total_cost;
+      }
+
+      // Sum hours
+      if (order.actual_hours) {
+        stats.totalHours += order.actual_hours;
+      }
+
+      // Count overdue
+      if (order.due_date && order.status !== 'completed' && order.status !== 'cancelled') {
+        const dueDate = new Date(order.due_date);
+        if (dueDate < today) {
+          stats.overdue++;
+        }
+      }
+    });
+
+    return stats;
+  };
+
+  const stats = calculateStats();
+
+  return {
+    workOrders,
+    isLoading,
+    error,
+    stats,
+    hasData: workOrders.length > 0,
+  };
+};
+
+export const useCreateWorkOrder = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async (workOrder: CreateWorkOrderData) => {
+      if (!profile?.organization_id) {
+        throw new Error('Organization ID is required');
+      }
+
       const { data, error } = await supabase
-        .from('defect_reports')
+        .from('work_orders')
         .insert([{
-          ...workOrderData,
-          reported_by: profile?.id,
-          defect_number: `DEF-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
-          reported_date: new Date().toISOString(),
-          estimated_cost: workOrderData.estimated_cost || 0,
-          actual_cost: 0
+          ...workOrder,
+          organization_id: profile.organization_id,
+          created_by: profile.id,
         }])
         .select()
         .single();
@@ -175,32 +294,38 @@ export const useWorkOrders = (organizationId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
-    }
+    },
   });
+};
 
-  // Update work order mutation
-  const updateWorkOrderMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateWorkOrderData }) => {
-      const { data: result, error } = await supabase
-        .from('defect_reports')
-        .update(data)
+export const useUpdateWorkOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: UpdateWorkOrderData & { id: string }) => {
+      const { data, error } = await supabase
+        .from('work_orders')
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return result;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
-    }
+    },
   });
+};
 
-  // Delete work order mutation
-  const deleteWorkOrderMutation = useMutation({
+export const useDeleteWorkOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('defect_reports')
+        .from('work_orders')
         .delete()
         .eq('id', id);
 
@@ -208,63 +333,6 @@ export const useWorkOrders = (organizationId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
-    }
-  });
-
-  // Get work order statistics
-  const { data: workOrderStats } = useQuery({
-    queryKey: ['work-order-stats', organizationId],
-    queryFn: async () => {
-      if (!organizationId) return null;
-
-      try {
-        const { data: defectReports, error } = await supabase
-          .from('defect_reports')
-          .select('status, severity, estimated_cost, actual_cost');
-
-        if (error) {
-          console.error('Error fetching work order stats:', error);
-          return null;
-        }
-
-        const stats = {
-          total: defectReports?.length || 0,
-          byStatus: {
-            reported: defectReports?.filter(dr => dr.status === 'reported').length || 0,
-            investigating: defectReports?.filter(dr => dr.status === 'investigating').length || 0,
-            repairing: defectReports?.filter(dr => dr.status === 'repairing').length || 0,
-            resolved: defectReports?.filter(dr => dr.status === 'resolved').length || 0,
-            closed: defectReports?.filter(dr => dr.status === 'closed').length || 0
-          },
-          bySeverity: {
-            low: defectReports?.filter(dr => dr.severity === 'low').length || 0,
-            medium: defectReports?.filter(dr => dr.severity === 'medium').length || 0,
-            high: defectReports?.filter(dr => dr.severity === 'high').length || 0,
-            critical: defectReports?.filter(dr => dr.severity === 'critical').length || 0
-          },
-          totalEstimatedCost: defectReports?.reduce((sum, dr) => sum + (dr.estimated_cost || 0), 0) || 0,
-          totalActualCost: defectReports?.reduce((sum, dr) => sum + (dr.actual_cost || 0), 0) || 0
-        };
-
-        return stats;
-      } catch (error) {
-        console.error('Error calculating work order stats:', error);
-        return null;
-      }
     },
-    enabled: !!organizationId
   });
-
-  return {
-    workOrders,
-    isLoading,
-    error,
-    createWorkOrder: createWorkOrderMutation.mutate,
-    updateWorkOrder: updateWorkOrderMutation.mutate,
-    deleteWorkOrder: deleteWorkOrderMutation.mutate,
-    isCreating: createWorkOrderMutation.isPending,
-    isUpdating: updateWorkOrderMutation.isPending,
-    isDeleting: deleteWorkOrderMutation.isPending,
-    workOrderStats
-  };
 };

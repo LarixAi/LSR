@@ -1,8 +1,13 @@
 import React from 'react';
-import VehicleInspectionsPage from './vehicle-inspections/VehicleInspectionsPage';
+import EnhancedVehicleInspectionsPage from './vehicle-inspections/EnhancedVehicleInspectionsPage';
 
 const VehicleInspections = () => {
-  return <VehicleInspectionsPage />;
+  console.log('VehicleInspections component is rendering');
+  return (
+    <div>
+      <EnhancedVehicleInspectionsPage />
+    </div>
+  );
 };
 
 export default VehicleInspections;

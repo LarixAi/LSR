@@ -12,7 +12,14 @@ import {
   FileText, 
   Download,
   TrendingUp,
-  Users
+  Users,
+  Calendar,
+  RefreshCw,
+  Filter,
+  Eye,
+  Printer,
+  BarChart3,
+  Activity
 } from 'lucide-react';
 import { useComplianceStats } from '@/hooks/useComplianceData';
 import { useQuery } from '@tanstack/react-query';
@@ -128,15 +135,24 @@ const ComplianceReportsPage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Compliance Reports</h1>
-          <p className="text-muted-foreground mt-2">Monitor compliance analytics and generate reports</p>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <Shield className="w-8 h-8 text-green-600" />
+            Compliance Reports
+          </h1>
+          <p className="text-muted-foreground mt-2">Monitor compliance analytics and generate comprehensive reports</p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Download className="w-4 h-4" />
-          Export Report
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button className="flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Export Report
+          </Button>
+        </div>
       </div>
 
       {/* Key Metrics */}

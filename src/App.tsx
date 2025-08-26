@@ -1,18 +1,22 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SecurityProvider } from "./contexts/SecurityContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PasswordChangeWrapper from "./components/auth/PasswordChangeWrapper";
+import AgreementGuard from "./components/guards/AgreementGuard";
 import { lazy, Suspense } from "react";
 import { isMobile } from "@/utils/mobileDetection";
 import MobileTest from "@/components/mobile/MobileTest";
+import { StripeSuccessHandler } from "./components/subscription/StripeSuccessHandler";
 
 // Lazy load components for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -22,11 +26,12 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VehicleManagement = lazy(() => import("./pages/VehicleManagement"));
 const VehicleManagementSettings = lazy(() => import("./pages/VehicleManagementSettings"));
 const JobManagement = lazy(() => import("./pages/JobManagement"));
-const AIAssistants = lazy(() => import("./pages/AIAssistants"));
+
 const TimeManagement = lazy(() => import("./pages/TimeManagement"));
 const LicenseManagement = lazy(() => import("./pages/LicenseManagement"));
 const DriverManagement = lazy(() => import("./pages/DriverManagement"));
-const Documents = lazy(() => import("./pages/Documents"));
+const DriverDetail = lazy(() => import("./pages/DriverDetail"));
+const Documents = lazy(() => import("./pages/DocumentsEnhanced"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const IncidentReports = lazy(() => import("./pages/IncidentReports"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
@@ -64,8 +69,14 @@ const AdminSchedule = lazy(() => import("./pages/AdminSchedule"));
 const AdminInventoryDashboard = lazy(() => import("./pages/AdminInventoryDashboard"));
 const AdminMechanicRequests = lazy(() => import("./pages/AdminMechanicRequests"));
 const AdminTrainingManagement = lazy(() => import("./pages/AdminTrainingManagement"));
-const AdvancedNotificationSystem = lazy(() => import("./components/notifications/AdvancedNotificationSystem"));
+const AdvancedNotifications = lazy(() => import("./pages/AdvancedNotifications"));
 const MobileNotificationSystem = lazy(() => import("./components/notifications/MobileNotificationSystem"));
+const MobileDriverDocuments = lazy(() => import("./components/mobile/MobileDriverDocuments"));
+const AdminDriverDocuments = lazy(() => import("./pages/AdminDriverDocuments"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const DataSubjectRights = lazy(() => import("./components/DataSubjectRights"));
+const DPIA = lazy(() => import("./components/DPIA"));
+const LocationConsent = lazy(() => import("./components/LocationConsent"));
 const RailReplacement = lazy(() => import("./pages/RailReplacement"));
 
 // New pages - Driver specific
@@ -75,6 +86,7 @@ const DriverSchedule = lazy(() => import("./pages/DriverSchedule"));
 const DriverIncidents = lazy(() => import("./pages/DriverIncidents"));
 const DriverCompliance = lazy(() => import("./pages/DriverCompliance"));
 const VehicleChecks = lazy(() => import("./pages/VehicleChecks"));
+const EnhancedVehicleCheckPage = lazy(() => import("./pages/EnhancedVehicleCheckPage"));
 const DriverFuelSystem = lazy(() => import("./pages/DriverFuelSystem"));
 const DriverSettings = lazy(() => import("./pages/DriverSettings"));
 const DriverMore = lazy(() => import("./pages/DriverMore"));
@@ -87,6 +99,8 @@ const ParentLayout = lazy(() => import("./components/layout/ParentLayout"));
 const ParentRouteTracker = lazy(() => import("./components/parent/ParentRouteTracker"));
 const ParentCommunicationCenter = lazy(() => import("./components/parent/ParentCommunicationCenter"));
 const ParentNotificationCenter = lazy(() => import("./components/parent/NotificationCenter"));
+
+
 const ParentSchedule = lazy(() => import("./pages/ParentSchedule"));
 
 // New pages - General
@@ -97,12 +111,35 @@ const RoutePlanning = lazy(() => import("./pages/RoutePlanning"));
 const InvoiceManagement = lazy(() => import("./pages/InvoiceManagement"));
 const QuotationManagement = lazy(() => import("./pages/QuotationManagement"));
 const EmailManagement = lazy(() => import("./pages/EmailManagement"));
+
+const SmartInspections = lazy(() => import("./pages/SmartInspections"));
+
+const DriverAppDownload = lazy(() => import("./pages/DriverAppDownload"));
 const ComplianceDashboard = lazy(() => import("./pages/ComplianceDashboard"));
 const TachographManager = lazy(() => import("./pages/TachographManager"));
 const APIManagement = lazy(() => import("./pages/APIManagement"));
+const PersonalAssistants = lazy(() => import("./pages/PersonalAssistants"));
+const FleetReportsPage = lazy(() => import("./pages/FleetReportsPage"));
 // const TrialTestPage = lazy(() => import("./pages/TrialTestPage")); // Hidden - no longer needed
 const SystemDiagnostic = lazy(() => import("./pages/SystemDiagnostic"));
 const TestPage = lazy(() => import("./pages/TestPage"));
+const UserAgreementTest = lazy(() => import("./components/test/UserAgreementTest"));
+const AgreementManagement = lazy(() => import("./pages/admin/AgreementManagement"));
+const EmailVerification = lazy(() => import("./pages/EmailVerification"));
+const EmailTest = lazy(() => import("./components/test/EmailTest"));
+const ApiKeyTest = lazy(() => import("./components/test/ApiKeyTest"));
+const SimpleApiKeyTest = lazy(() => import("./components/test/SimpleApiKeyTest"));
+const BasicApiTest = lazy(() => import("./components/test/BasicApiTest"));
+const PasswordResetForm = lazy(() => import("./components/auth/PasswordResetForm"));
+const EmailSystemTest = lazy(() => import("./components/test/EmailSystemTest"));
+const ApiKeyDiagnostic = lazy(() => import("./components/test/ApiKeyDiagnostic"));
+const ApiKeySetupGuide = lazy(() => import("./components/test/ApiKeySetupGuide"));
+const EmailWorkingTest = lazy(() => import("./components/test/EmailWorkingTest"));
+const SimpleEmailTest = lazy(() => import("./components/test/SimpleEmailTest"));
+const EmailSystemWorkingTest = lazy(() => import("./components/test/EmailSystemWorkingTest"));
+const EdgeFunctionEmailTest = lazy(() => import("./components/test/EdgeFunctionEmailTest"));
+const EdgeFunctionSetupTest = lazy(() => import("./components/test/EdgeFunctionSetupTest"));
+const EdgeFunctionDebugTest = lazy(() => import("./components/test/EdgeFunctionDebugTest"));
 
 import PageLoader from "./components/common/PageLoader";
 
@@ -135,13 +172,77 @@ const App = () => {
             <AuthProvider>
               <PasswordChangeWrapper>
                 <SecurityProvider>
-                <Suspense fallback={<PageLoader />}>
-                <Routes>
+                  <ThemeProvider>
+                    <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                  {/* Vehicle Check Questions - MUST BE FIRST to avoid conflicts */}
+                  <Route path="/admin/smart-inspections" element={
+                    <OrganizationProvider>
+                      <AppLayout>
+                        <ProtectedRoute allowedRoles={['admin', 'council']}>
+                          <SmartInspections />
+                        </ProtectedRoute>
+                      </AppLayout>
+                    </OrganizationProvider>
+                  } />
+                  
+                  {/* Alternative route for Vehicle Check Questions */}
+                  <Route path="/vehicle-check-questions" element={
+                    <OrganizationProvider>
+                      <AppLayout>
+                        <ProtectedRoute allowedRoles={['admin', 'council']}>
+                          <SmartInspections />
+                        </ProtectedRoute>
+                      </AppLayout>
+                    </OrganizationProvider>
+                  } />
+                  
+                  {/* Simple test route for SmartInspections */}
+                  <Route path="/test-smart-simple" element={
+                    <div className="p-8">
+                      <h1 className="text-2xl font-bold mb-4">🧪 Simple SmartInspections Test</h1>
+                      <p className="mb-4">Testing SmartInspections component directly without any wrappers...</p>
+                      <SmartInspections />
+                    </div>
+                  } />
+                  
                   {/* Auth routes - full screen without AppLayout */}
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/customer-auth" element={<CustomerAuth />} />
+                  
+                  {/* Test route for Vehicle Check Questions */}
+                  <Route path="/test-smart" element={
+                    <div className="p-8">
+                      <h1 className="text-2xl font-bold mb-4">🚗 Vehicle Check Questions Test</h1>
+                      <p className="mb-4">This is a test route to verify Vehicle Check Questions routing.</p>
+                      <div className="space-y-2">
+                        <p><strong>Current URL:</strong> {window.location.href}</p>
+                        <p><strong>Pathname:</strong> {window.location.pathname}</p>
+                      </div>
+                      <div className="mt-4 space-x-2">
+                        <a href="/admin/smart-inspections" className="text-blue-600 hover:underline">Go to Vehicle Check Questions (Original)</a>
+                        <a href="/vehicle-check-questions" className="text-blue-600 hover:underline">Go to Vehicle Check Questions (New)</a>
+                        <a href="/inspections" className="text-blue-600 hover:underline">Go to Regular Inspections</a>
+                      </div>
+                    </div>
+                  } />
+                  
+                  {/* Debug route to test Vehicle Check Questions component */}
+                  <Route path="/debug-smart" element={
+                    <OrganizationProvider>
+                      <AppLayout>
+                        <ProtectedRoute allowedRoles={['admin', 'council']}>
+                          <div className="p-8">
+                            <h1 className="text-2xl font-bold mb-4">🔍 Vehicle Check Questions Debug</h1>
+                            <p className="mb-4">Testing Vehicle Check Questions component directly...</p>
+                            <SmartInspections />
+                          </div>
+                        </ProtectedRoute>
+                      </AppLayout>
+                    </OrganizationProvider>
+                  } />
                   
                   {/* Parent-specific routes with admin layout */}
                   <Route path="/parent/*" element={
@@ -153,11 +254,13 @@ const App = () => {
                           <Route path="schedule" element={<ParentSchedule />} />
                           <Route path="children" element={<ChildManagement />} />
                           <Route path="communication" element={<ParentCommunicationCenter />} />
-                          <Route path="notifications" element={<ParentNotificationCenter />} />
-                        </Routes>
-                      </AppLayout>
-                    </ProtectedRoute>
-                  } />
+                                                  <Route path="notifications" element={<ParentNotificationCenter />} />
+                      </Routes>
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+
                   
                   {/* Legacy parent routes for backward compatibility */}
                   <Route path="/parent-dashboard" element={
@@ -180,13 +283,22 @@ const App = () => {
                   <Route path="/*" element={
                     <OrganizationProvider>
                       <AppLayout>
-                        <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route path="/dashboard" element={
+                        <AgreementGuard>
+                          <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/dashboard" element={
+                            <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
+                              <Dashboard />
+                            </ProtectedRoute>
+                          } />
+
+                        {/* Documents */}
+                        <Route path="/documents" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <Dashboard />
+                            <Documents />
                           </ProtectedRoute>
                         } />
+
                         <Route path="/mechanic-dashboard" element={
                           <ProtectedRoute allowedRoles={['mechanic']}>
                             <MechanicDashboard />
@@ -286,6 +398,11 @@ const App = () => {
                             <VehicleChecks />
                           </ProtectedRoute>
                         } />
+                        <Route path="/driver/enhanced-vehicle-check" element={
+                          <ProtectedRoute allowedRoles={['driver']}>
+                            <EnhancedVehicleCheckPage />
+                          </ProtectedRoute>
+                        } />
                         <Route path="/driver/fuel" element={
                           <ProtectedRoute allowedRoles={['driver']}>
                             <DriverFuelSystem />
@@ -299,6 +416,11 @@ const App = () => {
                         <Route path="/driver/more" element={
                           <ProtectedRoute allowedRoles={['driver']}>
                             <DriverMore />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/driver/documents" element={
+                          <ProtectedRoute allowedRoles={['driver']}>
+                            <MobileDriverDocuments />
                           </ProtectedRoute>
                         } />
                         <Route path="/driver/dashboard" element={
@@ -346,6 +468,50 @@ const App = () => {
                             <APIManagement />
                           </ProtectedRoute>
                         } />
+                        <Route path="/personal-assistants" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <PersonalAssistants />
+                          </ProtectedRoute>
+                        } />
+                        
+                        {/* Admin-specific routes to match sidebar navigation */}
+                        <Route path="/admin/inventory" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AdminInventoryDashboard />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/emails" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <EmailManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/compliance-dashboard" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <ComplianceDashboard />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/tachograph-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <TachographManager />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/api-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <APIManagement />
+                          </ProtectedRoute>
+                        } />
+                        
+                        {/* Reports Routes */}
+                        <Route path="/reports/fleet" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <FleetReportsPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/reports/compliance" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <ComplianceReportsPage />
+                          </ProtectedRoute>
+                        } />
                         <Route path="/system-diagnostic" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <SystemDiagnostic />
@@ -356,6 +522,31 @@ const App = () => {
                             <TestPage />
                           </ProtectedRoute>
                         } />
+                        <Route path="/test-agreements" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <UserAgreementTest />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/agreements" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AgreementManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/verify-email" element={<EmailVerification />} />
+                        <Route path="/test-email" element={<EmailTest />} />
+                        <Route path="/test-api-key" element={<ApiKeyTest />} />
+                        <Route path="/simple-test" element={<SimpleApiKeyTest />} />
+                        <Route path="/basic-test" element={<BasicApiTest />} />
+                        <Route path="/reset-password" element={<PasswordResetForm />} />
+                                                 <Route path="/email-system-test" element={<EmailSystemTest />} />
+                         <Route path="/api-diagnostic" element={<ApiKeyDiagnostic />} />
+                         <Route path="/api-setup-guide" element={<ApiKeySetupGuide />} />
+                         <Route path="/email-working-test" element={<EmailWorkingTest />} />
+                         <Route path="/simple-email-test" element={<SimpleEmailTest />} />
+                         <Route path="/email-system-working-test" element={<EmailSystemWorkingTest />} />
+                         <Route path="/edge-function-email-test" element={<EdgeFunctionEmailTest />} />
+                         <Route path="/edge-function-setup-test" element={<EdgeFunctionSetupTest />} />
+                         <Route path="/edge-function-debug-test" element={<EdgeFunctionDebugTest />} />
 
                         {/* Vehicle Management */}
                         <Route path="/vehicles" element={
@@ -383,11 +574,35 @@ const App = () => {
                             <VehicleServicePage />
                           </ProtectedRoute>
                         } />
-                        <Route path="/vehicle-inspections" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+
+                        {/* Inspections - Place these routes early to avoid conflicts */}
+                        <Route path="/inspections" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
                             <VehicleInspections />
                           </ProtectedRoute>
                         } />
+                        
+                        {/* Redirect /vehicle-inspections to /inspections for consistency */}
+                        <Route path="/vehicle-inspections" element={
+                          <Navigate to="/inspections" replace />
+                        } />
+                        
+                        {/* Compliance route for backward compatibility */}
+                        <Route path="/compliance" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
+                            <VehicleInspections />
+                          </ProtectedRoute>
+                        } />
+                        
+                        {/* Test route to verify routing is working */}
+                        <Route path="/test-inspections" element={
+                          <div>
+                            <h1>Test Inspections Route Working!</h1>
+                            <p>If you can see this, routing is working correctly.</p>
+                            <a href="/inspections">Go to real inspections page</a>
+                          </div>
+                        } />
+
 
                         {/* Job Management */}
                         <Route path="/jobs" element={
@@ -426,18 +641,33 @@ const App = () => {
                             <DriverManagement />
                           </ProtectedRoute>
                         } />
+                        <Route path="/drivers/:driverId" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <DriverDetail />
+                          </ProtectedRoute>
+                        } />
                         <Route path="/driver-management" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <DriverManagement />
                           </ProtectedRoute>
                         } />
-
-                        {/* Documents */}
-                        <Route path="/documents" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <Documents />
-                          </ProtectedRoute>
-                        } />
+                                <Route path="/admin-driver-documents" element={
+          <ProtectedRoute allowedRoles={['admin', 'council']}>
+            <AdminDriverDocuments />
+          </ProtectedRoute>
+        } />
+        
+        {/* Privacy Policy - Public Route */}
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        
+        {/* Data Subject Rights - Public Route */}
+        <Route path="/data-rights" element={<DataSubjectRights />} />
+        
+        {/* DPIA - Public Route */}
+        <Route path="/dpia" element={<DPIA />} />
+        
+        {/* Location Consent - Public Route */}
+        <Route path="/location-consent" element={<LocationConsent />} />
 
                         {/* Incident Reports */}
                         <Route path="/incidents" element={
@@ -476,6 +706,9 @@ const App = () => {
                             <Subscriptions />
                           </ProtectedRoute>
                         } />
+
+                        {/* Stripe Payment Success/Cancel Handler */}
+                        <Route path="/payment-result" element={<StripeSuccessHandler />} />
 
                         {/* Support */}
                         <Route path="/support" element={
@@ -536,19 +769,16 @@ const App = () => {
                           </ProtectedRoute>
                         } />
 
-                        {/* AI Assistants */}
-                        <Route path="/ai-assistants" element={
+
+
+                        {/* Advanced Notifications */}
+                        <Route path="/notifications" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <AIAssistants />
+                            <AdvancedNotifications />
                           </ProtectedRoute>
                         } />
 
-                        {/* Notification Center */}
-                        <Route path="/notifications" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
-                            <NotificationCenterPage />
-                          </ProtectedRoute>
-                        } />
+
 
                         {/* Unauthorized */}
                         <Route path="/unauthorized" element={<Unauthorized />} />
@@ -556,11 +786,14 @@ const App = () => {
                         {/* Catch all route */}
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
+                        </AgreementGuard>
                       </AppLayout>
                     </OrganizationProvider>
                   } />
                 </Routes>
-                </Suspense>
+                    </Suspense>
+            
+                  </ThemeProvider>
                 </SecurityProvider>
               </PasswordChangeWrapper>
             </AuthProvider>

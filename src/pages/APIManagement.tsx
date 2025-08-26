@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { 
@@ -246,6 +246,9 @@ const APIManagement: React.FC = () => {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Create New API Key</DialogTitle>
+                <DialogDescription>
+                  Create a new API key with specific permissions and rate limits for external integrations.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>

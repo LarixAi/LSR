@@ -65,17 +65,17 @@ const Header = () => {
               />
               <div className="min-w-0">
                 <span className="text-lg sm:text-xl lg:text-2xl font-bold text-brand block">LSR</span>
-                <p className="text-xs text-gray-500 whitespace-nowrap">Logistics Solution Resources</p>
+                <p className="text-xs text-muted-foreground whitespace-nowrap">Logistics Solution Resources</p>
               </div>
             </div>
           </div>
 
           {/* Center Section - Page Title (Desktop only) */}
           {!isMobile && (
-            <div className="hidden lg:flex items-center space-x-2 border-l border-gray-200 pl-6 mx-6">
+            <div className="hidden lg:flex items-center space-x-2 border-l border-border pl-6 mx-6">
               <div className="text-center">
-                <h1 className="text-lg font-semibold text-gray-900">{getPageTitle()}</h1>
-                <p className="text-xs text-gray-500">Current Location</p>
+                <h1 className="text-lg font-semibold text-foreground">{getPageTitle()}</h1>
+                <p className="text-xs text-muted-foreground">Current Location</p>
               </div>
             </div>
           )}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import NotificationCenter from '@/components/notifications/NotificationCenter';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import NotificationTest from '@/components/notifications/NotificationTest';
 
 const NotificationCenterPage = () => {

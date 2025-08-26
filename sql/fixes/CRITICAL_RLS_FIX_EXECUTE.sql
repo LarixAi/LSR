@@ -191,3 +191,5 @@ BEGIN
     RAISE NOTICE 'Authentication should now work properly';
 END $$;
 
+
+

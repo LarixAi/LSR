@@ -76,115 +76,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useCreateVehicleCheck } from '@/hooks/useVehicleChecks';
 import { uploadFileToStorage } from '@/utils/fileUpload';
 import { useVehicles } from '@/hooks/useVehicles';
+import { useVehicleCheckQuestions, type VehicleCheckQuestion } from '@/hooks/useVehicleCheckQuestions';
 
-// Default vehicle check questions (fallback when database table doesn't exist)
-const getDefaultVehicleCheckQuestions = (): VehicleCheckQuestion[] => {
-  return [
-    // Basic safety questions - these will be replaced with real data from database
-    {
-      id: '1',
-      question_text: 'Are there any fuel, oil, or fluid leaks under the vehicle?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 1,
-      category: 'exterior'
-    },
-    {
-      id: '2',
-      question_text: 'Is the windscreen clean and free from cracks or damage?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 2,
-      category: 'exterior'
-    },
-    {
-      id: '3',
-      question_text: 'Are the windscreen wipers and washers working correctly?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 3,
-      category: 'exterior'
-    },
-    {
-      id: '4',
-      question_text: 'Are the headlights (main/dip) working and lenses clean?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 4,
-      category: 'exterior'
-    },
-    {
-      id: '5',
-      question_text: 'Are the front indicators including side repeaters working?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 5,
-      category: 'exterior'
-    },
-    {
-      id: '6',
-      question_text: 'Is the horn working clearly?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 6,
-      category: 'exterior'
-    },
-    {
-      id: '7',
-      question_text: 'Are mirrors fitted, secure, adjusted, and not cracked?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 7,
-      category: 'exterior'
-    },
-    {
-      id: '8',
-      question_text: 'Is the front registration plate present, clean, and secure?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 8,
-      category: 'exterior'
-    },
-    {
-      id: '9',
-      question_text: 'Are the tyres in good condition with adequate tread depth and proper inflation?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 9,
-      category: 'exterior'
-    },
-    {
-      id: '10',
-      question_text: 'Are the wheel nuts secure with no cracks, rust marks, or missing nuts?',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      order_index: 10,
-      category: 'exterior'
-    }
-  ];
-};
+// This component now uses admin-controlled questions from the database
+// instead of hardcoded questions. The hook handles fallback to default
+// questions if no admin questions are available.
 
-interface VehicleCheckQuestion {
-  id: string;
-  question_text: string;
-  question_type: 'yes_no' | 'multiple_choice' | 'text' | 'number' | 'photo';
-  is_required: boolean;
-  is_critical: boolean;
-  order_index: number;
-  category: 'exterior' | 'interior' | 'engine' | 'safety' | 'documentation';
-  options?: string[];
-  guidance?: string;
-}
+// VehicleCheckQuestion interface is now imported from the hook
 
 interface GPSLocation {
   latitude: number;
@@ -219,8 +117,8 @@ const EnhancedVehicleCheck: React.FC = () => {
   const { toast } = useToast();
   const createVehicleCheck = useCreateVehicleCheck();
   const { data: vehicles = [], isLoading: vehiclesLoading } = useVehicles();
-  // Use default questions for now - will be replaced with real data when vehicle_check_questions table is created
-  const questions = getDefaultVehicleCheckQuestions();
+  // Use admin-controlled questions from the database (with fallback to defaults)
+  const { data: questions = [], isLoading: questionsLoading } = useVehicleCheckQuestions();
   const [currentStep, setCurrentStep] = useState<'vehicle-selection' | 'registration-photo' | 'mileage' | 'questions' | 'signature' | 'review'>('vehicle-selection');
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [registrationPhoto, setRegistrationPhoto] = useState<string>('');
@@ -252,9 +150,12 @@ const EnhancedVehicleCheck: React.FC = () => {
       'exterior': '🔹 Exterior Check',
       'interior': '🔹 Interior Check', 
       'safety': '🔹 Safety Equipment',
-      'load': '🔹 Load & Trailer',
+      'lights': '🔹 Lights & Indicators',
+      'tires': '🔹 Tyres & Wheels',
+      'brakes': '🔹 Braking System',
+      'fuel': '🔹 Fuel & AdBlue',
+      'engine': '🔹 Engine & Exhaust',
       'general': '🔹 General Equipment',
-      'final': '🔹 Final Check',
       'documentation': '🔹 Documentation',
       'driver': '🔹 Driver Check'
     };
@@ -263,20 +164,30 @@ const EnhancedVehicleCheck: React.FC = () => {
 
   const getCategoryDescription = (category: string): string => {
     const categoryDescriptions: Record<string, string> = {
-      'exterior': 'Checking vehicle exterior, lights, tires, and body condition',
+      'exterior': 'Checking vehicle exterior, body condition, and registration plates',
       'interior': 'Checking cab interior, controls, and dashboard systems',
       'safety': 'Checking safety equipment, emergency exits, and accessibility features',
-      'load': 'Checking load security, trailer connections, and height limits',
-      'general': 'Checking general equipment, AdBlue, and emergency devices',
-      'final': 'Final verification and defect reporting confirmation',
+      'lights': 'Checking all lighting systems including headlights, indicators, and brake lights',
+      'tires': 'Checking tyre condition, tread depth, pressure, and wheel security',
+      'brakes': 'Checking braking system operation and handbrake function',
+      'fuel': 'Checking fuel system, AdBlue levels, and related components',
+      'engine': 'Checking engine bay, exhaust system, and mechanical components',
+      'general': 'Checking general equipment, cleanliness, and emergency devices',
       'documentation': 'Recording mileage and documentation checks',
       'driver': 'Driver fitness and readiness assessment'
     };
     return categoryDescriptions[category] || 'Vehicle inspection category';
   };
 
-  // Helper function to get question guidance
+  // Helper function to get question guidance (now uses database guidance field)
   const getQuestionGuidance = (questionId: string): string => {
+    // First try to get guidance from the question object
+    const question = questions.find(q => q.id === questionId);
+    if (question?.guidance) {
+      return question.guidance;
+    }
+    
+    // Fallback to hardcoded guidance for legacy questions
     const guidanceMap: Record<string, string> = {
       // Front of Vehicle
       '1': 'Check for any visible leaks under the vehicle. Look for oil, fuel, coolant, or other fluid stains on the ground. Pay attention to the engine area, transmission, and fuel tank.',
@@ -928,7 +839,7 @@ const EnhancedVehicleCheck: React.FC = () => {
     console.log('Total questions:', questions.length);
     console.log('Current question:', question);
     console.log('Question ID:', question?.id);
-    console.log('Question text:', question?.question_text);
+    console.log('Question text:', question?.question);
     console.log('========================');
     return question;
   };
@@ -944,14 +855,14 @@ const EnhancedVehicleCheck: React.FC = () => {
         return (
           <Card className="w-full shadow-sm border-0 mobile-card">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg sm:text-xl text-gray-900">Select Vehicle</CardTitle>
-              <CardDescription className="text-sm sm:text-base text-gray-600">
+                          <CardTitle className="text-lg sm:text-xl">Select Vehicle</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
                 Choose the vehicle you will be checking today
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6">
               <div className="space-y-3">
-                <Label htmlFor="vehicle" className="text-base font-medium text-gray-700">Vehicle</Label>
+                <Label htmlFor="vehicle" className="text-base font-medium">Vehicle</Label>
                 <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
                   <SelectTrigger className="h-14 sm:h-12 text-base mobile-touch-target">
                     <SelectValue placeholder="Choose your vehicle" />
@@ -1000,8 +911,8 @@ const EnhancedVehicleCheck: React.FC = () => {
         return (
           <Card className="w-full shadow-sm border-0 mobile-card">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg sm:text-xl text-gray-900">Vehicle Registration Photo</CardTitle>
-              <CardDescription className="text-sm sm:text-base text-gray-600">
+                          <CardTitle className="text-lg sm:text-xl">Vehicle Registration Photo</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
                 Take a clear photo of the vehicle registration plate
               </CardDescription>
             </CardHeader>
@@ -1136,14 +1047,14 @@ const EnhancedVehicleCheck: React.FC = () => {
         return (
           <Card className="w-full shadow-sm border-0 mobile-card">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg sm:text-xl text-gray-900">Current Mileage</CardTitle>
-              <CardDescription className="text-sm sm:text-base text-gray-600">
+                          <CardTitle className="text-lg sm:text-xl">Current Mileage</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
                 Enter the current mileage reading from the vehicle
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6">
               <div className="space-y-3">
-                <Label htmlFor="mileage" className="text-base font-medium text-gray-700">Mileage (miles)</Label>
+                <Label htmlFor="mileage" className="text-base font-medium">Mileage (miles)</Label>
                 <Input
                   id="mileage"
                   type="number"
@@ -1179,8 +1090,8 @@ const EnhancedVehicleCheck: React.FC = () => {
         return (
           <Card className="w-full shadow-sm border-0 mobile-card">
             <CardHeader className="pb-3 sm:pb-4">
-              <CardTitle className="text-lg sm:text-xl text-gray-900">Vehicle Check Questions</CardTitle>
-              <CardDescription className="text-sm sm:text-base text-gray-600">
+                          <CardTitle className="text-lg sm:text-xl">Vehicle Check Questions</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
                 Question {currentQuestionIndex + 1} of {questions.length}
               </CardDescription>
             </CardHeader>
@@ -1210,7 +1121,7 @@ const EnhancedVehicleCheck: React.FC = () => {
                 </div>
                 
                 <div className="flex items-start space-x-3">
-                  <h3 className="text-lg sm:text-xl font-semibold leading-relaxed text-gray-900 flex-1">{question.question_text}</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold leading-relaxed text-foreground flex-1">{question.question}</h3>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1320,8 +1231,8 @@ const EnhancedVehicleCheck: React.FC = () => {
         return (
           <Card className="w-full shadow-sm border-0 mobile-card">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg sm:text-xl text-gray-900">Driver Signature</CardTitle>
-              <CardDescription className="text-sm sm:text-base text-gray-600">
+                          <CardTitle className="text-lg sm:text-xl">Driver Signature</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
                 Sign to confirm the vehicle check is complete and accurate
               </CardDescription>
             </CardHeader>
@@ -1347,7 +1258,7 @@ const EnhancedVehicleCheck: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-3">
-                <Label htmlFor="notes" className="text-base font-medium text-gray-700">Additional Notes (Optional)</Label>
+                <Label htmlFor="notes" className="text-base font-medium">Additional Notes (Optional)</Label>
                 <Textarea
                   id="notes"
                   value={notes}
@@ -1391,8 +1302,8 @@ const EnhancedVehicleCheck: React.FC = () => {
         return (
           <Card className="w-full shadow-sm border-0 mobile-card">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg sm:text-xl text-gray-900">Review Vehicle Check</CardTitle>
-              <CardDescription className="text-sm sm:text-base text-gray-600">
+                          <CardTitle className="text-lg sm:text-xl">Review Vehicle Check</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
                 Review all information before submitting
               </CardDescription>
             </CardHeader>
@@ -1434,7 +1345,7 @@ const EnhancedVehicleCheck: React.FC = () => {
                 <div className="space-y-2 max-h-80 overflow-y-auto">
                   {questions.map((question) => (
                     <div key={question.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
-                      <span className="text-sm flex-1 mr-4">{question.question_text}</span>
+                      <span className="text-sm flex-1 mr-4">{question.question}</span>
                       <Badge variant={answers[question.id] ? "default" : "secondary"} className="text-xs">
                         {answers[question.id] ? "Answered" : "Not Answered"}
                       </Badge>
@@ -1465,15 +1376,15 @@ const EnhancedVehicleCheck: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 relative">
+    <div className="h-screen bg-background relative">
       {/* Scrollable Content Area */}
-      <div className="h-full overflow-y-auto pb-28 sm:pb-24">
+      <div className="h-full overflow-y-auto pb-20 sm:pb-16">
         <div className="space-y-3 p-3 sm:space-y-4 sm:p-4 lg:space-y-6 lg:p-6 max-w-4xl mx-auto">
       {/* Header */}
-          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border mobile-card">
+          <div className="bg-card rounded-lg p-3 sm:p-4 shadow-sm border border-border mobile-card">
             <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div className="flex-1">
-                <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight text-gray-900">Enhanced Vehicle Check</h1>
+                <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight text-foreground">Enhanced Vehicle Check</h1>
                 <p className="text-muted-foreground text-xs sm:text-sm lg:text-base mt-1">
             Complete vehicle inspection with GPS tracking and photo capture
           </p>
@@ -1492,9 +1403,9 @@ const EnhancedVehicleCheck: React.FC = () => {
       </div>
 
       {/* Progress Bar */}
-          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border space-y-3 mobile-card">
+          <div className="bg-card rounded-lg p-3 sm:p-4 shadow-sm border border-border space-y-3 mobile-card">
             <div className="flex items-center justify-between text-xs sm:text-sm">
-              <span className="font-medium text-gray-700">Progress</span>
+                              <span className="font-medium text-foreground">Progress</span>
               <span className="text-muted-foreground font-semibold">{Math.round(getStepProgress())}%</span>
         </div>
             <Progress value={getStepProgress()} className="w-full h-2 sm:h-3" />
@@ -1503,7 +1414,7 @@ const EnhancedVehicleCheck: React.FC = () => {
             <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
               <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
-                  <span className="font-medium text-gray-700 text-xs sm:text-sm">Current Step:</span>
+                  <span className="font-medium text-foreground text-xs sm:text-sm">Current Step:</span>
                   <Badge variant="outline" className="text-xs w-fit">
                     {currentStep === 'vehicle-selection' && 'Vehicle Selection'}
                     {currentStep === 'registration-photo' && 'Registration Photo'}
@@ -1513,7 +1424,7 @@ const EnhancedVehicleCheck: React.FC = () => {
                     {currentStep === 'review' && 'Review & Submit'}
                   </Badge>
                 </div>
-                <div className="text-xs text-gray-500 font-medium">
+                <div className="text-xs text-muted-foreground font-medium">
                   {currentStep === 'questions' && `Question ${currentQuestionIndex + 1} of ${questions.length}`}
                   {currentStep !== 'questions' && 'Step Complete'}
                 </div>
@@ -1530,13 +1441,10 @@ const EnhancedVehicleCheck: React.FC = () => {
           <div>
         {renderStepContent()}
           </div>
-        </div>
-      </div>
 
-      {/* Fixed Navigation Bar - Always Visible */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-3 sm:p-4 z-10 safe-area-bottom">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      {/* Navigation Bar - Now part of scrollable content, positioned at bottom */}
+              <div className="bg-card rounded-lg p-3 sm:p-4 shadow-sm border border-border mobile-card">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
@@ -1579,6 +1487,7 @@ const EnhancedVehicleCheck: React.FC = () => {
           )}
           </div>
         </div>
+      </div>
         </div>
       </div>
 

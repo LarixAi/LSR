@@ -102,19 +102,48 @@ export const useReceivedNotifications = () => {
   return useQuery({
     queryKey: ['received-notifications', user?.id],
     queryFn: async () => {
-      if (!user?.id || !profile?.organization_id) return [];
+      // Early return if user or profile is not available
+      if (!user?.id) {
+        console.log('User not authenticated, returning empty array for received notifications');
+        return [];
+      }
       
-      const { data, error } = await supabase
-        .from('notification_messages')
-        .select('*')
-        .or(`recipient_id.eq.${user.id},and(recipient_role.eq.${profile.role},organization_id.eq.${profile.organization_id})`)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      if (!profile?.organization_id) {
+        console.log('Profile or organization not available, returning empty array for received notifications');
+        return [];
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('notification_messages')
+          .select('*')
+          .or(`recipient_id.eq.${user.id},and(recipient_role.eq.${profile.role},organization_id.eq.${profile.organization_id})`)
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-      if (error) throw error;
-      return data as NotificationMessage[] || [];
+        if (error) {
+          console.error('Error fetching received notifications:', error);
+          
+          // If table doesn't exist, return empty array
+          if (error.code === '42P01' || error.message.includes('does not exist')) {
+            console.warn('Notification messages table may not exist, returning empty array');
+            return [];
+          }
+          
+          throw error;
+        }
+        
+        return data as NotificationMessage[] || [];
+      } catch (err) {
+        console.error('Unexpected error in useReceivedNotifications:', err);
+        return [];
+      }
     },
-    enabled: !!user?.id && !!profile?.organization_id
+    enabled: !!user?.id && !!profile?.organization_id,
+    retry: 2,
+    retryDelay: 1000,
+    // Add staleTime to prevent unnecessary refetches
+    staleTime: 10000, // Consider data fresh for 10 seconds
   });
 };
 
@@ -395,16 +424,65 @@ export const useUnreadNotificationCount = () => {
   return useQuery({
     queryKey: ['unread-notification-count', user?.id, profile?.organization_id],
     queryFn: async () => {
-      if (!user?.id || !profile?.organization_id) return 0;
+      // Early return if user or profile is not available
+      if (!user?.id) {
+        console.log('User not authenticated, returning 0 for unread notifications');
+        return 0;
+      }
       
-      const { data, error } = await supabase
-        .rpc('get_unread_notification_count', { user_uuid: user.id });
+      if (!profile?.organization_id) {
+        console.log('Profile or organization not available, returning 0 for unread notifications');
+        return 0;
+      }
+      
+      try {
+        console.log('Fetching unread notifications for user:', user.id);
+        
+        // Check if notification_messages table exists by trying a simple query first
+        const { data, error } = await supabase
+          .from('notification_messages')
+          .select('id')
+          .eq('recipient_id', user.id)
+          .is('read_at', null)
+          .limit(1);
 
-      if (error) throw error;
-      return data || 0;
+        if (error) {
+          console.error('Error fetching unread notifications:', error);
+          
+          // If table doesn't exist or other database error, return 0
+          if (error.code === '42P01' || error.message.includes('does not exist')) {
+            console.warn('Notification messages table may not exist, returning 0');
+            return 0;
+          }
+          
+          // For other errors, still return 0 but log the error
+          return 0;
+        }
+        
+        // Get the full count
+        const { data: countData, error: countError } = await supabase
+          .from('notification_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('recipient_id', user.id)
+          .is('read_at', null);
+
+        if (countError) {
+          console.error('Error getting unread notification count:', countError);
+          return data?.length || 0;
+        }
+        
+        return countData?.length || 0;
+      } catch (err) {
+        console.error('Unexpected error in useUnreadNotificationCount:', err);
+        return 0;
+      }
     },
     enabled: !!user?.id && !!profile?.organization_id,
     refetchInterval: 30000, // Refetch every 30 seconds
+    retry: 2, // Retry up to 2 times
+    retryDelay: 1000, // Wait 1 second between retries
+    // Add staleTime to prevent unnecessary refetches
+    staleTime: 10000, // Consider data fresh for 10 seconds
   });
 };
 

@@ -82,3 +82,5 @@ SELECT 'Password fix completed successfully!' as status;
 SELECT 'Service role bypass policies created for Edge Functions' as info;
 SELECT 'Profiles table is now accessible for password resets' as info;
 
+
+

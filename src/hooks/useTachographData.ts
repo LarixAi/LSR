@@ -1,177 +1,235 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const useTachographData = () => {
+export interface TachographRecord {
+  id: string;
+  organization_id: string;
+  driver_id: string;
+  vehicle_id: string;
+  record_date: string;
+  start_time: string;
+  end_time: string;
+  activity_type: 'driving' | 'rest' | 'break' | 'other_work' | 'availability' | 'poa';
+  distance_km: number;
+  start_location: string;
+  end_location: string;
+  speed_data: any;
+  violations: string[];
+  card_type: 'driver' | 'company' | 'workshop' | 'control';
+  card_number: string;
+  download_method: 'manual' | 'automatic' | 'remote';
+  download_timestamp: string;
+  equipment_serial_number: string;
+  calibration_date: string;
+  next_calibration_date: string;
+  data_quality_score: number;
+  is_complete: boolean;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  driver?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  vehicle?: {
+    id: string;
+    vehicle_number: string;
+    make: string;
+    model: string;
+    license_plate: string;
+  };
+}
+
+export const useTachographData = (driverId?: string, startDate?: string, endDate?: string) => {
   const { profile } = useAuth();
 
-  // Fetch drivers and vehicles for tachograph calculations
-  const { data: drivers = [] } = useQuery({
-    queryKey: ['tachograph-drivers', profile?.organization_id],
+  // Fetch real tachograph records from database
+  const { data: tachographRecords = [], isLoading, error } = useQuery({
+    queryKey: ['tachograph-records', profile?.organization_id, driverId, startDate, endDate],
     queryFn: async () => {
       if (!profile?.organization_id) return [];
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'driver')
-        .eq('organization_id', profile.organization_id);
-      
-      if (error) {
-        console.error('Error fetching drivers for tachograph:', error);
-        return [];
-      }
-      return data || [];
-    },
-    enabled: !!profile?.organization_id,
-  });
 
-  const { data: vehicles = [] } = useQuery({
-    queryKey: ['tachograph-vehicles', profile?.organization_id],
-    queryFn: async () => {
-      if (!profile?.organization_id) return [];
-      
-      const { data, error } = await supabase
-        .from('vehicles')
-        .select('*')
-        .eq('organization_id', profile.organization_id);
-      
-      if (error) {
-        console.error('Error fetching vehicles for tachograph:', error);
-        return [];
-      }
-      return data || [];
-    },
-    enabled: !!profile?.organization_id,
-  });
+      try {
+        let query = supabase
+          .from('tachograph_records')
+          .select(`
+            *,
+            driver:profiles!tachograph_records_driver_id_fkey(id, first_name, last_name, email),
+            vehicle:vehicles!tachograph_records_vehicle_id_fkey(id, vehicle_number, make, model, license_plate)
+          `)
+          .eq('organization_id', profile.organization_id)
+          .order('record_date', { ascending: false });
 
-  // Generate realistic tachograph records based on available drivers and vehicles
-  const generateTachographRecords = () => {
-    if (drivers.length === 0 || vehicles.length === 0) return [];
-
-    const records = [];
-    const today = new Date();
-    
-    // Generate records for the last 7 days
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      // Create 1-3 records per day based on available drivers
-      const recordsPerDay = Math.min(Math.floor(Math.random() * 3) + 1, drivers.length);
-      
-      for (let j = 0; j < recordsPerDay; j++) {
-        const driver = drivers[j % drivers.length];
-        const vehicle = vehicles[j % vehicles.length];
-        
-        const startTime = new Date(date);
-        startTime.setHours(6 + Math.floor(Math.random() * 4), Math.floor(Math.random() * 60));
-        
-        const endTime = new Date(startTime);
-        endTime.setHours(startTime.getHours() + 8 + Math.floor(Math.random() * 4));
-        
-        const totalWorkTime = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-        const drivingTime = totalWorkTime * (0.6 + Math.random() * 0.3); // 60-90% driving
-        const restTime = Math.max(0.5, Math.random() * 2); // 0.5-2 hours rest
-        const availabilityTime = totalWorkTime - drivingTime - restTime;
-        
-        // Generate occasional violations
-        const violations = [];
-        const hasViolation = Math.random() < 0.15; // 15% chance of violation
-        
-        if (hasViolation) {
-          const possibleViolations = [
-            'Driving time exceeded',
-            'Insufficient rest period', 
-            'Daily driving limit exceeded',
-            'Weekly driving limit exceeded',
-            'Tachograph card not inserted'
-          ];
-          violations.push(possibleViolations[Math.floor(Math.random() * possibleViolations.length)]);
+        // Filter by driver if specified
+        if (driverId) {
+          query = query.eq('driver_id', driverId);
         }
-        
-        records.push({
-          id: `TACH-${String(records.length + 1).padStart(3, '0')}`,
-          driverId: driver.id,
-          driverName: `${driver.first_name || 'Driver'} ${driver.last_name || driver.id.slice(-3)}`,
-          vehicleId: vehicle.id,
-          vehicleNumber: vehicle.vehicle_number || `LSR-${vehicle.id.slice(-3)}`,
-          recordType: Math.random() > 0.1 ? 'digital' : 'analogue',
-          startDate: startTime.toISOString(),
-          endDate: endTime.toISOString(),
-          totalDrivingTime: Math.round(drivingTime * 100) / 100,
-          restTime: Math.round(restTime * 100) / 100,
-          workTime: Math.round(totalWorkTime * 100) / 100,
-          availabilityTime: Math.round(Math.max(0, availabilityTime) * 100) / 100,
-          violations,
-          status: violations.length > 0 ? 'violation' : 'valid',
-          uploadedAt: new Date(endTime.getTime() + Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-          fileName: `TACH_${date.toISOString().split('T')[0].replace(/-/g, '')}_${String(j + 1).padStart(3, '0')}.ddd`,
-          analysisStatus: Math.random() > 0.05 ? 'completed' : 'pending'
-        });
+
+        // Filter by date range if specified
+        if (startDate) {
+          query = query.gte('record_date', startDate);
+        }
+        if (endDate) {
+          query = query.lte('record_date', endDate);
+        }
+
+        const { data, error: fetchError } = await query;
+
+        if (fetchError) {
+          console.error('Error fetching tachograph records:', fetchError);
+          return [];
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error('Error in tachograph data query:', error);
+        return [];
       }
-    }
-    
-    return records.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-  };
+    },
+    enabled: !!profile?.organization_id,
+  });
 
-  // Generate violation summary
-  const generateViolationSummary = (records: any[]) => {
-    const violations = records.filter(r => r.violations.length > 0);
-    
-    return violations.map((record, index) => ({
-      id: `VIO-${String(index + 1).padStart(3, '0')}`,
-      type: record.violations[0] || 'Unknown violation',
-      severity: Math.random() > 0.3 ? 'high' : Math.random() > 0.5 ? 'medium' : 'low',
-      driverId: record.driverId,
-      driverName: record.driverName,
-      vehicleId: record.vehicleId,
-      vehicleNumber: record.vehicleNumber,
-      violationDate: record.startDate,
-      detectedAt: record.uploadedAt,
-      status: Math.random() > 0.6 ? 'resolved' : Math.random() > 0.3 ? 'acknowledged' : 'open'
-    }));
-  };
-
-  // Calculate statistics
-  const calculateStats = (records: any[]) => {
-    if (records.length === 0) {
+  // Calculate statistics from real data
+  const calculateStats = () => {
+    if (!tachographRecords || tachographRecords.length === 0) {
       return {
         totalRecords: 0,
-        validRecords: 0,
-        violationRecords: 0,
-        pendingAnalysis: 0,
-        averageDrivingTime: 0,
-        complianceRate: 100
+        totalDrivingTime: 0,
+        totalDistance: 0,
+        violations: 0,
+        averageDataQuality: 0,
+        drivers: new Set(),
+        vehicles: new Set(),
       };
     }
 
-    const totalRecords = records.length;
-    const validRecords = records.filter(r => r.status === 'valid').length;
-    const violationRecords = records.filter(r => r.status === 'violation').length;
-    const pendingAnalysis = records.filter(r => r.analysisStatus === 'pending').length;
-    const averageDrivingTime = records.reduce((sum, r) => sum + r.totalDrivingTime, 0) / totalRecords;
-    const complianceRate = totalRecords > 0 ? (validRecords / totalRecords) * 100 : 100;
+    const stats = {
+      totalRecords: tachographRecords.length,
+      totalDrivingTime: 0,
+      totalDistance: 0,
+      violations: 0,
+      averageDataQuality: 0,
+      drivers: new Set<string>(),
+      vehicles: new Set<string>(),
+    };
+
+    let totalQualityScore = 0;
+
+    tachographRecords.forEach(record => {
+      // Calculate driving time
+      if (record.start_time && record.end_time) {
+        const start = new Date(record.start_time);
+        const end = new Date(record.end_time);
+        const drivingHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        stats.totalDrivingTime += drivingHours;
+      }
+
+      // Sum distance
+      if (record.distance_km) {
+        stats.totalDistance += record.distance_km;
+      }
+
+      // Count violations
+      if (record.violations && record.violations.length > 0) {
+        stats.violations += record.violations.length;
+      }
+
+      // Track unique drivers and vehicles
+      if (record.driver_id) stats.drivers.add(record.driver_id);
+      if (record.vehicle_id) stats.vehicles.add(record.vehicle_id);
+
+      // Sum quality scores
+      if (record.data_quality_score) {
+        totalQualityScore += record.data_quality_score;
+      }
+    });
+
+    stats.averageDataQuality = stats.totalRecords > 0 ? totalQualityScore / stats.totalRecords : 0;
 
     return {
-      totalRecords,
-      validRecords,
-      violationRecords,
-      pendingAnalysis,
-      averageDrivingTime: Math.round(averageDrivingTime * 100) / 100,
-      complianceRate: Math.round(complianceRate * 100) / 100
+      ...stats,
+      drivers: stats.drivers.size,
+      vehicles: stats.vehicles.size,
     };
   };
 
-  const tachographRecords = generateTachographRecords();
-  const violationSummary = generateViolationSummary(tachographRecords);
-  const stats = calculateStats(tachographRecords);
+  const stats = calculateStats();
 
   return {
     tachographRecords,
-    violationSummary,
+    isLoading,
+    error,
     stats,
-    isLoading: false,
-    hasData: tachographRecords.length > 0
+    hasData: tachographRecords.length > 0,
   };
+};
+
+export const useCreateTachographRecord = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async (record: Partial<TachographRecord>) => {
+      if (!profile?.organization_id) {
+        throw new Error('Organization ID is required');
+      }
+
+      const { data, error } = await supabase
+        .from('tachograph_records')
+        .insert([{
+          ...record,
+          organization_id: profile.organization_id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tachograph-records'] });
+    },
+  });
+};
+
+export const useUpdateTachographRecord = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<TachographRecord> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('tachograph_records')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tachograph-records'] });
+    },
+  });
+};
+
+export const useDeleteTachographRecord = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('tachograph_records')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tachograph-records'] });
+    },
+  });
 };

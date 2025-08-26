@@ -9,10 +9,17 @@ ALTER TABLE IF EXISTS public.route_students
 DROP CONSTRAINT IF EXISTS route_students_route_id_fkey;
 
 -- Re-add foreign key constraints with CASCADE DELETE for existing tables
-ALTER TABLE public.route_assignments 
-ADD CONSTRAINT route_assignments_route_id_fkey 
-FOREIGN KEY (route_id) REFERENCES public.routes(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'route_assignments') THEN
+        ALTER TABLE public.route_assignments 
+        ADD CONSTRAINT route_assignments_route_id_fkey 
+        FOREIGN KEY (route_id) REFERENCES public.routes(id) ON DELETE CASCADE;
+    END IF;
 
-ALTER TABLE public.route_students 
-ADD CONSTRAINT route_students_route_id_fkey 
-FOREIGN KEY (route_id) REFERENCES public.routes(id) ON DELETE CASCADE;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'route_students') THEN
+        ALTER TABLE public.route_students 
+        ADD CONSTRAINT route_students_route_id_fkey 
+        FOREIGN KEY (route_id) REFERENCES public.routes(id) ON DELETE CASCADE;
+    END IF;
+END $$;

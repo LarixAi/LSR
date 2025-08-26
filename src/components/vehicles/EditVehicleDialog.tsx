@@ -10,9 +10,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useUpdateVehicle, type Vehicle } from '@/hooks/useVehicles';
-import { Loader2, Car, Shield, Scale, AlertTriangle, CheckCircle, Wrench, Clock, FileText } from 'lucide-react';
+import { useVehicleDocuments, useDeleteVehicleDocument, type VehicleDocument } from '@/hooks/useVehicleDocuments';
+import { Loader2, Car, Shield, Scale, AlertTriangle, CheckCircle, Wrench, Clock, FileText, Upload, Download, Eye, Trash2, Calendar, Tag, Star, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import VehicleDocumentUploadDialog from './VehicleDocumentUploadDialog';
 
 interface EditVehicleFormData {
   make: string;
@@ -53,6 +57,7 @@ interface EditVehicleDialogProps {
 
 const EditVehicleDialog = ({ vehicle, open, onOpenChange, onSuccess }: EditVehicleDialogProps) => {
   const updateVehicle = useUpdateVehicle();
+  const [isDocumentUploadOpen, setIsDocumentUploadOpen] = React.useState(false);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<EditVehicleFormData>({
     defaultValues: {
@@ -244,22 +249,23 @@ const EditVehicleDialog = ({ vehicle, open, onOpenChange, onSuccess }: EditVehic
             <Car className="h-5 w-5" />
             Edit Vehicle - {vehicle.vehicle_number}
           </DialogTitle>
-          <DialogDescription className="flex items-center gap-2">
+          <div className="text-sm text-muted-foreground flex items-center gap-2">
             Update vehicle details and ORV & BOR compliance settings
             <Badge variant="outline" className={`text-${complianceStatus.color}-600 border-${complianceStatus.color}-200`}>
               {complianceStatus.icon}
               {complianceStatus.status}
             </Badge>
-          </DialogDescription>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="orv">ORV Status</TabsTrigger>
               <TabsTrigger value="bor">BOR Status</TabsTrigger>
               <TabsTrigger value="compliance">Compliance</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
 
             {/* Basic Information Tab */}
@@ -656,6 +662,24 @@ const EditVehicleDialog = ({ vehicle, open, onOpenChange, onSuccess }: EditVehic
                 </div>
               </div>
             </TabsContent>
+
+            {/* Documents Tab */}
+            <TabsContent value="documents" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Vehicle Documents</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage all documents related to this vehicle
+                  </p>
+                </div>
+                <Button onClick={() => setIsDocumentUploadOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Document
+                </Button>
+              </div>
+
+              <VehicleDocumentsList vehicleId={vehicle.id} vehicleNumber={vehicle.vehicle_number} />
+            </TabsContent>
           </Tabs>
 
           <div className="flex justify-end space-x-2 pt-4">
@@ -678,8 +702,251 @@ const EditVehicleDialog = ({ vehicle, open, onOpenChange, onSuccess }: EditVehic
             </Button>
           </div>
         </form>
+
+        {/* Document Upload Dialog */}
+        <VehicleDocumentUploadDialog
+          open={isDocumentUploadOpen}
+          onOpenChange={setIsDocumentUploadOpen}
+          vehicleId={vehicle.id}
+          vehicleNumber={vehicle.vehicle_number}
+          allowVehicleSelection={false}
+        />
       </DialogContent>
     </Dialog>
+  );
+};
+
+// Vehicle Documents List Component
+interface VehicleDocumentsListProps {
+  vehicleId: string;
+  vehicleNumber: string;
+}
+
+const VehicleDocumentsList = ({ vehicleId, vehicleNumber }: VehicleDocumentsListProps) => {
+  const { data: documents = [], isLoading } = useVehicleDocuments(vehicleId);
+  const deleteDocument = useDeleteVehicleDocument();
+
+  const handleDeleteDocument = async (documentId: string) => {
+    if (confirm('Are you sure you want to delete this document?')) {
+      try {
+        await deleteDocument.mutateAsync({ id: documentId, vehicleId });
+      } catch (error) {
+        console.error('Error deleting document:', error);
+      }
+    }
+  };
+
+  const handleDownloadDocument = (document: VehicleDocument) => {
+    if (document.file_url) {
+      window.open(document.file_url, '_blank');
+    } else {
+      toast.error('Download URL not available');
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'expired': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'archived': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span className="ml-2">Loading documents...</span>
+      </div>
+    );
+  }
+
+  if (documents.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <FileText className="h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No documents uploaded</h3>
+          <p className="text-gray-500 text-center mb-4">
+            Upload documents like registration, insurance, MOT certificates, and maintenance records.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Documents Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Documents ({documents.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Document</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Uploaded</TableHead>
+                <TableHead>Expiry</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documents.map((document) => (
+                <TableRow key={document.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {document.is_favorite && <Star className="h-4 w-4 text-yellow-500" />}
+                      {!document.is_public && <Lock className="h-4 w-4 text-red-500" />}
+                      <div>
+                        <div className="font-medium">{document.name}</div>
+                        {document.description && (
+                          <div className="text-sm text-gray-500">{document.description}</div>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{document.category}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(document.status)}>
+                      {document.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {document.priority && (
+                      <Badge className={getPriorityColor(document.priority)}>
+                        {document.priority}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {new Date(document.uploaded_at).toLocaleDateString()}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {document.expiry_date ? (
+                      <div className="text-sm">
+                        {new Date(document.expiry_date).toLocaleDateString()}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">No expiry</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownloadDocument(document)}
+                        title="Download"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(document.file_url, '_blank')}
+                        title="View"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteDocument(document.id)}
+                        title="Delete"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Document Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-blue-600" />
+              <div>
+                <div className="text-2xl font-bold">{documents.length}</div>
+                <div className="text-sm text-gray-600">Total Documents</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <div>
+                <div className="text-2xl font-bold">
+                  {documents.filter(d => d.status === 'active').length}
+                </div>
+                <div className="text-sm text-gray-600">Active</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <div>
+                <div className="text-2xl font-bold">
+                  {documents.filter(d => d.status === 'expired').length}
+                </div>
+                <div className="text-sm text-gray-600">Expired</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-orange-600" />
+              <div>
+                <div className="text-2xl font-bold">
+                  {documents.filter(d => !d.is_public).length}
+                </div>
+                <div className="text-sm text-gray-600">Confidential</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 

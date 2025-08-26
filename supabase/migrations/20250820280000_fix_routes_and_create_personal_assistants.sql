@@ -68,46 +68,62 @@ CREATE INDEX IF NOT EXISTS idx_personal_assistants_background_check ON public.pe
 ALTER TABLE public.personal_assistants ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for personal_assistants
-CREATE POLICY "Organization admins can view all personal assistants" ON public.personal_assistants
-    FOR SELECT USING (
-        organization_id IN (
-            SELECT organization_id FROM public.profiles 
-            WHERE id = auth.uid() AND role IN ('admin', 'council')
-        )
-    );
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'personal_assistants' AND policyname = 'Organization admins can view all personal assistants') THEN
+        CREATE POLICY "Organization admins can view all personal assistants" ON public.personal_assistants
+            FOR SELECT USING (
+                organization_id IN (
+                    SELECT organization_id FROM public.profiles
+                    WHERE id = auth.uid() AND role IN ('admin', 'council')
+                )
+            );
+    END IF;
 
-CREATE POLICY "Organization admins can insert personal assistants" ON public.personal_assistants
-    FOR INSERT WITH CHECK (
-        organization_id IN (
-            SELECT organization_id FROM public.profiles 
-            WHERE id = auth.uid() AND role IN ('admin', 'council')
-        )
-    );
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'personal_assistants' AND policyname = 'Organization admins can insert personal assistants') THEN
+        CREATE POLICY "Organization admins can insert personal assistants" ON public.personal_assistants
+            FOR INSERT WITH CHECK (
+                organization_id IN (
+                    SELECT organization_id FROM public.profiles
+                    WHERE id = auth.uid() AND role IN ('admin', 'council')
+                )
+            );
+    END IF;
 
-CREATE POLICY "Organization admins can update personal assistants" ON public.personal_assistants
-    FOR UPDATE USING (
-        organization_id IN (
-            SELECT organization_id FROM public.profiles 
-            WHERE id = auth.uid() AND role IN ('admin', 'council')
-        )
-    );
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'personal_assistants' AND policyname = 'Organization admins can update personal assistants') THEN
+        CREATE POLICY "Organization admins can update personal assistants" ON public.personal_assistants
+            FOR UPDATE USING (
+                organization_id IN (
+                    SELECT organization_id FROM public.profiles
+                    WHERE id = auth.uid() AND role IN ('admin', 'council')
+                )
+            );
+    END IF;
 
-CREATE POLICY "Organization admins can delete personal assistants" ON public.personal_assistants
-    FOR DELETE USING (
-        organization_id IN (
-            SELECT organization_id FROM public.profiles 
-            WHERE id = auth.uid() AND role IN ('admin', 'council')
-        )
-    );
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'personal_assistants' AND policyname = 'Organization admins can delete personal assistants') THEN
+        CREATE POLICY "Organization admins can delete personal assistants" ON public.personal_assistants
+            FOR DELETE USING (
+                organization_id IN (
+                    SELECT organization_id FROM public.profiles
+                    WHERE id = auth.uid() AND role IN ('admin', 'council')
+                )
+            );
+    END IF;
+END $$;
 
 -- Create updated_at trigger for personal_assistants
-CREATE TRIGGER update_personal_assistants_updated_at BEFORE UPDATE ON public.personal_assistants
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_personal_assistants_updated_at') THEN
+        CREATE TRIGGER update_personal_assistants_updated_at BEFORE UPDATE ON public.personal_assistants
+            FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
 
 -- Grant permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.personal_assistants TO authenticated;
 
--- Insert some sample personal assistants
+-- Insert some sample personal assistants (only if organizations exist)
 INSERT INTO public.personal_assistants (
     organization_id,
     first_name,
@@ -119,9 +135,9 @@ INSERT INTO public.personal_assistants (
     hourly_rate,
     status,
     background_check_status
-) VALUES 
-(
-    'd1ad845e-8989-4563-9691-dc1b3c86c4ce',
+) 
+SELECT 
+    org.id,
     'Sarah',
     'Johnson',
     'sarah.johnson@example.com',
@@ -131,9 +147,22 @@ INSERT INTO public.personal_assistants (
     15.50,
     'active',
     'passed'
-),
-(
-    'd1ad845e-8989-4563-9691-dc1b3c86c4ce',
+FROM public.organizations org LIMIT 1;
+
+INSERT INTO public.personal_assistants (
+    organization_id,
+    first_name,
+    last_name,
+    email,
+    phone,
+    qualifications,
+    experience_years,
+    hourly_rate,
+    status,
+    background_check_status
+) 
+SELECT 
+    org.id,
     'Michael',
     'Chen',
     'michael.chen@example.com',
@@ -143,18 +172,5 @@ INSERT INTO public.personal_assistants (
     14.00,
     'active',
     'passed'
-),
-(
-    'd1ad845e-8989-4563-9691-dc1b3c86c4ce',
-    'Emma',
-    'Williams',
-    'emma.williams@example.com',
-    '+44 20 7123 4569',
-    ARRAY['Child Care', 'Learning Support', 'Dyslexia Awareness'],
-    7,
-    16.00,
-    'active',
-    'passed'
-)
-ON CONFLICT (email) DO NOTHING;
+FROM public.organizations org LIMIT 1;
 

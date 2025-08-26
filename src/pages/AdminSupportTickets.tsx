@@ -132,10 +132,10 @@ export default function AdminSupportTickets() {
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = 
-      ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.ticket_id.toLowerCase().includes(searchTerm.toLowerCase());
+      (ticket.subject?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (ticket.user_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (ticket.user_email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (ticket.ticket_id?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
     const matchesType = typeFilter === 'all' || ticket.type === typeFilter;
@@ -147,7 +147,9 @@ export default function AdminSupportTickets() {
   const getStatusCounts = () => {
     const counts = { open: 0, in_progress: 0, resolved: 0, closed: 0 };
     tickets.forEach(ticket => {
-      counts[ticket.status as keyof typeof counts]++;
+      if (ticket.status && counts.hasOwnProperty(ticket.status)) {
+        counts[ticket.status as keyof typeof counts]++;
+      }
     });
     return counts;
   };
@@ -314,41 +316,41 @@ export default function AdminSupportTickets() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        {ticket.type === 'support' ? (
+                        {(ticket.type || 'support') === 'support' ? (
                           <AlertTriangle className="w-4 h-4 text-red-600" />
                         ) : (
                           <Lightbulb className="w-4 h-4 text-blue-600" />
                         )}
-                        <span className="font-medium">{ticket.subject}</span>
+                        <span className="font-medium">{ticket.subject || 'No Subject'}</span>
                         <Badge variant="outline" className="text-xs">
-                          {ticket.ticket_id}
+                          {ticket.ticket_id || 'No ID'}
                         </Badge>
                       </div>
                       
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
                         <span className="flex items-center space-x-1">
                           <User className="w-3 h-3" />
-                          <span>{ticket.user_name}</span>
+                          <span>{ticket.user_name || 'Unknown User'}</span>
                         </span>
                         <span className="flex items-center space-x-1">
                           <Mail className="w-3 h-3" />
-                          <span>{ticket.user_email}</span>
+                          <span>{ticket.user_email || 'No Email'}</span>
                         </span>
                         <span className="flex items-center space-x-1">
                           <Clock className="w-3 h-3" />
-                          <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+                          <span>{ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'Unknown Date'}</span>
                         </span>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <Badge className={priorityColors[ticket.priority]}>
-                          {priorityIcons[ticket.priority]} {ticket.priority}
+                        <Badge className={priorityColors[ticket.priority] || 'bg-gray-100 text-gray-800'}>
+                          {priorityIcons[ticket.priority] || '⚪'} {ticket.priority || 'unknown'}
                         </Badge>
-                        <Badge className={statusColors[ticket.status]}>
-                          {ticket.status.replace('_', ' ')}
+                        <Badge className={statusColors[ticket.status] || 'bg-gray-100 text-gray-800'}>
+                          {(ticket.status || 'unknown').replace('_', ' ')}
                         </Badge>
                         <Badge variant="outline">
-                          {ticket.type === 'support' ? 'IT Support' : 'Feature Suggestion'}
+                          {(ticket.type || 'support') === 'support' ? 'IT Support' : 'Feature Suggestion'}
                         </Badge>
                       </div>
                     </div>
@@ -362,13 +364,13 @@ export default function AdminSupportTickets() {
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl">
                           <DialogHeader>
-                            <DialogTitle>Ticket Details - {ticket.ticket_id}</DialogTitle>
+                            <DialogTitle>Ticket Details - {ticket.ticket_id || 'No ID'}</DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Label>Type</Label>
-                                <p className="text-sm">{ticket.type === 'support' ? 'IT Support' : 'Feature Suggestion'}</p>
+                                <p className="text-sm">{(ticket.type || 'support') === 'support' ? 'IT Support' : 'Feature Suggestion'}</p>
                               </div>
                               <div>
                                 <Label>Priority</Label>
@@ -380,28 +382,28 @@ export default function AdminSupportTickets() {
                               </div>
                               <div>
                                 <Label>Created</Label>
-                                <p className="text-sm">{new Date(ticket.created_at).toLocaleString()}</p>
+                                <p className="text-sm">{ticket.created_at ? new Date(ticket.created_at).toLocaleString() : 'Unknown Date'}</p>
                               </div>
                             </div>
                             
                             <div>
                               <Label>Subject</Label>
-                              <p className="text-sm font-medium">{ticket.subject}</p>
+                              <p className="text-sm font-medium">{ticket.subject || 'No Subject'}</p>
                             </div>
                             
                             <div>
                               <Label>Description</Label>
-                              <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
+                              <p className="text-sm whitespace-pre-wrap">{ticket.description || 'No description provided'}</p>
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Label>User Name</Label>
-                                <p className="text-sm">{ticket.user_name}</p>
+                                <p className="text-sm">{ticket.user_name || 'Unknown User'}</p>
                               </div>
                               <div>
                                 <Label>User Email</Label>
-                                <p className="text-sm">{ticket.user_email}</p>
+                                <p className="text-sm">{ticket.user_email || 'No Email'}</p>
                               </div>
                               {ticket.user_phone && (
                                 <div>

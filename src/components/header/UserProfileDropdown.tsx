@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, CreditCard } from 'lucide-react';
+import { LogOut, User, Settings, CreditCard, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -103,12 +103,20 @@ const UserProfileDropdown = () => {
           </Link>
         </DropdownMenuItem>
         {profile?.role === 'admin' && (
-          <DropdownMenuItem asChild>
-            <Link to="/subscriptions" className="flex items-center">
-              <CreditCard className="w-4 h-4 mr-2" />
-              Subscriptions
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem asChild>
+              <Link to="/subscriptions" className="flex items-center">
+                <CreditCard className="w-4 h-4 mr-2" />
+                Subscriptions
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/admin/support-tickets" className="flex items-center">
+                <Ticket className="w-4 h-4 mr-2" />
+                Support Tickets
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="flex items-center">

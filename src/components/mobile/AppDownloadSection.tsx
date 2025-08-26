@@ -62,12 +62,12 @@ const AppDownloadSection = () => {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-center p-4 bg-card rounded-lg border border-border">
             <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Smartphone className="w-8 h-8 text-white" />
             </div>
             <h3 className="font-semibold mb-2">Web App</h3>
-            <p className="text-sm text-gray-600 mb-4">Install as a web app on any device</p>
+            <p className="text-sm text-muted-foreground mb-4">Install as a web app on any device</p>
             <Button 
               onClick={handleInstallPWA}
               className="w-full bg-blue-600 hover:bg-blue-700"
@@ -77,12 +77,12 @@ const AppDownloadSection = () => {
             </Button>
           </div>
 
-          <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-center p-4 bg-card rounded-lg border border-border">
             <div className="w-16 h-16 bg-gradient-to-r from-gray-700 to-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <Apple className="w-8 h-8 text-white" />
             </div>
             <h3 className="font-semibold mb-2">iOS App</h3>
-            <p className="text-sm text-gray-600 mb-4">Native iOS app coming soon</p>
+            <p className="text-sm text-muted-foreground mb-4">Native iOS app coming soon</p>
             <Button 
               variant="outline" 
               disabled
@@ -92,12 +92,12 @@ const AppDownloadSection = () => {
             </Button>
           </div>
 
-          <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-center p-4 bg-card rounded-lg border border-border">
             <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Play className="w-8 h-8 text-white" />
             </div>
             <h3 className="font-semibold mb-2">Android App</h3>
-            <p className="text-sm text-gray-600 mb-4">Native Android app coming soon</p>
+            <p className="text-sm text-muted-foreground mb-4">Native Android app coming soon</p>
             <Button 
               variant="outline" 
               disabled
@@ -108,11 +108,11 @@ const AppDownloadSection = () => {
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-white rounded-lg border">
+        <div className="mt-6 p-4 bg-card rounded-lg border border-border">
           <div className="flex items-center justify-between">
             <div>
               <h4 className="font-semibold">Share with Team</h4>
-              <p className="text-sm text-gray-600">Send the app link to your team members</p>
+              <p className="text-sm text-muted-foreground">Send the app link to your team members</p>
             </div>
             <Button onClick={handleShareApp} variant="outline">
               <Share className="w-4 h-4 mr-2" />

@@ -49,6 +49,50 @@
   padding-right: env(safe-area-inset-right);
 }
 
+/* Keyboard handling for mobile */
+.responsive-scaffold {
+  /* Ensure proper viewport handling */
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height */
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.responsive-scaffold.keyboard-visible {
+  /* When keyboard is visible, allow content to scroll */
+  height: auto !important;
+  min-height: auto !important;
+  overflow-y: auto;
+}
+
+/* Ensure content remains visible when keyboard appears */
+.responsive-scaffold .flex-1 {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+/* Mobile input handling */
+.mobile-input {
+  /* Prevent zoom on iOS */
+  font-size: 16px;
+  /* Ensure proper touch handling */
+  -webkit-appearance: none;
+  appearance: none;
+  /* Prevent white screen issues */
+  background-color: transparent;
+}
+
+/* Mobile textarea handling */
+textarea.mobile-input {
+  /* Prevent zoom and ensure proper sizing */
+  font-size: 16px;
+  line-height: 1.4;
+  resize: none;
+  /* Ensure proper keyboard handling */
+  min-height: 80px;
+}
+
 /* Mobile-specific line clamping */
 .line-clamp-1 {
   display: -webkit-box;
@@ -106,48 +150,451 @@
   animation: slide-down-mobile 0.3s ease-in;
 }
 
-/* Mobile-specific grid layouts */
-.mobile-grid-1 {
-  grid-template-columns: 1fr;
+/* ===== COMPREHENSIVE MOBILE OPTIMIZATION ===== */
+
+/* 1. SafeArea Implementation */
+.mobile-safe-area-top {
+  padding-top: max(env(safe-area-inset-top), 12px);
 }
 
-.mobile-grid-2 {
-  grid-template-columns: repeat(2, 1fr);
+.mobile-safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 12px);
 }
 
-.mobile-grid-auto {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+.mobile-safe-area-left {
+  padding-left: max(env(safe-area-inset-left), 12px);
 }
 
-/* Mobile typography scaling */
-@media (max-width: 768px) {
-  .mobile-text-scale {
-    font-size: clamp(0.875rem, 2.5vw, 1rem);
+.mobile-safe-area-right {
+  padding-right: max(env(safe-area-inset-right), 12px);
+}
+
+/* 2. Constraints-based Layout */
+.mobile-constraint-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mobile-flexible {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.mobile-expanded {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 3. Responsive Typography with Text Scaling */
+.mobile-text-responsive {
+  font-size: clamp(14px, 4vw, 16px);
+  line-height: 1.5;
+}
+
+.mobile-text-small {
+  font-size: clamp(12px, 3.5vw, 14px);
+}
+
+.mobile-text-large {
+  font-size: clamp(16px, 4.5vw, 18px);
+}
+
+.mobile-text-xl {
+  font-size: clamp(18px, 5vw, 20px);
+}
+
+/* Text scaling for accessibility */
+@media (min-resolution: 2dppx) {
+  .mobile-text-responsive {
+    font-size: clamp(15px, 4.2vw, 17px);
+  }
+}
+
+/* 4. Keyboard Safety */
+.mobile-keyboard-safe {
+  padding-bottom: env(keyboard-inset-height, 0px);
+}
+
+.mobile-form-keyboard {
+  padding-bottom: max(env(keyboard-inset-height, 0px), 16px);
+}
+
+/* 5. Touch Optimization */
+.mobile-touch-target {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 12px;
+}
+
+.mobile-touch-button {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.mobile-touch-button:active {
+  transform: scale(0.98);
+  opacity: 0.8;
+}
+
+/* 6. Responsive Spacing */
+.mobile-spacing-small {
+  gap: 8px;
+  padding: 8px;
+}
+
+.mobile-spacing-medium {
+  gap: 12px;
+  padding: 12px;
+}
+
+.mobile-spacing-large {
+  gap: 16px;
+  padding: 16px;
+}
+
+/* 7. Mobile-specific breakpoints */
+@media (max-width: 360px) {
+  .mobile-spacing-small {
+    gap: 6px;
+    padding: 6px;
   }
   
-  .mobile-heading-scale {
-    font-size: clamp(1.25rem, 4vw, 1.5rem);
+  .mobile-spacing-medium {
+    gap: 8px;
+    padding: 8px;
+  }
+  
+  .mobile-spacing-large {
+    gap: 12px;
+    padding: 12px;
   }
 }
 
-/* Mobile-optimized spacing */
-.mobile-spacing-xs { padding: 0.5rem; }
-.mobile-spacing-sm { padding: 0.75rem; }
-.mobile-spacing-md { padding: 1rem; }
-.mobile-spacing-lg { padding: 1.25rem; }
-.mobile-spacing-xl { padding: 1.5rem; }
-
-/* Pull-to-refresh indicator */
-.pull-to-refresh {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+/* 8. Scrollable Content */
+.mobile-scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
-.pull-to-refresh.active {
-  opacity: 1;
+.mobile-scrollable-horizontal {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 9. Mobile Form Optimization */
+.mobile-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.mobile-input {
+  font-size: 16px !important; /* Prevents zoom on iOS */
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground)) !important;
+  transition: border-color 0.2s ease;
+}
+
+.mobile-input:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+/* Ensure input text is always visible */
+.mobile-input,
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Dark mode input styling */
+@media (prefers-color-scheme: dark) {
+  .mobile-input,
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    color: #ffffff !important;
+    background-color: #1f2937 !important;
+  }
+}
+
+/* Force text visibility in all themes */
+.mobile-input::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="text"]::placeholder {
+  color: #6b7280 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobile-input::placeholder,
+  input[type="email"]::placeholder,
+  input[type="password"]::placeholder,
+  input[type="text"]::placeholder {
+    color: #9ca3af !important;
+  }
+}
+
+.mobile-textarea {
+  font-size: 16px !important; /* Prevents zoom on iOS */
+  min-height: 80px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  resize: none;
+  transition: border-color 0.2s ease;
+}
+
+.mobile-textarea:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+/* 10. Mobile Button Optimization */
+.mobile-button {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.mobile-button:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* 11. Mobile Card Optimization */
+.mobile-card {
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+}
+
+.mobile-card-compact {
+  padding: 12px;
+  margin: 6px;
+}
+
+.mobile-card-large {
+  padding: 20px;
+  margin: 12px;
+}
+
+/* 12. Mobile Navigation Optimization */
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: hsl(var(--background));
+  border-top: 1px solid hsl(var(--border));
+  padding-bottom: max(env(safe-area-inset-bottom), 8px);
+}
+
+.mobile-nav-item {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-item:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+/* 13. Mobile Layout Improvements */
+.mobile-layout-improved {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.mobile-content-area {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 14. Mobile Performance Optimizations */
+.mobile-optimized {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform: translateZ(0);
+}
+
+/* 15. Mobile Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-button,
+  .mobile-nav-item,
+  .mobile-touch-button {
+    transition: none;
+  }
+  
+  .mobile-button:active,
+  .mobile-nav-item:active,
+  .mobile-touch-button:active {
+    transform: none;
+  }
+}
+
+/* 16. Mobile Tab Navigation */
+.mobile-tabs .grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+.mobile-tabs [role="tab"] {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 4px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+  .mobile-tabs [role="tab"] {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+}
+
+/* 17. Mobile Dark Mode Enhancements */
+@media (prefers-color-scheme: dark) {
+  .mobile-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .mobile-input,
+  .mobile-textarea {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+  }
+}
+
+/* 17. Mobile Landscape Optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobile-safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  }
+  
+  .mobile-button {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  
+  .mobile-nav-item {
+    min-height: 40px;
+    padding: 6px 4px;
+  }
+}
+
+/* 18. Mobile High-DPI Optimizations */
+@media screen and (min-resolution: 2dppx) {
+  .mobile-button,
+  .mobile-input,
+  .mobile-textarea {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* 19. Mobile Gesture Support */
+.mobile-gesture-enabled {
+  touch-action: pan-x pan-y;
+  user-select: none;
+}
+
+.mobile-gesture-disabled {
+  touch-action: none;
+  user-select: none;
+}
+
+/* 20. Mobile Loading States */
+.mobile-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.mobile-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: mobile-spin 1s linear infinite;
+}
+
+@keyframes mobile-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 21. Landing Page Style Blob Animation */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
 }

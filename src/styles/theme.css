@@ -1,6 +1,6 @@
 :root {
-  /* Brand & Accents - subtle color within a primarily black/white theme */
-  --brand: 0 72% 50%; /* LSR red accent */
+  /* Brand & Accents - professional black/white theme with subtle accents */
+  --brand: 0 0% 10%; /* Professional black */
   --brand-foreground: 0 0% 100%;
 
   --success: 142 72% 35%;
@@ -12,12 +12,12 @@
   --info: 221 83% 53%;
   --info-foreground: 0 0% 98%;
 
-  /* Optional gradient token for hero/CTAs */
-  --gradient-brand: linear-gradient(135deg, hsl(var(--brand)), hsl(0 0% 20%));
+  /* Professional gradient token for hero/CTAs */
+  --gradient-brand: linear-gradient(135deg, hsl(0 0% 10%), hsl(0 0% 30%));
 }
 
 .dark {
-  --brand: 0 72% 60%;
+  --brand: 0 0% 90%;
   --brand-foreground: 0 0% 10%;
 
   --success: 142 70% 45%;

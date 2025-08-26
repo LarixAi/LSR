@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { isMobile, isBiometricAvailable } from '@/utils/mobileDetection';
 import AnimatedSignInButton from './AnimatedSignInButton';
+import ResponsiveScaffold from './ResponsiveScaffold';
 import { 
   User, 
   Mail, 
@@ -16,12 +18,15 @@ import {
   EyeOff,
   Smartphone,
   Fingerprint,
-  AlertCircle
+  AlertCircle,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const MobileAuth: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme, toggleTheme, isDark } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -96,7 +101,14 @@ const MobileAuth: React.FC = () => {
       });
       
       // Navigate based on role
-      const route = selectedRole === 'driver' ? '/driver-dashboard' : '/dashboard';
+      let route;
+      if (selectedRole === 'driver') {
+        route = '/driver-dashboard';
+      } else if (selectedRole === 'parent') {
+        route = '/parent/dashboard';
+      } else {
+        route = '/dashboard';
+      }
       navigate(route);
     } catch (error: any) {
       console.error('💥 Mobile login failed:', error);
@@ -123,7 +135,7 @@ const MobileAuth: React.FC = () => {
     },
     parent: {
       title: 'Parent Login',
-      route: '/dashboard',
+      route: '/parent/dashboard',
       icon: <User className="h-5 w-5" />
     }
   };
@@ -131,14 +143,27 @@ const MobileAuth: React.FC = () => {
   const config = roleConfig[selectedRole];
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-100 p-4 safe-area-inset flex items-center justify-center mobile-layout-improved">
-      <Card className="w-full max-w-sm mx-auto mobile-card mobile-card-improved shadow-lg">
+    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-4 safe-area-inset flex items-center justify-center mobile-layout-improved">
+      <Card className="w-full max-w-sm mx-auto mobile-card mobile-card-improved shadow-xl bg-white/80 backdrop-blur-md dark:bg-gray-900/80 dark:backdrop-blur-md border border-gray-200 dark:border-gray-700">
         <CardHeader className="text-center space-y-3 pb-6">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4 shadow-md">
+          {/* Theme Toggle Button */}
+          <div className="absolute top-4 right-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="h-10 w-10 p-0 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDark ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5 text-gray-600" />}
+            </Button>
+          </div>
+          
+          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-600 dark:to-gray-700 rounded-full flex items-center justify-center mb-4 shadow-lg">
             <Smartphone className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold mobile-heading-scale">{config.title}</CardTitle>
-          <p className="text-sm text-muted-foreground mobile-text-scale">
+          <CardTitle className="text-2xl font-bold mobile-heading-scale text-gray-900 dark:text-gray-100">{config.title}</CardTitle>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mobile-text-scale">
             Sign in to access your {selectedRole} dashboard
           </p>
         </CardHeader>
@@ -146,7 +171,7 @@ const MobileAuth: React.FC = () => {
         <CardContent className="space-y-6 px-6 pb-8">
           {/* Role Selection */}
           <div className="space-y-3">
-            <Label htmlFor="role" className="text-sm font-medium">Select Role</Label>
+            <Label htmlFor="role" className="text-sm font-medium text-gray-900 dark:text-gray-100">Select Role</Label>
             <div className="grid grid-cols-3 gap-3">
               {(['driver', 'admin', 'parent'] as const).map((role) => (
                 <Button
@@ -155,7 +180,11 @@ const MobileAuth: React.FC = () => {
                   variant={selectedRole === role ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedRole(role)}
-                  className="h-12 text-sm font-medium touch-target mobile-button-improved mobile-touch-improved"
+                  className={`h-12 text-sm font-medium touch-target mobile-button-improved mobile-touch-improved ${
+                    selectedRole === role 
+                      ? 'bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-600 dark:to-gray-700 text-white shadow-lg' 
+                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800'
+                  }`}
                 >
                   {roleConfig[role].icon}
                   <span className="ml-2 capitalize">{role}</span>
@@ -172,13 +201,13 @@ const MobileAuth: React.FC = () => {
                 variant="outline"
                 onClick={handleBiometricLogin}
                 disabled={isLoading}
-                className="w-full h-12 touch-target mobile-button-improved mobile-touch-improved"
+                className="w-full h-12 touch-target mobile-button-improved mobile-touch-improved border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800"
               >
                 <Fingerprint className="h-5 w-5 mr-2" />
                 Login with Biometric
               </Button>
               <div className="text-center">
-                <span className="text-xs text-muted-foreground">or</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">or</span>
               </div>
             </div>
           )}
@@ -186,39 +215,39 @@ const MobileAuth: React.FC = () => {
           {/* Email/Password Form */}
           <form onSubmit={handleSignIn} className="space-y-5">
             <div className="space-y-3">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-900 dark:text-gray-100">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12 text-base touch-target mobile-input mobile-touch-improved"
+                  className="pl-10 h-12 text-base touch-target mobile-input mobile-touch-improved bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-gray-400 dark:focus:border-gray-500 focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-gray-900 dark:text-gray-100">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-12 h-12 text-base touch-target mobile-input mobile-touch-improved"
+                  className="pl-10 pr-12 h-12 text-base touch-target mobile-input mobile-touch-improved bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-gray-400 dark:focus:border-gray-500 focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                   required
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent touch-target"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent touch-target text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -239,7 +268,7 @@ const MobileAuth: React.FC = () => {
 
           {/* Support Link */}
           <div className="text-center pt-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Having trouble? Contact support
             </p>
           </div>

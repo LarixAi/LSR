@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Integration Test</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 SQL Integration Test</h1>
+    
+    <div class="test-section info">
+        <h3>Test Instructions</h3>
+        <p>This test will check if the SQL integration is working in your Supabase backend.</p>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        // Supabase configuration (from your .env file)
+        const supabaseUrl = 'https://dznbihypzmvcmradijqn.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6bmJpaHlwem12Y21yYWRpanFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NTQ1NzQsImV4cCI6MjA3MDUzMDU3NH0.dS4mQBL0q_JhsZQF14KKB0nL2f3H--2hPoxXzitPOgo';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        function addResult(title, content, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-section ${type}`;
+            div.innerHTML = `
+                <h3>${title}</h3>
+                <div>${content}</div>
+            `;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testTables() {
+            addResult('📋 Test 1: Checking Tables', 'Testing...', 'info');
+            
+            try {
+                // Test inspection_question_sets table
+                const { data: setsData, error: setsError } = await supabase
+                    .from('inspection_question_sets')
+                    .select('count')
+                    .limit(1);
+
+                // Test inspection_questions table
+                const { data: questionsData, error: questionsError } = await supabase
+                    .from('inspection_questions')
+                    .select('count')
+                    .limit(1);
+
+                let content = '';
+                
+                if (setsError) {
+                    content += `<p class="error">❌ inspection_question_sets table: ${setsError.message}</p>`;
+                } else {
+                    content += `<p class="success">✅ inspection_question_sets table exists and accessible</p>`;
+                }
+
+                if (questionsError) {
+                    content += `<p class="error">❌ inspection_questions table: ${questionsError.message}</p>`;
+                } else {
+                    content += `<p class="success">✅ inspection_questions table exists and accessible</p>`;
+                }
+
+                // Update the result
+                const resultsDiv = document.getElementById('results');
+                const testDiv = resultsDiv.querySelector('.test-section');
+                testDiv.innerHTML = `
+                    <h3>📋 Test 1: Checking Tables</h3>
+                    <div>${content}</div>
+                `;
+                testDiv.className = setsError || questionsError ? 'test-section error' : 'test-section success';
+
+            } catch (error) {
+                addResult('📋 Test 1: Checking Tables', `❌ Test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFunction() {
+            addResult('🔧 Test 2: Checking SQL Function', 'Testing...', 'info');
+            
+            try {
+                const { data: functionTest, error: functionError } = await supabase.rpc('create_default_daily_pretrip_questions', {
+                    org_id: 'test-org-id',
+                    creator_id: 'test-creator-id'
+                });
+
+                let content = '';
+                
+                if (functionError) {
+                    if (functionError.message.includes('function') || functionError.message.includes('not found')) {
+                        content = `<p class="error">❌ create_default_daily_pretrip_questions function not found</p>
+                                 <p>Error: ${functionError.message}</p>
+                                 <p><strong>Solution:</strong> Run the SQL script in Supabase SQL Editor</p>`;
+                    } else {
+                        content = `<p class="success">✅ Function exists (expected error for test parameters)</p>
+                                 <p>Error (expected): ${functionError.message}</p>`;
+                    }
+                } else {
+                    content = `<p class="success">✅ Function exists and executed</p>`;
+                }
+
+                // Update the result
+                const resultsDiv = document.getElementById('results');
+                const testDiv = resultsDiv.querySelectorAll('.test-section')[1];
+                testDiv.innerHTML = `
+                    <h3>🔧 Test 2: Checking SQL Function</h3>
+                    <div>${content}</div>
+                `;
+                testDiv.className = functionError && functionError.message.includes('function') ? 'test-section error' : 'test-section success';
+
+            } catch (error) {
+                addResult('🔧 Test 2: Checking SQL Function', `❌ Test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testExistingData() {
+            addResult('📊 Test 3: Checking Existing Data', 'Testing...', 'info');
+            
+            try {
+                const { data: existingSets, error: existingSetsError } = await supabase
+                    .from('inspection_question_sets')
+                    .select('*')
+                    .limit(5);
+
+                const { data: existingQuestions, error: existingQuestionsError } = await supabase
+                    .from('inspection_questions')
+                    .select('*')
+                    .limit(5);
+
+                let content = '';
+                
+                if (existingSetsError) {
+                    content += `<p class="error">❌ Could not fetch question sets: ${existingSetsError.message}</p>`;
+                } else {
+                    content += `<p class="success">✅ Found ${existingSets.length} question sets</p>`;
+                    if (existingSets.length > 0) {
+                        content += '<ul>';
+                        existingSets.forEach(set => {
+                            content += `<li>${set.name} (${set.is_default ? 'Default' : 'Custom'})</li>`;
+                        });
+                        content += '</ul>';
+                    }
+                }
+
+                if (existingQuestionsError) {
+                    content += `<p class="error">❌ Could not fetch questions: ${existingQuestionsError.message}</p>`;
+                } else {
+                    content += `<p class="success">✅ Found ${existingQuestions.length} questions</p>`;
+                    if (existingQuestions.length > 0) {
+                        content += `<p>Sample question: "${existingQuestions[0].question}"</p>`;
+                    }
+                }
+
+                // Update the result
+                const resultsDiv = document.getElementById('results');
+                const testDiv = resultsDiv.querySelectorAll('.test-section')[2];
+                testDiv.innerHTML = `
+                    <h3>📊 Test 3: Checking Existing Data</h3>
+                    <div>${content}</div>
+                `;
+                testDiv.className = 'test-section info';
+
+            } catch (error) {
+                addResult('📊 Test 3: Checking Existing Data', `❌ Test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            clearResults();
+            await testTables();
+            await testFunction();
+            await testExistingData();
+            
+            // Add summary
+            setTimeout(() => {
+                addSummary();
+            }, 1000);
+        }
+
+        function addSummary() {
+            const resultsDiv = document.getElementById('results');
+            const sections = resultsDiv.querySelectorAll('.test-section');
+            
+            let hasErrors = false;
+            let hasTables = false;
+            let hasData = false;
+            
+            sections.forEach(section => {
+                if (section.className.includes('error')) hasErrors = true;
+                if (section.innerHTML.includes('table exists')) hasTables = true;
+                if (section.innerHTML.includes('Found') && section.innerHTML.includes('questions')) hasData = true;
+            });
+
+            let summaryContent = '<h3>🎯 Test Summary</h3>';
+            
+            if (!hasTables) {
+                summaryContent += `
+                    <div class="error">
+                        <p><strong>❌ Tables Missing</strong></p>
+                        <p>You need to run the SQL script first:</p>
+                        <ol>
+                            <li>Go to your Supabase Dashboard</li>
+                            <li>Open the SQL Editor</li>
+                            <li>Copy and paste the contents of: <code>sql/vehicle_check_questions_integration.sql</code></li>
+                            <li>Run the script</li>
+                        </ol>
+                    </div>
+                `;
+            } else if (!hasData) {
+                summaryContent += `
+                    <div class="warning">
+                        <p><strong>⚠️ Tables Exist But No Data</strong></p>
+                        <p>Use the "Import Default Questions" button in the admin panel to create the default question set.</p>
+                    </div>
+                `;
+            } else {
+                summaryContent += `
+                    <div class="success">
+                        <p><strong>✅ SQL Integration Working!</strong></p>
+                        <p>Your database is properly set up and contains question data.</p>
+                    </div>
+                `;
+            }
+
+            summaryContent += `
+                <div class="info">
+                    <h4>📝 Next Steps:</h4>
+                    <ul>
+                        <li>Test the admin panel: Navigate to "Vehicle Check Questions"</li>
+                        <li>Test mobile integration: Check if drivers see admin-controlled questions</li>
+                        <li>Customize questions as needed for your organization</li>
+                    </ul>
+                </div>
+            `;
+
+            addResult('🎯 Test Summary', summaryContent, hasErrors ? 'error' : 'success');
+        }
+    </script>
+</body>
+</html>
+
+

@@ -612,11 +612,11 @@ const DriverDashboard: React.FC = () => {
 
       {/* Main Content - Mobile Optimized */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 mobile-tabs">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-3">Overview</TabsTrigger>
-          <TabsTrigger value="schedule" className="text-xs sm:text-sm px-2 sm:px-3">Schedule</TabsTrigger>
-          <TabsTrigger value="vehicle" className="text-xs sm:text-sm px-2 sm:px-3">Vehicle</TabsTrigger>
-          <TabsTrigger value="activity" className="text-xs sm:text-sm px-2 sm:px-3">Activity</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 gap-1">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Overview</TabsTrigger>
+          <TabsTrigger value="schedule" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Schedule</TabsTrigger>
+          <TabsTrigger value="vehicle" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Vehicle</TabsTrigger>
+          <TabsTrigger value="activity" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Activity</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab - Mobile Optimized */}

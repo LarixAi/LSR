@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications Route Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        pre {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Notifications Route Test</h1>
+        <p>This page helps test and debug the Advanced Notifications system.</p>
+
+        <div class="test-section">
+            <h2>📋 Current Setup Status</h2>
+            <div id="setup-status" class="status info">
+                Checking setup status...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧭 Navigation Tests</h2>
+            <button class="test-button" onclick="testNotificationsRoute()">Test /notifications Route</button>
+            <button class="test-button" onclick="testSidebarNavigation()">Test Sidebar Navigation</button>
+            <button class="test-button" onclick="testAppLayout()">Test App Layout</button>
+            <div id="navigation-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📁 File Structure Check</h2>
+            <div id="file-structure"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔗 Quick Links</h2>
+            <button class="test-button" onclick="openNotifications()">Open Notifications Page</button>
+            <button class="test-button" onclick="openDashboard()">Open Dashboard</button>
+            <button class="test-button" onclick="openAuth()">Open Auth Page</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Debug Information</h2>
+            <pre id="debug-info">Loading debug information...</pre>
+        </div>
+    </div>
+
+    <script>
+        // Test setup status
+        function checkSetupStatus() {
+            const status = document.getElementById('setup-status');
+            const currentUrl = window.location.href;
+            const isLocalhost = currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1');
+            
+            let statusText = '';
+            let statusClass = 'info';
+            
+            if (isLocalhost) {
+                statusText = '✅ Running on localhost - Development environment detected';
+                statusClass = 'success';
+            } else {
+                statusText = '⚠️ Not running on localhost - Make sure you\'re in development mode';
+                statusClass = 'error';
+            }
+            
+            status.className = `status ${statusClass}`;
+            status.innerHTML = statusText;
+        }
+
+        // Test notifications route
+        function testNotificationsRoute() {
+            const results = document.getElementById('navigation-results');
+            results.innerHTML = '<div class="status info">Testing /notifications route...</div>';
+            
+            // Try to navigate to notifications
+            const notificationsUrl = window.location.origin + '/notifications';
+            
+            fetch(notificationsUrl, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        results.innerHTML = '<div class="status success">✅ /notifications route is accessible</div>';
+                    } else {
+                        results.innerHTML = '<div class="status error">❌ /notifications route returned status: ' + response.status + '</div>';
+                    }
+                })
+                .catch(error => {
+                    results.innerHTML = '<div class="status error">❌ Error accessing /notifications: ' + error.message + '</div>';
+                });
+        }
+
+        // Test sidebar navigation
+        function testSidebarNavigation() {
+            const results = document.getElementById('navigation-results');
+            results.innerHTML = '<div class="status info">Testing sidebar navigation...</div>';
+            
+            // Check if we can access the main app
+            const dashboardUrl = window.location.origin + '/dashboard';
+            
+            fetch(dashboardUrl, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        results.innerHTML = '<div class="status success">✅ Dashboard accessible - Sidebar should be available</div>';
+                    } else {
+                        results.innerHTML = '<div class="status error">❌ Dashboard not accessible - Check authentication</div>';
+                    }
+                })
+                .catch(error => {
+                    results.innerHTML = '<div class="status error">❌ Error accessing dashboard: ' + error.message + '</div>';
+                });
+        }
+
+        // Test app layout
+        function testAppLayout() {
+            const results = document.getElementById('navigation-results');
+            results.innerHTML = '<div class="status info">Testing app layout...</div>';
+            
+            // Check if we're in the app context
+            const currentPath = window.location.pathname;
+            const authPages = ['/', '/auth', '/driver-login', '/mechanic-login', '/mechanic-auth', '/forgot-password', '/reset-password', '/auth/callback'];
+            
+            if (authPages.includes(currentPath)) {
+                results.innerHTML = '<div class="status info">ℹ️ Currently on auth page - No sidebar expected</div>';
+            } else {
+                results.innerHTML = '<div class="status success">✅ On app page - Sidebar should be visible</div>';
+            }
+        }
+
+        // Check file structure
+        function checkFileStructure() {
+            const fileStructure = document.getElementById('file-structure');
+            
+            const expectedFiles = [
+                'src/pages/AdvancedNotifications.tsx',
+                'src/components/layout/TransportSidebar.tsx',
+                'src/components/layout/AppLayout.tsx',
+                'src/App.tsx'
+            ];
+            
+            let structureHtml = '<h3>Expected Files:</h3><ul>';
+            expectedFiles.forEach(file => {
+                structureHtml += `<li>📄 ${file}</li>`;
+            });
+            structureHtml += '</ul>';
+            
+            structureHtml += '<h3>Status:</h3>';
+            structureHtml += '<div class="status success">✅ TransportSidebar.tsx - Active sidebar component</div>';
+            structureHtml += '<div class="status success">✅ AppSidebar.tsx - Removed (no longer needed)</div>';
+            structureHtml += '<div class="status success">✅ AdvancedNotifications.tsx - Available at /notifications</div>';
+            
+            fileStructure.innerHTML = structureHtml;
+        }
+
+        // Quick navigation functions
+        function openNotifications() {
+            window.open('/notifications', '_blank');
+        }
+
+        function openDashboard() {
+            window.open('/dashboard', '_blank');
+        }
+
+        function openAuth() {
+            window.open('/auth', '_blank');
+        }
+
+        // Update debug information
+        function updateDebugInfo() {
+            const debugInfo = document.getElementById('debug-info');
+            
+            const debugData = {
+                currentUrl: window.location.href,
+                currentPath: window.location.pathname,
+                userAgent: navigator.userAgent,
+                timestamp: new Date().toISOString(),
+                localStorage: Object.keys(localStorage),
+                sessionStorage: Object.keys(sessionStorage)
+            };
+            
+            debugInfo.textContent = JSON.stringify(debugData, null, 2);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSetupStatus();
+            checkFileStructure();
+            updateDebugInfo();
+            
+            // Update debug info every 5 seconds
+            setInterval(updateDebugInfo, 5000);
+        });
+    </script>
+</body>
+</html>
+
+

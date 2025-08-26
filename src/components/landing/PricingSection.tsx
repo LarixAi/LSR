@@ -1,247 +1,257 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Check, Star, Zap, Crown } from 'lucide-react';
-import BookDemoDialog from '@/components/BookDemoDialog';
+import { Badge } from '@/components/ui/badge';
+import { Check, Star, Zap, Shield, Users, Truck, BarChart3, Clock } from 'lucide-react';
+import { useStripeCheckout } from '@/hooks/useStripeCheckout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 const PricingSection = () => {
-  const [isAnnual, setIsAnnual] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
+  const stripeCheckout = useStripeCheckout();
+  
   const plans = [
     {
-      id: 'basic',
-      name: 'Starter',
-      icon: Zap,
-      price: { monthly: 29, annual: 290 },
-      description: 'Perfect for small fleets getting started',
-      color: 'from-blue-500 to-blue-600',
+      id: "starter",
+      name: "Starter",
+      price: "£29",
+      period: "per month",
+      description: "Perfect for small transport companies getting started",
       features: [
-        'Up to 5 vehicles',
-        'Basic route planning',
-        'Driver management',
-        'Digital defect sheets',
-        'Email support',
-        'Mobile app access'
+        "Up to 5 drivers",
+        "Up to 10 vehicles",
+        "Basic reporting",
+        "Email support",
+        "Mobile app access",
+        "Vehicle inspections"
       ],
-      popular: false
+      color: "from-gray-600 to-gray-800",
+      bgColor: "from-gray-50 to-gray-100",
+      popular: true,
+      icon: Truck
     },
     {
-      id: 'premium',
-      name: 'Professional',
-      icon: Star,
-      price: { monthly: 79, annual: 790 },
-      description: 'Most popular for growing businesses',
-      color: 'from-green-500 to-green-600',
+      id: "professional",
+      name: "Professional",
+      price: "£79",
+      period: "per month",
+      description: "Ideal for growing transport businesses",
       features: [
-        'Up to 25 vehicles',
-        'Advanced route optimization',
-        'Real-time tracking',
-        'Compliance monitoring',
-        'Predictive analytics',
-        'Priority support',
-        'API access',
-        'Custom reporting'
+        "Up to 25 drivers",
+        "Up to 50 vehicles",
+        "Advanced reporting",
+        "Priority support",
+        "API access",
+        "Custom integrations",
+        "Real-time tracking",
+        "Compliance management"
       ],
-      popular: true
+      color: "from-gray-700 to-gray-900",
+      bgColor: "from-gray-50 to-gray-100",
+      popular: false,
+      icon: Shield
     },
     {
-      id: 'enterprise',
-      name: 'Enterprise',
-      icon: Crown,
-      price: { monthly: 199, annual: 1990 },
-      description: 'For large fleets with advanced needs',
-      color: 'from-purple-500 to-purple-600',
+      id: "enterprise",
+      name: "Enterprise",
+      price: "£199",
+      period: "per month",
+      description: "For large transport operations with complex needs",
       features: [
-        'Unlimited vehicles',
-        'AI-powered insights',
-        'Multi-location support',
-        'Advanced compliance tools',
-        'Custom integrations',
-        'Dedicated account manager',
-        'White-label options',
-        'SLA guarantee'
+        "Unlimited drivers",
+        "Unlimited vehicles",
+        "Custom reporting",
+        "Dedicated support",
+        "Full API access",
+        "White-label options",
+        "Advanced analytics",
+        "Custom integrations"
       ],
-      popular: false
+      color: "from-gray-600 to-gray-800",
+      bgColor: "from-gray-50 to-gray-100",
+      popular: false,
+      icon: Users
     }
   ];
 
-  const getPrice = (plan: typeof plans[0]) => {
-    const price = isAnnual ? plan.price.annual : plan.price.monthly;
-    const period = isAnnual ? 'year' : 'month';
-    return { price, period };
-  };
-
-  const getSavings = (plan: typeof plans[0]) => {
-    if (!isAnnual) return null;
-    const monthlyCost = plan.price.monthly * 12;
-    const annualCost = plan.price.annual;
-    const savings = Math.round(((monthlyCost - annualCost) / monthlyCost) * 100);
-    return savings;
-  };
-
-  const handlePlanSelect = async (planId: string) => {
+  const handlePlanSelection = async (planId: string) => {
     if (!user) {
       // Redirect to signup if not logged in
-      navigate('/signup');
+      window.location.href = '/signup';
       return;
     }
     
-    // Create checkout session for authenticated users
-    setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { planId, isAnnual },
+      await stripeCheckout.mutateAsync({
+        planId,
+        isAnnual: false
       });
-      
-      if (error) throw error;
-      
-      if (data.url) {
-        // Open Stripe checkout in a new tab
-        window.open(data.url, "_blank");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create checkout session",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
+    } catch (error) {
+      console.error('Failed to start checkout:', error);
     }
   };
 
+  const features = [
+    {
+      icon: Truck,
+      title: "Fleet Management",
+      description: "Comprehensive vehicle and driver management"
+    },
+    {
+      icon: BarChart3,
+      title: "Analytics & Reporting",
+      description: "Advanced insights and performance tracking"
+    },
+    {
+      icon: Shield,
+      title: "Compliance & Safety",
+      description: "Built-in safety protocols and compliance tools"
+    },
+    {
+      icon: Clock,
+      title: "24/7 Support",
+      description: "Round-the-clock professional support"
+    }
+  ];
 
   return (
-    <section id="pricing" className="py-20 bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Simple, Transparent
-            <span className="block bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
-              Pricing
+    <section className="py-24 bg-gray-50 relative overflow-hidden">
+      {/* Subtle professional background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-20 w-80 h-80 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-r from-gray-300 to-gray-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ animationDelay: '4s' }}></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="text-center mb-20">
+          <h2 className="text-5xl font-bold text-gray-900 mb-6">
+            Professional
+            <span className="block bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 bg-clip-text text-transparent">
+              Pricing Plans
             </span>
           </h2>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto mb-8">
-            Choose the perfect plan for your transport operations. All plans include a 14-day free trial.
+          <p className="text-xl text-gray-600 max-w-4xl mx-auto">
+            Choose the perfect plan for your transport business. All plans include our core features 
+            with professional support and regular updates.
           </p>
+        </div>
 
-          {/* Annual/Monthly Toggle */}
-          <div className="flex items-center justify-center space-x-4 mb-12">
-            <span className={`text-sm font-medium ${!isAnnual ? 'text-white' : 'text-blue-300'}`}>
-              Monthly
-            </span>
-            <button
-              onClick={() => setIsAnnual(!isAnnual)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                isAnnual ? 'bg-green-500' : 'bg-gray-600'
-              }`}
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+          {plans.map((plan, index) => (
+            <Card 
+              key={index} 
+              className={`relative border-0 shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-105 transform bg-gradient-to-br ${plan.bgColor} border border-gray-200 ${plan.popular ? 'ring-2 ring-gray-600' : ''}`}
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isAnnual ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-            <span className={`text-sm font-medium ${isAnnual ? 'text-white' : 'text-blue-300'}`}>
-              Annual
-            </span>
-            {isAnnual && (
-              <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                Save up to 20%
-              </span>
-            )}
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-4 py-2 rounded-full font-semibold">
+                    <Star className="w-4 h-4 mr-2" />
+                    Most Popular
+                  </Badge>
+                </div>
+              )}
+              
+              <CardHeader className="text-center pb-6">
+                <div className={`w-16 h-16 mx-auto mb-4 bg-gradient-to-r ${plan.color} rounded-xl flex items-center justify-center shadow-md`}>
+                  <plan.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                <p className="text-gray-600">{plan.description}</p>
+              </CardHeader>
+              
+              <CardContent className="pt-0">
+                <div className="text-center mb-8">
+                  <div className="flex items-baseline justify-center">
+                    <span className="text-5xl font-bold text-gray-900">{plan.price}</span>
+                    <span className="text-gray-600 ml-2">/{plan.period}</span>
+                  </div>
+                </div>
+                
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-start space-x-3">
+                      <div className={`w-5 h-5 mt-0.5 bg-gradient-to-r ${plan.color} rounded-full flex items-center justify-center flex-shrink-0`}>
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <Button 
+                  className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-300`}
+                  onClick={() => handlePlanSelection(plan.id)}
+                  disabled={stripeCheckout.isPending}
+                >
+                  {stripeCheckout.isPending ? 'Loading...' : (plan.id === 'starter' ? 'Start Free Trial' : 'Get Started')}
+                  <Zap className="w-4 h-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Features Overview */}
+        <div className="bg-white rounded-xl p-12 shadow-lg border border-gray-200 mb-16">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">
+              All Plans Include
+            </h3>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Every plan comes with our core professional features designed to streamline 
+              your transport operations and improve efficiency.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center shadow-md">
+                  <feature.icon className="w-8 h-8 text-white" />
+                </div>
+                <h4 className="font-bold text-gray-900 mb-2">{feature.title}</h4>
+                <p className="text-gray-600 text-sm">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {plans.map((plan, index) => {
-            const { price, period } = getPrice(plan);
-            const savings = getSavings(plan);
-            
-            return (
-              <Card
-                key={index}
-                className={`relative overflow-hidden transition-all duration-500 hover:scale-105 ${
-                  plan.popular
-                    ? 'bg-white/15 border-2 border-green-400 shadow-2xl shadow-green-400/20'
-                    : 'bg-white/10 border border-white/20 hover:bg-white/15'
-                } backdrop-blur-sm`}
-              >
-                {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-green-400 to-cyan-400 text-gray-900 text-center py-2 text-sm font-bold">
-                    Most Popular
-                  </div>
-                )}
-
-                <div className={`p-8 ${plan.popular ? 'pt-12' : ''}`}>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${plan.color} rounded-xl flex items-center justify-center`}>
-                      <plan.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
-                      <p className="text-blue-100 text-sm">{plan.description}</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <div className="flex items-baseline space-x-2">
-                      <span className="text-4xl font-bold text-white">£{price}</span>
-                      <span className="text-blue-200">/ {period}</span>
-                    </div>
-                    {savings && (
-                      <div className="text-green-400 text-sm font-semibold mt-1">
-                        Save {savings}% annually
-                      </div>
-                    )}
-                  </div>
-
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center space-x-3">
-                        <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
-                        <span className="text-blue-100 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="space-y-3">
-                    <Button 
-                      className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90 text-white font-semibold py-3`}
-                      onClick={() => handlePlanSelect(plan.id)}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? 'Processing...' : 'Start Free Trial'}
-                    </Button>
-                    
-                    <BookDemoDialog>
-                      <Button 
-                        variant="outline" 
-                        className="w-full border-white/30 text-white hover:bg-white/10"
-                      >
-                        Book Demo
-                      </Button>
-                    </BookDemoDialog>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="text-center mt-12">
-          <p className="text-blue-200 text-sm">
-            All plans include 14-day free trial • No setup fees • Cancel anytime
-          </p>
+        {/* Bottom CTA */}
+        <div className="text-center">
+          <div className="inline-flex items-center space-x-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl px-8 py-6 shadow-lg border border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-gray-600 to-gray-800 rounded-full flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="font-bold text-gray-900">30-Day Free Trial</div>
+                <div className="text-sm text-gray-600">Starter plan only • No credit card required</div>
+              </div>
+            </div>
+            <div className="w-px h-12 bg-gray-300"></div>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-gray-700 to-gray-900 rounded-full flex items-center justify-center">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="font-bold text-gray-900">Cancel Anytime</div>
+                <div className="text-sm text-gray-600">No long-term contracts</div>
+              </div>
+            </div>
+            <div className="w-px h-12 bg-gray-300"></div>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-gray-600 to-gray-800 rounded-full flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="font-bold text-gray-900">Professional Support</div>
+                <div className="text-sm text-gray-600">Expert assistance</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

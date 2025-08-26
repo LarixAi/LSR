@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   FileText, 
   Plus, 
@@ -36,12 +39,40 @@ import {
   SortDesc,
   Grid,
   List,
-  MoreHorizontal
+  MoreHorizontal,
+  Star,
+  StarOff,
+  Copy,
+  ExternalLink,
+  Archive,
+  Tag,
+  Shield,
+  AlertCircle,
+  Info,
+  BarChart3,
+  PieChart,
+  TrendingUp,
+  FileCheck,
+  FileX,
+  FileClock,
+  FileAlert,
+  FolderPlus,
+  BookOpen,
+  CalendarDays,
+  UserCheck,
+  Building2,
+  Car,
+  Truck,
+  Bus,
+  Train,
+  Ship,
+  Plane
 } from 'lucide-react';
 import { useDocuments, useCreateDocument, useUpdateDocument, useDeleteDocument } from '@/hooks/useDocuments';
-import { format } from 'date-fns';
+import { format, isAfter, isBefore, addDays, differenceInDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFileToStorage } from '@/utils/fileUpload';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Document {
   id: string;
@@ -51,11 +82,30 @@ interface Document {
   size: string;
   uploadedBy: string;
   uploadedAt: string;
-  status: 'approved' | 'pending' | 'rejected' | 'expired' | 'active';
+  status: 'approved' | 'pending' | 'rejected' | 'expired' | 'active' | 'archived';
   expiryDate?: string;
   tags: string[];
   isConfidential: boolean;
   downloadCount: number;
+  description?: string;
+  version?: string;
+  department?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  isFavorite?: boolean;
+  fileUrl?: string;
+  thumbnailUrl?: string;
+}
+
+interface DocumentStats {
+  total: number;
+  approved: number;
+  pending: number;
+  expired: number;
+  confidential: number;
+  byCategory: Record<string, number>;
+  byStatus: Record<string, number>;
+  expiringSoon: number;
+  recentlyUploaded: number;
 }
 
 const Documents: React.FC = () => {
@@ -63,29 +113,91 @@ const Documents: React.FC = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState<boolean>(false);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [isBulkUploadDialogOpen, setIsBulkUploadDialogOpen] = useState<boolean>(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [sortBy, setSortBy] = useState<'name' | 'date' | 'size' | 'status'>('date');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'kanban'>('list');
+  const [sortBy, setSortBy] = useState<'name' | 'date' | 'size' | 'status' | 'priority' | 'expiry'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [isBulkActionDialogOpen, setIsBulkActionDialogOpen] = useState<boolean>(false);
+  const [bulkAction, setBulkAction] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('all');
+  const [showExpiredOnly, setShowExpiredOnly] = useState<boolean>(false);
+  const [showConfidentialOnly, setShowConfidentialOnly] = useState<boolean>(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
+
+  // Upload form state
   const [uploadFormData, setUploadFormData] = useState({
     name: '',
     category: '',
     description: '',
     expiryDate: '',
     tags: '',
-    isConfidential: false
+    isConfidential: false,
+    priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
+    department: '',
+    version: '1.0'
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingToCategory, setUploadingToCategory] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   // Fetch real data from backend
   const { data: documents = [], isLoading: documentsLoading, error, refetch } = useDocuments();
   const createDocument = useCreateDocument();
   const updateDocument = useUpdateDocument();
   const deleteDocument = useDeleteDocument();
+
+  // Calculate document statistics
+  const documentStats: DocumentStats = useMemo(() => {
+    const stats = {
+      total: documents.length,
+      approved: 0,
+      pending: 0,
+      expired: 0,
+      confidential: 0,
+      byCategory: {} as Record<string, number>,
+      byStatus: {} as Record<string, number>,
+      expiringSoon: 0,
+      recentlyUploaded: 0
+    };
+
+    const thirtyDaysFromNow = addDays(new Date(), 30);
+    const sevenDaysAgo = addDays(new Date(), -7);
+
+    documents.forEach(doc => {
+      // Status counts
+      stats.byStatus[doc.status] = (stats.byStatus[doc.status] || 0) + 1;
+      if (doc.status === 'approved') stats.approved++;
+      if (doc.status === 'pending') stats.pending++;
+      if (doc.status === 'expired') stats.expired++;
+      if (!doc.is_public) stats.confidential++;
+
+      // Category counts
+      const category = doc.category || 'other';
+      stats.byCategory[category] = (stats.byCategory[category] || 0) + 1;
+
+      // Expiring soon
+      if (doc.expiry_date && isAfter(new Date(doc.expiry_date), new Date()) && isBefore(new Date(doc.expiry_date), thirtyDaysFromNow)) {
+        stats.expiringSoon++;
+      }
+
+      // Recently uploaded
+      if (new Date(doc.created_at) > sevenDaysAgo) {
+        stats.recentlyUploaded++;
+      }
+    });
+
+    return stats;
+  }, [documents]);
 
   if (authLoading || documentsLoading) {
     return (
@@ -135,11 +247,18 @@ const Documents: React.FC = () => {
     size: formatFileSize(doc.file_size),
     uploadedBy: doc.uploaded_by || 'Unknown',
     uploadedAt: doc.created_at,
-    status: doc.status as 'approved' | 'pending' | 'rejected' | 'expired' | 'active' || 'pending',
+    status: doc.status as 'approved' | 'pending' | 'rejected' | 'expired' | 'active' | 'archived' || 'pending',
     expiryDate: doc.expiry_date,
     tags: doc.tags || [],
     isConfidential: !doc.is_public,
-    downloadCount: doc.download_count || 0
+    downloadCount: doc.download_count || 0,
+    description: doc.description,
+    version: doc.version,
+    department: doc.department,
+    priority: doc.priority as 'low' | 'medium' | 'high' | 'critical' || 'medium',
+    isFavorite: doc.is_favorite,
+    fileUrl: doc.file_path,
+    thumbnailUrl: doc.thumbnail_url
   }));
 
   // Calculate categories from real data
@@ -166,7 +285,8 @@ const Documents: React.FC = () => {
       pending: 'bg-yellow-100 text-yellow-800',
       rejected: 'bg-red-100 text-red-800',
       expired: 'bg-gray-100 text-gray-800',
-      active: 'bg-blue-100 text-blue-800'
+      active: 'bg-blue-100 text-blue-800',
+      archived: 'bg-gray-100 text-gray-800'
     };
     
     return (
@@ -197,7 +317,13 @@ const Documents: React.FC = () => {
     .filter(doc => {
       const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || doc.category === categoryFilter;
-      return matchesSearch && matchesCategory;
+      const matchesStatus = statusFilter === 'all' || doc.status === statusFilter;
+      const matchesPriority = priorityFilter === 'all' || doc.priority === priorityFilter;
+      const matchesExpiry = showExpiredOnly ? isAfter(new Date(doc.expiryDate || ''), new Date()) : true;
+      const matchesConfidential = showConfidentialOnly ? !doc.isConfidential : true;
+      const matchesFavorites = showFavoritesOnly ? doc.isFavorite : true;
+
+      return matchesSearch && matchesCategory && matchesStatus && matchesPriority && matchesExpiry && matchesConfidential && matchesFavorites;
     })
     .sort((a, b) => {
       let aValue: any, bValue: any;
@@ -219,6 +345,14 @@ const Documents: React.FC = () => {
           aValue = a.status;
           bValue = b.status;
           break;
+        case 'priority':
+          aValue = a.priority;
+          bValue = b.priority;
+          break;
+        case 'expiry':
+          aValue = a.expiryDate ? new Date(a.expiryDate).getTime() : 0;
+          bValue = b.expiryDate ? new Date(b.expiryDate).getTime() : 0;
+          break;
         default:
           return 0;
       }
@@ -230,14 +364,7 @@ const Documents: React.FC = () => {
       }
     });
 
-  const documentStats = {
-    totalDocuments: transformedDocuments.length,
-    approvedDocuments: transformedDocuments.filter(d => d.status === 'approved' || d.status === 'active').length,
-    pendingDocuments: transformedDocuments.filter(d => d.status === 'pending').length,
-    confidentialDocs: transformedDocuments.filter(d => d.isConfidential).length
-  };
-
-  const handleViewDocument = (document: any) => {
+  const handleViewDocument = (document: Document) => {
     setSelectedDocument(document);
     setIsViewDialogOpen(true);
   };
@@ -339,7 +466,12 @@ const Documents: React.FC = () => {
           file_type: file.type,
           file_size: file.size,
           mime_type: file.type,
-          status: 'draft' as const
+          status: 'draft' as const,
+          priority: uploadFormData.priority,
+          department: uploadFormData.department,
+          version: uploadFormData.version,
+          is_favorite: false, // Default to false
+          thumbnail_url: uploadResult.thumbnailUrl || null // Assuming thumbnailUrl is available from upload
         };
 
         console.log('Creating document record:', documentData);
@@ -362,7 +494,10 @@ const Documents: React.FC = () => {
         description: '',
         expiryDate: '',
         tags: '',
-        isConfidential: false
+        isConfidential: false,
+        priority: 'medium',
+        department: '',
+        version: '1.0'
       });
       setSelectedFiles([]);
       setUploadingToCategory('');
@@ -389,18 +524,194 @@ const Documents: React.FC = () => {
       description: '',
       expiryDate: '',
       tags: '',
-      isConfidential: false
+      isConfidential: false,
+      priority: 'medium',
+      department: '',
+      version: '1.0'
     });
     setSelectedFiles([]);
     setUploadingToCategory('');
   };
 
-  const toggleSort = (field: 'name' | 'date' | 'size' | 'status') => {
+  const toggleSort = (field: 'name' | 'date' | 'size' | 'status' | 'priority' | 'expiry') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(field);
       setSortOrder('desc');
+    }
+  };
+
+  const handleBulkAction = async () => {
+    if (selectedDocuments.length === 0) {
+      toast({
+        title: "No Documents Selected",
+        description: "Please select at least one document to perform a bulk action.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!bulkAction) {
+      toast({
+        title: "No Action Selected",
+        description: "Please select an action to perform on the selected documents.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (bulkAction === 'delete') {
+      if (confirm('Are you sure you want to delete these documents?')) {
+        try {
+          for (const docId of selectedDocuments) {
+            await deleteDocument.mutateAsync(docId);
+          }
+          toast({
+            title: "Bulk Deleted",
+            description: `${selectedDocuments.length} document(s) deleted.`,
+          });
+        } catch (error) {
+          toast({
+            title: "Bulk Delete Failed",
+            description: "Failed to delete documents. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+    setSelectedDocuments([]);
+    setIsBulkActionDialogOpen(false);
+  };
+
+  const handleFavorite = async (documentId: string, isFavorite: boolean) => {
+    try {
+      await updateDocument.mutateAsync({ id: documentId, is_favorite: isFavorite });
+      toast({
+        title: "Favorite Updated",
+        description: `Document marked as ${isFavorite ? 'favorite' : 'not favorite'}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Favorite Update Failed",
+        description: "Failed to update favorite status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleArchive = async (documentId: string, isArchived: boolean) => {
+    try {
+      await updateDocument.mutateAsync({ id: documentId, status: isArchived ? 'archived' : 'active' });
+      toast({
+        title: "Document Archived",
+        description: `Document marked as ${isArchived ? 'archived' : 'active'}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Archive Failed",
+        description: "Failed to archive document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditDocument = (document: Document) => {
+    setSelectedDocument(document);
+    setUploadFormData({
+      name: document.name,
+      category: document.category,
+      description: document.description || '',
+      expiryDate: document.expiryDate || '',
+      tags: document.tags.join(', '),
+      isConfidential: !document.is_public,
+      priority: document.priority || 'medium',
+      department: document.department || '',
+      version: document.version || '1.0'
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!selectedDocument) return;
+
+    const updatedDocumentData = {
+      id: selectedDocument.id,
+      name: uploadFormData.name,
+      category: uploadFormData.category,
+      description: uploadFormData.description,
+      expiry_date: uploadFormData.expiryDate || null,
+      tags: uploadFormData.tags ? uploadFormData.tags.split(',').map(tag => tag.trim()) : [],
+      is_public: !uploadFormData.isConfidential,
+      priority: uploadFormData.priority,
+      department: uploadFormData.department,
+      version: uploadFormData.version,
+      is_favorite: selectedDocument.isFavorite || false, // Preserve favorite status
+      thumbnail_url: selectedDocument.thumbnailUrl || null // Preserve thumbnail
+    };
+
+    try {
+      await updateDocument.mutateAsync(updatedDocumentData);
+      toast({
+        title: "Document Updated",
+        description: "Document details have been updated.",
+      });
+      setIsEditDialogOpen(false);
+      refetch(); // Refresh data after update
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update document details. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareDocument = () => {
+    setSelectedDocument(null); // Clear selected document for sharing
+    setIsShareDialogOpen(true);
+  };
+
+  const handleCloseDialogs = () => {
+    setIsUploadDialogOpen(false);
+    setIsBulkUploadDialogOpen(false);
+    setIsViewDialogOpen(false);
+    setIsEditDialogOpen(false);
+    setIsShareDialogOpen(false);
+    setIsBulkActionDialogOpen(false);
+    setSelectedDocument(null);
+    setSelectedDocuments([]);
+    setUploadingToCategory('');
+    setUploadFormData({
+      name: '',
+      category: '',
+      description: '',
+      expiryDate: '',
+      tags: '',
+      isConfidential: false,
+      priority: 'medium',
+      department: '',
+      version: '1.0'
+    });
+    setSelectedFiles([]);
+    setUploadProgress(0);
+    setIsUploading(false);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setShowExpiredOnly(false);
+    setShowConfidentialOnly(false);
+    setShowFavoritesOnly(false);
+  };
+
+  const handleFilterChange = (value: string) => {
+    if (value === 'expired') {
+      setShowExpiredOnly(true);
+    } else if (value === 'confidential') {
+      setShowConfidentialOnly(true);
+    } else if (value === 'favorites') {
+      setShowFavoritesOnly(true);
     }
   };
 
@@ -584,7 +895,7 @@ const Documents: React.FC = () => {
               <FileText className="w-5 h-5 text-blue-600" />
               <div>
                 <p className="text-xs text-gray-600">Total</p>
-                <p className="text-lg font-bold">{documentStats.totalDocuments}</p>
+                <p className="text-lg font-bold">{documentStats.total}</p>
               </div>
             </div>
           </Card>
@@ -593,7 +904,7 @@ const Documents: React.FC = () => {
               <CheckCircle className="w-5 h-5 text-green-600" />
               <div>
                 <p className="text-xs text-gray-600">Approved</p>
-                <p className="text-lg font-bold text-green-600">{documentStats.approvedDocuments}</p>
+                <p className="text-lg font-bold text-green-600">{documentStats.approved}</p>
               </div>
             </div>
           </Card>
@@ -602,7 +913,7 @@ const Documents: React.FC = () => {
               <Clock className="w-5 h-5 text-yellow-600" />
               <div>
                 <p className="text-xs text-gray-600">Pending</p>
-                <p className="text-lg font-bold text-yellow-600">{documentStats.pendingDocuments}</p>
+                <p className="text-lg font-bold text-yellow-600">{documentStats.pending}</p>
               </div>
             </div>
           </Card>
@@ -611,7 +922,7 @@ const Documents: React.FC = () => {
               <Lock className="w-5 h-5 text-purple-600" />
               <div>
                 <p className="text-xs text-gray-600">Confidential</p>
-                <p className="text-lg font-bold text-purple-600">{documentStats.confidentialDocs}</p>
+                <p className="text-lg font-bold text-purple-600">{documentStats.confidential}</p>
               </div>
             </div>
           </Card>
@@ -649,6 +960,46 @@ const Documents: React.FC = () => {
                 </SelectContent>
               </Select>
               
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="All Priorities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={handleFilterChange} onValueChange={handleFilterChange}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Filter by..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Documents</SelectItem>
+                  <SelectItem value="expired">Expiring Soon</SelectItem>
+                  <SelectItem value="confidential">Confidential</SelectItem>
+                  <SelectItem value="favorites">Favorites</SelectItem>
+                </SelectContent>
+              </Select>
+              
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -678,6 +1029,8 @@ const Documents: React.FC = () => {
                       <SelectItem value="date">Date</SelectItem>
                       <SelectItem value="size">Size</SelectItem>
                       <SelectItem value="status">Status</SelectItem>
+                      <SelectItem value="priority">Priority</SelectItem>
+                      <SelectItem value="expiry">Expiry Date</SelectItem>
                     </SelectContent>
                   </Select>
                   
@@ -742,6 +1095,10 @@ const Documents: React.FC = () => {
                           <div className="flex items-center justify-between">
                             {getStatusBadge(doc.status)}
                             {doc.isConfidential && <Lock className="w-3 h-3 text-gray-400" />}
+                            {doc.isFavorite && <Star className="w-3 h-3 text-yellow-500" />}
+                            {doc.expiryDate && isAfter(new Date(doc.expiryDate), new Date()) && (
+                              <Clock className="w-3 h-3 text-red-500" />
+                            )}
                           </div>
                           
                           <div className="flex space-x-1">
@@ -757,9 +1114,27 @@ const Documents: React.FC = () => {
                             <Button 
                               variant="outline" 
                               size="sm" 
+                              onClick={() => handleEditDocument(doc)} 
                               className="text-xs"
                             >
-                              <Download className="w-3 h-3" />
+                              <Edit className="w-3 h-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleFavorite(doc.id, !doc.isFavorite)} 
+                              className="text-xs"
+                            >
+                              {doc.isFavorite ? <StarOff className="w-3 h-3 text-gray-500" /> : <Star className="w-3 h-3 text-yellow-500" />}
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleArchive(doc.id, doc.status === 'archived')} 
+                              className="text-xs"
+                            >
+                              {doc.status === 'archived' ? <Archive className="w-3 h-3 text-gray-500" /> : <Archive className="w-3 h-3 text-blue-500" />}
                             </Button>
                             <Button 
                               variant="outline" 
@@ -783,6 +1158,8 @@ const Documents: React.FC = () => {
                           <TableHead className="text-xs">Document</TableHead>
                           <TableHead className="text-xs hidden sm:table-cell">Category</TableHead>
                           <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-xs">Priority</TableHead>
+                          <TableHead className="text-xs">Expiry</TableHead>
                           <TableHead className="text-xs">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -804,13 +1181,25 @@ const Documents: React.FC = () => {
                             <TableCell className="p-2">
                               {getStatusBadge(doc.status)}
                             </TableCell>
+                            <TableCell className="p-2 text-xs">
+                              {doc.priority}
+                            </TableCell>
+                            <TableCell className="p-2 text-xs text-gray-500">
+                              {doc.expiryDate ? format(new Date(doc.expiryDate), 'MMM dd, yyyy') : 'N/A'}
+                            </TableCell>
                             <TableCell className="p-2">
                               <div className="flex space-x-1">
                                 <Button variant="outline" size="sm" onClick={() => handleViewDocument(doc)}>
                                   <Eye className="w-3 h-3" />
                                 </Button>
-                                <Button variant="outline" size="sm">
-                                  <Download className="w-3 h-3" />
+                                <Button variant="outline" size="sm" onClick={() => handleEditDocument(doc)}>
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => handleFavorite(doc.id, !doc.isFavorite)}>
+                                  {doc.isFavorite ? <StarOff className="w-3 h-3 text-gray-500" /> : <Star className="w-3 h-3 text-yellow-500" />}
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => handleArchive(doc.id, doc.status === 'archived')}>
+                                  {doc.status === 'archived' ? <Archive className="w-3 h-3 text-gray-500" /> : <Archive className="w-3 h-3 text-blue-500" />}
                                 </Button>
                                 <Button variant="outline" size="sm" onClick={() => handleDeleteDocument(doc.id)}>
                                   <Trash2 className="w-3 h-3 text-red-500" />
@@ -926,6 +1315,18 @@ const Documents: React.FC = () => {
                       <span>{getStatusBadge(selectedDocument.status)}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span className="text-gray-600">Priority:</span>
+                      <span>{selectedDocument.priority}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Department:</span>
+                      <span>{selectedDocument.department}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Version:</span>
+                      <span>{selectedDocument.version}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Uploaded By:</span>
                       <span>{selectedDocument.uploadedBy}</span>
                     </div>
@@ -943,6 +1344,20 @@ const Documents: React.FC = () => {
                       <span className="text-gray-600">Downloads:</span>
                       <span>{selectedDocument.downloadCount}</span>
                     </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm mb-2">Description</h3>
+                  <p className="text-sm text-gray-800">{selectedDocument.description || 'No description available.'}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm mb-2">Tags</h3>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedDocument.tags.map((tag: string, index: number) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
                 <div>
@@ -967,22 +1382,17 @@ const Documents: React.FC = () => {
                   </div>
                 </div>
               </div>
-              {selectedDocument.tags && selectedDocument.tags.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-sm mb-2">Tags</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedDocument.tags.map((tag: string, index: number) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Compact Edit Document Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle className="text-base">Edit Document Details</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
     </div>
   );
 };

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Mail, 
@@ -23,34 +23,62 @@ import {
   FileText,
   CheckCircle,
   TrendingUp,
-  Settings
+  Settings,
+  Trash2,
+  Loader2
 } from 'lucide-react';
+import {
+  useEmailCampaigns,
+  useEmailTemplates,
+  useCreateEmailCampaign,
+  useUpdateEmailCampaign,
+  useDeleteEmailCampaign,
+  useCreateEmailTemplate,
+  useUpdateEmailTemplate,
+  useDeleteEmailTemplate,
+  useSendEmailCampaign,
+  type EmailCampaign,
+  type EmailTemplate
+} from '@/hooks/useEmailManagement';
 
-interface EmailCampaign {
-  id: string;
-  name: string;
-  type: string;
-  status: string;
-  recipients: number;
-  opened: number;
-  clicked: number;
-  subject: string;
-  sentDate: string | null;
-}
-
-interface EmailTemplate {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  used: number;
-  lastModified: string;
-}
+// Remove old interfaces as we're using the ones from the hook
 
 const EmailManagement: React.FC = () => {
   const { user, profile, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isComposeDialogOpen, setIsComposeDialogOpen] = useState<boolean>(false);
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState<boolean>(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
+
+  // Hooks for data fetching and mutations
+  const { data: campaigns = [], isLoading: campaignsLoading } = useEmailCampaigns();
+  const { data: templates = [], isLoading: templatesLoading } = useEmailTemplates();
+  const createCampaign = useCreateEmailCampaign();
+  const updateCampaign = useUpdateEmailCampaign();
+  const deleteCampaign = useDeleteEmailCampaign();
+  const createTemplate = useCreateEmailTemplate();
+  const updateTemplate = useUpdateEmailTemplate();
+  const deleteTemplate = useDeleteEmailTemplate();
+  const sendCampaign = useSendEmailCampaign();
+
+  // Form states
+  const [campaignForm, setCampaignForm] = useState({
+    name: '',
+    subject: '',
+    content: '',
+    type: 'newsletter' as const,
+    status: 'draft' as const,
+    recipients_count: 0
+  });
+
+  const [templateForm, setTemplateForm] = useState({
+    name: '',
+    subject: '',
+    content: '',
+    type: 'newsletter' as const,
+    description: ''
+  });
 
   if (loading) {
     return (
@@ -72,69 +100,16 @@ const EmailManagement: React.FC = () => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Mock data for demonstration
-  const emailCampaigns: EmailCampaign[] = [
-    {
-      id: 'CAM-001',
-      name: 'Monthly Service Update - January',
-      type: 'newsletter',
-      status: 'sent',
-      recipients: 245,
-      opened: 198,
-      clicked: 42,
-      subject: 'LSR Logistics - January Service Updates',
-      sentDate: '2024-01-15'
-    },
-    {
-      id: 'CAM-002',
-      name: 'New Route Announcement',
-      type: 'announcement',
-      status: 'scheduled',
-      recipients: 180,
-      opened: 0,
-      clicked: 0,
-      subject: 'Exciting News: New Route Service Available',
-      sentDate: null
-    },
-    {
-      id: 'CAM-003',
-      name: 'Payment Reminder - Overdue Invoices',
-      type: 'reminder',
-      status: 'draft',
-      recipients: 15,
-      opened: 0,
-      clicked: 0,
-      subject: 'Payment Reminder - Invoice Due',
-      sentDate: null
-    }
-  ];
+  // Filter data based on search term
+  const filteredCampaigns = campaigns.filter(campaign =>
+    campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.subject.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const emailTemplates: EmailTemplate[] = [
-    {
-      id: 'TEMP-001',
-      name: 'Service Update Template',
-      type: 'newsletter',
-      description: 'Monthly service updates and company news',
-      lastModified: '2024-01-10',
-      used: 12
-    },
-    {
-      id: 'TEMP-002',
-      name: 'Invoice Template',
-      type: 'billing',
-      description: 'Professional invoice email template',
-      lastModified: '2024-01-08',
-      used: 45
-    },
-    {
-      id: 'TEMP-003',
-      name: 'Welcome Email',
-      type: 'onboarding',
-      description: 'Welcome new customers to our service',
-      lastModified: '2024-01-05',
-      used: 8
-    }
-  ];
+  const filteredTemplates = templates.filter(template =>
+    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    template.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -153,13 +128,98 @@ const EmailManagement: React.FC = () => {
   };
 
   const emailStats = {
-    totalCampaigns: emailCampaigns.length,
-    totalRecipients: emailCampaigns.reduce((sum, camp) => sum + camp.recipients, 0),
-    totalOpened: emailCampaigns.reduce((sum, camp) => sum + camp.opened, 0),
-    totalClicked: emailCampaigns.reduce((sum, camp) => sum + camp.clicked, 0)
+    totalCampaigns: campaigns.length,
+    totalRecipients: campaigns.reduce((sum, camp) => sum + camp.recipients_count, 0),
+    totalOpened: campaigns.reduce((sum, camp) => sum + camp.opened_count, 0),
+    totalClicked: campaigns.reduce((sum, camp) => sum + camp.clicked_count, 0)
   };
 
   const openRate = emailStats.totalRecipients > 0 ? (emailStats.totalOpened / emailStats.totalRecipients * 100) : 0;
+
+  // Handler functions
+  const handleCreateCampaign = async () => {
+    if (!profile?.organization_id) return;
+    
+    await createCampaign.mutateAsync({
+      ...campaignForm,
+      organization_id: profile.organization_id,
+      created_by: profile.id
+    });
+    
+    setCampaignForm({
+      name: '',
+      subject: '',
+      content: '',
+      type: 'newsletter',
+      status: 'draft',
+      recipients_count: 0
+    });
+    setIsComposeDialogOpen(false);
+  };
+
+  const handleCreateTemplate = async () => {
+    if (!profile?.organization_id) return;
+    
+    await createTemplate.mutateAsync({
+      ...templateForm,
+      organization_id: profile.organization_id,
+      created_by: profile.id,
+      is_default: false,
+      used_count: 0
+    });
+    
+    setTemplateForm({
+      name: '',
+      subject: '',
+      content: '',
+      type: 'newsletter',
+      description: ''
+    });
+    setIsTemplateDialogOpen(false);
+  };
+
+  const handleEditCampaign = (campaign: EmailCampaign) => {
+    setSelectedCampaign(campaign);
+    setCampaignForm({
+      name: campaign.name,
+      subject: campaign.subject,
+      content: campaign.content,
+      type: campaign.type,
+      status: campaign.status,
+      recipients_count: campaign.recipients_count
+    });
+    setIsComposeDialogOpen(true);
+  };
+
+  const handleEditTemplate = (template: EmailTemplate) => {
+    setSelectedTemplate(template);
+    setTemplateForm({
+      name: template.name,
+      subject: template.subject,
+      content: template.content,
+      type: template.type,
+      description: template.description || ''
+    });
+    setIsTemplateDialogOpen(true);
+  };
+
+  const handleDeleteCampaign = async (id: string) => {
+    if (confirm('Are you sure you want to delete this campaign?')) {
+      await deleteCampaign.mutateAsync(id);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (confirm('Are you sure you want to delete this template?')) {
+      await deleteTemplate.mutateAsync(id);
+    }
+  };
+
+  const handleSendCampaign = async (id: string) => {
+    if (confirm('Are you sure you want to send this campaign?')) {
+      await sendCampaign.mutateAsync(id);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -181,17 +241,30 @@ const EmailManagement: React.FC = () => {
           </DialogTrigger>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Compose New Email</DialogTitle>
+              <DialogTitle>
+                {selectedCampaign ? 'Edit Email Campaign' : 'Compose New Email'}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedCampaign ? 'Edit your email campaign.' : 'Create and send email campaigns to your customers and stakeholders.'}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="campaign-name">Campaign Name</Label>
-                  <Input id="campaign-name" placeholder="Internal campaign name" />
+                  <Input 
+                    id="campaign-name" 
+                    placeholder="Internal campaign name"
+                    value={campaignForm.name}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, name: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="email-type">Email Type</Label>
-                  <Select>
+                  <Select 
+                    value={campaignForm.type}
+                    onValueChange={(value) => setCampaignForm(prev => ({ ...prev, type: value as any }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -199,50 +272,64 @@ const EmailManagement: React.FC = () => {
                       <SelectItem value="newsletter">Newsletter</SelectItem>
                       <SelectItem value="announcement">Announcement</SelectItem>
                       <SelectItem value="reminder">Reminder</SelectItem>
-                      <SelectItem value="billing">Billing</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="promotional">Promotional</SelectItem>
+                      <SelectItem value="notification">Notification</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="recipients">Recipients</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select recipient group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all-customers">All Customers</SelectItem>
-                    <SelectItem value="school-customers">School Transport Customers</SelectItem>
-                    <SelectItem value="medical-customers">Medical Transport Customers</SelectItem>
-                    <SelectItem value="charter-customers">Charter Service Customers</SelectItem>
-                    <SelectItem value="overdue-invoices">Customers with Overdue Invoices</SelectItem>
-                    <SelectItem value="custom">Custom List</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="recipients-count">Recipients Count</Label>
+                <Input 
+                  id="recipients-count" 
+                  type="number"
+                  placeholder="Number of recipients"
+                  value={campaignForm.recipients_count}
+                  onChange={(e) => setCampaignForm(prev => ({ ...prev, recipients_count: parseInt(e.target.value) || 0 }))}
+                />
               </div>
 
               <div>
                 <Label htmlFor="subject">Subject Line</Label>
-                <Input id="subject" placeholder="Email subject line" />
+                <Input 
+                  id="subject" 
+                  placeholder="Email subject line"
+                  value={campaignForm.subject}
+                  onChange={(e) => setCampaignForm(prev => ({ ...prev, subject: e.target.value }))}
+                />
               </div>
 
               <div>
                 <Label htmlFor="content">Email Content</Label>
-                <Textarea id="content" placeholder="Compose your email message..." rows={8} />
+                <Textarea 
+                  id="content" 
+                  placeholder="Compose your email message..." 
+                  rows={8}
+                  value={campaignForm.content}
+                  onChange={(e) => setCampaignForm(prev => ({ ...prev, content: e.target.value }))}
+                />
               </div>
 
               <div className="flex gap-3">
-                <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
-                  <Send className="w-4 h-4 mr-2" />
-                  Send Email
+                <Button 
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  onClick={handleCreateCampaign}
+                  disabled={createCampaign.isPending}
+                >
+                  {createCampaign.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  {selectedCampaign ? 'Update Campaign' : 'Create Campaign'}
                 </Button>
-                <Button variant="outline" className="flex-1">
-                  Save Draft
-                </Button>
-                <Button variant="outline">
-                  Preview
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setIsComposeDialogOpen(false)}
+                >
+                  Cancel
                 </Button>
               </div>
             </div>
@@ -351,35 +438,72 @@ const EmailManagement: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {emailCampaigns.map((campaign) => (
-                    <TableRow key={campaign.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{campaign.name}</p>
-                          <p className="text-sm text-gray-600">{campaign.subject}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="capitalize">{campaign.type}</TableCell>
-                      <TableCell>{campaign.recipients}</TableCell>
-                      <TableCell>{campaign.opened}</TableCell>
-                      <TableCell>{campaign.clicked}</TableCell>
-                      <TableCell>{getStatusBadge(campaign.status)}</TableCell>
-                      <TableCell>{campaign.sentDate || 'Not sent'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                        </div>
+                  {campaignsLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                        <p>Loading campaigns...</p>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : filteredCampaigns.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        <Mail className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-500">No campaigns found</p>
+                        <p className="text-sm text-gray-400">Create your first email campaign to get started</p>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredCampaigns.map((campaign) => (
+                      <TableRow key={campaign.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{campaign.name}</p>
+                            <p className="text-sm text-gray-600">{campaign.subject}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="capitalize">{campaign.type}</TableCell>
+                        <TableCell>{campaign.recipients_count}</TableCell>
+                        <TableCell>{campaign.opened_count}</TableCell>
+                        <TableCell>{campaign.clicked_count}</TableCell>
+                        <TableCell>{getStatusBadge(campaign.status)}</TableCell>
+                        <TableCell>{campaign.sent_at ? new Date(campaign.sent_at).toLocaleDateString() : 'Not sent'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEditCampaign(campaign)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            {campaign.status === 'draft' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleSendCampaign(campaign.id)}
+                                disabled={sendCampaign.isPending}
+                              >
+                                {sendCampaign.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Send className="w-4 h-4" />
+                                )}
+                              </Button>
+                            )}
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleDeleteCampaign(campaign.id)}
+                              disabled={deleteCampaign.isPending}
+                            >
+                              {deleteCampaign.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -393,37 +517,159 @@ const EmailManagement: React.FC = () => {
                 <FileText className="w-5 h-5" />
                 Email Templates
               </CardTitle>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Template
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {emailTemplates.map((template) => (
-                  <div key={template.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex items-start justify-between mb-3">
+              <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Template
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {selectedTemplate ? 'Edit Email Template' : 'Create New Template'}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {selectedTemplate ? 'Edit your email template.' : 'Create a reusable email template for your campaigns.'}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <h3 className="font-semibold">{template.name}</h3>
-                        <p className="text-sm text-gray-600 capitalize">{template.type}</p>
+                        <Label htmlFor="template-name">Template Name</Label>
+                        <Input 
+                          id="template-name" 
+                          placeholder="Template name"
+                          value={templateForm.name}
+                          onChange={(e) => setTemplateForm(prev => ({ ...prev, name: e.target.value }))}
+                        />
                       </div>
-                      <div className="flex gap-1">
-                        <Button variant="outline" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                      <div>
+                        <Label htmlFor="template-type">Template Type</Label>
+                        <Select 
+                          value={templateForm.type}
+                          onValueChange={(value) => setTemplateForm(prev => ({ ...prev, type: value as any }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="newsletter">Newsletter</SelectItem>
+                            <SelectItem value="billing">Billing</SelectItem>
+                            <SelectItem value="onboarding">Onboarding</SelectItem>
+                            <SelectItem value="notification">Notification</SelectItem>
+                            <SelectItem value="promotional">Promotional</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">{template.description}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Used {template.used} times</span>
-                      <span>Modified: {template.lastModified}</span>
+                    <div>
+                      <Label htmlFor="template-subject">Subject Line</Label>
+                      <Input 
+                        id="template-subject" 
+                        placeholder="Email subject line"
+                        value={templateForm.subject}
+                        onChange={(e) => setTemplateForm(prev => ({ ...prev, subject: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="template-description">Description</Label>
+                      <Input 
+                        id="template-description" 
+                        placeholder="Template description"
+                        value={templateForm.description}
+                        onChange={(e) => setTemplateForm(prev => ({ ...prev, description: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="template-content">Email Content</Label>
+                      <Textarea 
+                        id="template-content" 
+                        placeholder="Write your email template content..."
+                        className="min-h-[200px]"
+                        value={templateForm.content}
+                        onChange={(e) => setTemplateForm(prev => ({ ...prev, content: e.target.value }))}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => {
+                        setIsTemplateDialogOpen(false);
+                        setSelectedTemplate(null);
+                        setTemplateForm({
+                          name: '',
+                          subject: '',
+                          content: '',
+                          type: 'newsletter',
+                          description: ''
+                        });
+                      }}>
+                        Cancel
+                      </Button>
+                      <Button 
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={handleCreateTemplate}
+                        disabled={createTemplate.isPending}
+                      >
+                        {createTemplate.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <FileText className="w-4 h-4 mr-2" />
+                        )}
+                        {selectedTemplate ? 'Update Template' : 'Create Template'}
+                      </Button>
                     </div>
                   </div>
-                ))}
-              </div>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {templatesLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                  <p>Loading templates...</p>
+                </div>
+              ) : filteredTemplates.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No templates found</p>
+                  <p className="text-sm text-gray-400">Create your first email template to get started</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredTemplates.map((template) => (
+                    <div key={template.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold">{template.name}</h3>
+                          <p className="text-sm text-gray-600 capitalize">{template.type}</p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button variant="outline" size="sm" onClick={() => handleEditTemplate(template)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleDeleteTemplate(template.id)}
+                            disabled={deleteTemplate.isPending}
+                          >
+                            {deleteTemplate.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Used {template.used_count} times</span>
+                        <span>Modified: {new Date(template.updated_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Shield, UserPlus, Wrench } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import EmailService from '@/services/emailService';
 
 interface MechanicSignupFormProps {
   onToggleForm: () => void;
@@ -95,9 +96,23 @@ const MechanicSignupForm = ({ onToggleForm, onSuccess }: MechanicSignupFormProps
 
       console.log('✅ Signup successful:', data);
 
+      // Send welcome email
+      try {
+        await EmailService.sendWelcomeEmail({
+          to: formData.email.trim(),
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim(),
+          loginUrl: `${window.location.origin}/auth`
+        });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't fail the signup if email fails
+      }
+
       toast({
         title: 'Mechanic Account Created Successfully',
-        description: 'Please check your email to verify your account before logging in.',
+        description: 'Please check your email to verify your account and welcome message.',
       });
 
       if (onSuccess) {
