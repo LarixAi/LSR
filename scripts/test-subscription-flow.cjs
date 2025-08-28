@@ -127,3 +127,4 @@ console.log('- Test function: curl -X POST https://your-project.supabase.co/func
 console.log('\n✅ Subscription System Test Complete!');
 
 
+

@@ -32,3 +32,4 @@ GRANT EXECUTE ON FUNCTION get_unread_notification_count(UUID) TO anon;
 SELECT get_unread_notification_count('00000000-0000-0000-0000-000000000000'::UUID) as test_result;
 
 
+

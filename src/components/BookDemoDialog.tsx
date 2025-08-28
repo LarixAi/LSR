@@ -27,7 +27,10 @@ const BookDemoDialog = ({ children }: BookDemoDialogProps) => {
     email: '',
     company: '',
     fleetSize: '',
-    message: ''
+    phone: '',
+    message: '',
+    preferredDate: '',
+    preferredTime: ''
   });
   const { toast } = useToast();
 
@@ -43,7 +46,10 @@ const BookDemoDialog = ({ children }: BookDemoDialogProps) => {
           email: formData.email,
           company: formData.company,
           fleetSize: formData.fleetSize ? parseInt(formData.fleetSize) : undefined,
+          phone: formData.phone,
           message: formData.message,
+          preferredDate: formData.preferredDate,
+          preferredTime: formData.preferredTime,
         },
       });
 
@@ -57,7 +63,7 @@ const BookDemoDialog = ({ children }: BookDemoDialogProps) => {
         description: "Thank you for your interest. Our team will contact you within 24 hours.",
       });
       
-      setFormData({ name: '', email: '', company: '', fleetSize: '', message: '' });
+      setFormData({ name: '', email: '', company: '', fleetSize: '', phone: '', message: '', preferredDate: '', preferredTime: '' });
       setOpen(false);
     } catch (error) {
       console.error('Error submitting demo request:', error);
@@ -142,6 +148,20 @@ const BookDemoDialog = ({ children }: BookDemoDialogProps) => {
           </div>
           
           <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number
+            </label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="+44 7911 123456"
+            />
+          </div>
+          
+          <div>
             <label htmlFor="fleetSize" className="block text-sm font-medium text-gray-700 mb-1">
               Fleet Size
             </label>
@@ -153,6 +173,40 @@ const BookDemoDialog = ({ children }: BookDemoDialogProps) => {
               onChange={handleChange}
               placeholder="Number of vehicles"
             />
+          </div>
+          
+          <div>
+            <label htmlFor="preferredDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Preferred Date
+            </label>
+            <Input
+              id="preferredDate"
+              name="preferredDate"
+              type="date"
+              value={formData.preferredDate}
+              onChange={handleChange}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="preferredTime" className="block text-sm font-medium text-gray-700 mb-1">
+              Preferred Time
+            </label>
+            <select
+              id="preferredTime"
+              name="preferredTime"
+              value={formData.preferredTime}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="">Select a time</option>
+              <option value="09:00">9:00 AM</option>
+              <option value="10:00">10:00 AM</option>
+              <option value="11:00">11:00 AM</option>
+              <option value="14:00">2:00 PM</option>
+              <option value="15:00">3:00 PM</option>
+              <option value="16:00">4:00 PM</option>
+            </select>
           </div>
           
           <div>

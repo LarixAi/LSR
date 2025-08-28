@@ -1,40 +1,76 @@
 
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Truck, Shield, Users, BarChart3, Clock, Route } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { 
+  Truck, 
+  Users, 
+  Shield, 
+  BarChart3, 
+  Route, 
+  Clock, 
+  MapPin, 
+  CheckCircle,
+  Zap,
+  Star,
+  Target,
+  TrendingUp
+} from 'lucide-react';
 
 const SolutionsSection = () => {
   const solutions = [
     {
       icon: Truck,
-      title: 'Fleet & Transport Managers',
-      description: 'Streamline operations with intelligent route planning, automated driver scheduling, and real-time fleet monitoring.',
-      features: ['Route Planning', 'Driver Scheduling', 'Fleet Monitoring', 'Cost Optimization'],
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      icon: Shield,
-      title: 'Compliance Teams',
-      description: 'Stay ahead of regulations with automated compliance checks, real-time alerts, and comprehensive audit trails.',
-      features: ['Automated Checks', 'Real-time Alerts', 'Audit Trails', 'Regulatory Updates'],
-      color: 'from-green-500 to-green-600'
+      title: 'Fleet Management',
+      description: 'Comprehensive fleet management with real-time tracking, maintenance scheduling, and driver management.',
+      color: 'from-teal-500 to-teal-600',
+      features: [
+        'Real-time GPS tracking',
+        'Maintenance scheduling',
+        'Fuel management',
+        'Driver performance analytics'
+      ]
     },
     {
       icon: Users,
-      title: 'Drivers & Mechanics',
-      description: 'Empower your team with real-time updates, digital defect tracking, and streamlined communication tools.',
-      features: ['Real-time Updates', 'Digital Defect Sheets', 'Communication Tools', 'Mobile Access'],
-      color: 'from-purple-500 to-purple-600'
+      title: 'Driver Management',
+      description: 'Complete driver lifecycle management from recruitment to performance monitoring and training.',
+      color: 'from-blue-500 to-blue-600',
+      features: [
+        'Driver recruitment & onboarding',
+        'Performance monitoring',
+        'Training management',
+        'Compliance tracking'
+      ]
+    },
+    {
+      icon: Shield,
+      title: 'Compliance & Safety',
+      description: 'Ensure regulatory compliance and maintain the highest safety standards across your operations.',
+      color: 'from-teal-500 to-teal-600',
+      features: [
+        'Regulatory compliance',
+        'Safety monitoring',
+        'Incident reporting',
+        'Audit trails'
+      ]
     }
   ];
 
   return (
-    <section id="solutions" className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="solutions" className="py-20 bg-gray-50 relative overflow-hidden">
+      {/* Subtle background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-teal-100 to-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute top-40 right-20 w-96 h-96 bg-gradient-to-r from-blue-100 to-teal-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute -bottom-20 left-1/3 w-80 h-80 bg-gradient-to-r from-teal-50 to-blue-50 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ animationDelay: '4s' }}></div>
+        <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-gradient-to-r from-blue-50 to-teal-50 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ animationDelay: '6s' }}></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Solutions for Every
-            <span className="block bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
               Transport Challenge
             </span>
           </h2>
@@ -47,8 +83,8 @@ const SolutionsSection = () => {
           {solutions.map((solution, index) => (
             <Card
               key={index}
-              className="relative overflow-hidden bg-white/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 group"
-            >
+              className="relative overflow-hidden bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 group border border-gray-200"
+              >
               <div className={`absolute inset-0 bg-gradient-to-br ${solution.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
               
               <div className="p-8">
@@ -56,7 +92,7 @@ const SolutionsSection = () => {
                   <solution.icon className="w-8 h-8 text-white" />
                 </div>
 
-                <h3 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors duration-300">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-teal-600 transition-colors duration-300">
                   {solution.title}
                 </h3>
                 
@@ -68,7 +104,7 @@ const SolutionsSection = () => {
                   {solution.features.map((feature, featureIndex) => (
                     <div key={featureIndex} className="flex items-center space-x-3">
                       <div className={`w-2 h-2 bg-gradient-to-r ${solution.color} rounded-full`} />
-                      <span className="text-sm font-medium text-gray-700">{feature}</span>
+                      <span className="text-sm font-medium text-gray-600">{feature}</span>
                     </div>
                   ))}
                 </div>

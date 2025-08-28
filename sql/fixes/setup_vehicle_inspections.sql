@@ -114,3 +114,4 @@ JOIN vehicles v ON vi.vehicle_id = v.id
 LIMIT 10;
 
 
+

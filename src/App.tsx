@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SecurityProvider } from "./contexts/SecurityContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -120,26 +119,14 @@ const TachographManager = lazy(() => import("./pages/TachographManager"));
 const APIManagement = lazy(() => import("./pages/APIManagement"));
 const PersonalAssistants = lazy(() => import("./pages/PersonalAssistants"));
 const FleetReportsPage = lazy(() => import("./pages/FleetReportsPage"));
+const BookDemoPage = lazy(() => import("./pages/BookDemoPage"));
 // const TrialTestPage = lazy(() => import("./pages/TrialTestPage")); // Hidden - no longer needed
 const SystemDiagnostic = lazy(() => import("./pages/SystemDiagnostic"));
-const TestPage = lazy(() => import("./pages/TestPage"));
-const UserAgreementTest = lazy(() => import("./components/test/UserAgreementTest"));
+
+
 const AgreementManagement = lazy(() => import("./pages/admin/AgreementManagement"));
 const EmailVerification = lazy(() => import("./pages/EmailVerification"));
-const EmailTest = lazy(() => import("./components/test/EmailTest"));
-const ApiKeyTest = lazy(() => import("./components/test/ApiKeyTest"));
-const SimpleApiKeyTest = lazy(() => import("./components/test/SimpleApiKeyTest"));
-const BasicApiTest = lazy(() => import("./components/test/BasicApiTest"));
 const PasswordResetForm = lazy(() => import("./components/auth/PasswordResetForm"));
-const EmailSystemTest = lazy(() => import("./components/test/EmailSystemTest"));
-const ApiKeyDiagnostic = lazy(() => import("./components/test/ApiKeyDiagnostic"));
-const ApiKeySetupGuide = lazy(() => import("./components/test/ApiKeySetupGuide"));
-const EmailWorkingTest = lazy(() => import("./components/test/EmailWorkingTest"));
-const SimpleEmailTest = lazy(() => import("./components/test/SimpleEmailTest"));
-const EmailSystemWorkingTest = lazy(() => import("./components/test/EmailSystemWorkingTest"));
-const EdgeFunctionEmailTest = lazy(() => import("./components/test/EdgeFunctionEmailTest"));
-const EdgeFunctionSetupTest = lazy(() => import("./components/test/EdgeFunctionSetupTest"));
-const EdgeFunctionDebugTest = lazy(() => import("./components/test/EdgeFunctionDebugTest"));
 
 import PageLoader from "./components/common/PageLoader";
 
@@ -170,9 +157,8 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
-              <PasswordChangeWrapper>
-                <SecurityProvider>
-                  <ThemeProvider>
+                              <PasswordChangeWrapper>
+                  <SecurityProvider>
                     <Suspense fallback={<PageLoader />}>
                     <Routes>
                   {/* Vehicle Check Questions - MUST BE FIRST to avoid conflicts */}
@@ -211,6 +197,7 @@ const App = () => {
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/customer-auth" element={<CustomerAuth />} />
+                  <Route path="/book-demo" element={<BookDemoPage />} />
                   
                   {/* Test route for Vehicle Check Questions */}
                   <Route path="/test-smart" element={
@@ -517,36 +504,15 @@ const App = () => {
                             <SystemDiagnostic />
                           </ProtectedRoute>
                         } />
-                        <Route path="/test-page" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <TestPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/test-agreements" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <UserAgreementTest />
-                          </ProtectedRoute>
-                        } />
+
+
                         <Route path="/admin/agreements" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <AgreementManagement />
                           </ProtectedRoute>
                         } />
                         <Route path="/verify-email" element={<EmailVerification />} />
-                        <Route path="/test-email" element={<EmailTest />} />
-                        <Route path="/test-api-key" element={<ApiKeyTest />} />
-                        <Route path="/simple-test" element={<SimpleApiKeyTest />} />
-                        <Route path="/basic-test" element={<BasicApiTest />} />
                         <Route path="/reset-password" element={<PasswordResetForm />} />
-                                                 <Route path="/email-system-test" element={<EmailSystemTest />} />
-                         <Route path="/api-diagnostic" element={<ApiKeyDiagnostic />} />
-                         <Route path="/api-setup-guide" element={<ApiKeySetupGuide />} />
-                         <Route path="/email-working-test" element={<EmailWorkingTest />} />
-                         <Route path="/simple-email-test" element={<SimpleEmailTest />} />
-                         <Route path="/email-system-working-test" element={<EmailSystemWorkingTest />} />
-                         <Route path="/edge-function-email-test" element={<EdgeFunctionEmailTest />} />
-                         <Route path="/edge-function-setup-test" element={<EdgeFunctionSetupTest />} />
-                         <Route path="/edge-function-debug-test" element={<EdgeFunctionDebugTest />} />
 
                         {/* Vehicle Management */}
                         <Route path="/vehicles" element={
@@ -594,14 +560,7 @@ const App = () => {
                           </ProtectedRoute>
                         } />
                         
-                        {/* Test route to verify routing is working */}
-                        <Route path="/test-inspections" element={
-                          <div>
-                            <h1>Test Inspections Route Working!</h1>
-                            <p>If you can see this, routing is working correctly.</p>
-                            <a href="/inspections">Go to real inspections page</a>
-                          </div>
-                        } />
+
 
 
                         {/* Job Management */}
@@ -790,12 +749,10 @@ const App = () => {
                       </AppLayout>
                     </OrganizationProvider>
                   } />
-                </Routes>
-                    </Suspense>
-            
-                  </ThemeProvider>
-                </SecurityProvider>
-              </PasswordChangeWrapper>
+                                  </Routes>
+                      </Suspense>
+                   </SecurityProvider>
+                 </PasswordChangeWrapper>
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>

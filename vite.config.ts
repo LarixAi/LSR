@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
+    // Set base path for assets - use relative paths for web hosting
+    base: './',
     server: {
       host: "0.0.0.0",
       port: 3000,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ import { Badge } from '@/components/ui/badge';
 
 const MobileSettings: React.FC = () => {
   const { user, profile, loading: authLoading, signOut } = useAuth();
-  const { theme, toggleTheme, isDark } = useTheme();
+
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   
@@ -544,16 +544,7 @@ const MobileSettings: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Dark Mode</Label>
-                    <p className="text-sm text-muted-foreground">Use dark theme for the app</p>
-                  </div>
-                  <Switch
-                    checked={isDark}
-                    onCheckedChange={toggleTheme}
-                  />
-                </div>
+
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">

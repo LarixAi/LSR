@@ -108,3 +108,4 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
   AND tc.table_name = 'driver_vehicle_assignments';
 
 
+

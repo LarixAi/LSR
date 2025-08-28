@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useUserAgreements } from '@/hooks/useUserAgreements';
 import UserAgreementModal from '@/components/modals/UserAgreementModal';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface AgreementGuardProps {
   children: React.ReactNode;
@@ -23,8 +23,16 @@ const AgreementGuard: React.FC<AgreementGuardProps> = ({
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [hasCheckedAgreements, setHasCheckedAgreements] = useState(false);
 
+  // TEMPORARY: Bypass agreement check for testing
+  const bypassAgreements = true; // Set to false to re-enable agreement checks
+
   // Check if user needs to accept agreements
   useEffect(() => {
+    if (bypassAgreements) {
+      setHasCheckedAgreements(true);
+      return;
+    }
+
     if (!user || isLoadingStatus) return;
 
     // If user has no profile yet, wait for it to load
@@ -41,7 +49,7 @@ const AgreementGuard: React.FC<AgreementGuardProps> = ({
     }
     
     setHasCheckedAgreements(true);
-  }, [user, profile, needsAgreementAcceptance, isLoadingStatus, showOnFirstLogin]);
+  }, [user, profile, needsAgreementAcceptance, isLoadingStatus, showOnFirstLogin, bypassAgreements]);
 
   const handleAgreementsAccepted = () => {
     setShowAgreementModal(false);
@@ -57,7 +65,7 @@ const AgreementGuard: React.FC<AgreementGuardProps> = ({
   };
 
   // Show loading while checking agreements
-  if (!hasCheckedAgreements || isLoadingStatus) {
+  if (!hasCheckedAgreements || (isLoadingStatus && !bypassAgreements)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -71,7 +79,6 @@ const AgreementGuard: React.FC<AgreementGuardProps> = ({
   return (
     <>
       {children}
-      
       <UserAgreementModal
         isOpen={showAgreementModal}
         onClose={handleModalClose}

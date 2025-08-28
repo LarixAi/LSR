@@ -1,0 +1,54 @@
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { UserCheck } from 'lucide-react';
+// Removed import for deleted component
+import DriversTable from './DriversTable';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Driver = Tables<'profiles'>;
+
+interface DriversListProps {
+  drivers: Driver[];
+  isLoading: boolean;
+}
+
+const DriversList = ({ drivers, isLoading }: DriversListProps) => {
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const [onboardingDialogOpen, setOnboardingDialogOpen] = useState(false);
+
+  const handleViewOnboarding = (driverId: string) => {
+    setSelectedDriverId(driverId);
+    setOnboardingDialogOpen(true);
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center p-8">Loading drivers...</div>;
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <UserCheck className="w-5 h-5" />
+            <span>Drivers Overview</span>
+          </CardTitle>
+          <CardDescription>
+            Manage driver onboarding and employment status
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DriversTable 
+            drivers={drivers} 
+            onViewOnboarding={handleViewOnboarding} 
+          />
+        </CardContent>
+      </Card>
+
+      {/* Removed DriverOnboardingDialog - component was deleted */}
+    </>
+  );
+};
+
+export default DriversList;

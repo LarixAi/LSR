@@ -381,3 +381,4 @@ JOIN vehicles v ON vi.vehicle_id = v.id
 ORDER BY vi.created_at DESC;
 
 
+

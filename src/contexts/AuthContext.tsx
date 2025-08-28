@@ -256,7 +256,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     console.log('Profile timeout reached - allowing user through with limited profile');
                     setLoading(false);
                   }
-                }, 5000); // Increased timeout to 5 seconds
+                }, 3000); // Reduced timeout to 3 seconds
               }
             };
             
@@ -297,7 +297,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Auth initialization timeout - no session found, setting loading to false');
         setLoading(false);
       }
-    }, 5000); // Increased to 5 seconds to allow proper session restoration
+    }, 3000); // Reduced to 3 seconds for faster loading
 
     return () => {
       mounted = false;

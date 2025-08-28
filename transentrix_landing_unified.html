@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Transentrix — Fleet/PSV Operator Management</title>
+
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/embla-carousel@8.0.0/embla.umd.js"></script>
+
+  <style>
+    @keyframes marquee { 0% { transform: translateX(0) } 100% { transform: translateX(-50%) } }
+    .marquee { animation: marquee 18s linear infinite; }
+    .reveal { opacity: 0; transform: translateY(24px); transition: all .6s ease; }
+    .reveal.show { opacity: 1; transform: translateY(0); }
+    html { scroll-behavior: smooth; }
+    .speckle {
+      background-image:
+        radial-gradient(rgba(16,185,129,0.08) 1px, rgba(0,0,0,0) 1px);
+      background-size: 8px 8px;
+    }
+    .soft-shadow { box-shadow: 0 6px 20px rgba(2, 6, 23, 0.08); }
+    .floating-pill { position: fixed; left: 16px; bottom: 16px; z-index: 50; }
+    .chat-btn {
+      position: fixed; right: 16px; bottom: 16px; z-index: 50;
+      width: 56px; height: 56px; border-radius: 9999px;
+      background: white; border: 1px solid #e5e7eb;
+      box-shadow: 0 10px 25px rgba(2,6,23,.08);
+      display: grid; place-items: center;
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900 selection:bg-green-600 selection:text-white">
+  <!-- NAV -->
+  <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-gray-100">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="#home" class="flex items-center gap-3 group">
+        <div class="w-8 h-8 rounded-xl bg-green-600 grid place-items-center shadow-[0_0_0_3px_rgba(0,0,0,0.06)]">
+          <span class="font-black text-white">T</span>
+        </div>
+        <span class="font-semibold tracking-tight text-gray-900 group-hover:text-green-600 transition-colors">Transentrix</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm">
+        <a href="#features" class="hover:text-gray-700">Features</a>
+        <a href="#platform" class="hover:text-gray-700">Platform</a>
+        <a href="#results" class="hover:text-gray-700">Results</a>
+        <a href="#customers" class="hover:text-gray-700">Customers</a>
+        <a href="#pricing" class="hover:text-gray-700">Pricing</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="#demo" class="hidden sm:inline-flex items-center px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300">Book demo</a>
+        <a href="#get-started" class="inline-flex items-center px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 font-medium text-white shadow-lg shadow-green-600/30">Get started</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section id="home" class="relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
+      <div class="grid lg:grid-cols-2 gap-10 items-center">
+        <div class="reveal">
+          <p class="inline-flex items-center text-xs uppercase tracking-widest text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+            PSV • School Transport • Council Contracts
+          </p>
+          <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold leading-tight">
+            Run your transport business <span class="text-green-600">smarter</span> — from jobs to compliance.
+          </h1>
+          <p class="mt-4 text-gray-600 text-lg max-w-xl">
+            Assign drivers, manage routes, track MOT/service dates, capture defects, and share role-based portals with parents and councils.
+          </p>
+          <div class="mt-6 flex flex-col sm:flex-row gap-3">
+            <a href="#get-started" class="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-green-600 hover:bg-green-500 font-semibold text-white shadow-lg shadow-green-600/30">
+              Start free
+            </a>
+            <a href="#demo" class="inline-flex items-center justify-center px-6 py-3 rounded-2xl border border-gray-200 hover:border-gray-300">
+              Watch 90-sec demo
+            </a>
+          </div>
+        </div>
+
+        <!-- Product Mock -->
+        <div class="relative reveal">
+          <div class="aspect-video rounded-3xl bg-gray-100 border border-gray-200 p-2 shadow-2xl">
+            <div class="h-full w-full rounded-2xl bg-white border border-gray-200 grid grid-rows-[auto,1fr] overflow-hidden">
+              <div class="h-10 border-b border-gray-200 flex items-center gap-2 px-3">
+                <span class="w-3 h-3 rounded-full bg-green-600"></span>
+                <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                <span class="ml-3 text-xs text-gray-400">Live board — Jobs · Vehicles · Compliance</span>
+              </div>
+              <div class="p-4 grid sm:grid-cols-2 gap-4">
+                <div class="rounded-xl border border-gray-200 p-3">
+                  <p class="text-xs text-gray-400">Today’s Jobs</p>
+                  <ul class="mt-2 space-y-1 text-sm">
+                    <li class="flex justify-between"><span>School Run A</span><span class="text-gray-500">07:45</span></li>
+                    <li class="flex justify-between"><span>Airport Transfer</span><span class="text-gray-500">10:00</span></li>
+                    <li class="flex justify-between"><span>Private Hire</span><span class="text-gray-500">14:30</span></li>
+                  </ul>
+                </div>
+                <div class="rounded-xl border border-gray-200 p-3">
+                  <p class="text-xs text-gray-400">Vehicle Alerts</p>
+                  <ul class="mt-2 space-y-1 text-sm">
+                    <li class="flex justify-between"><span>MOT — BX12 ABC</span><span class="text-green-600">Due in 7 days</span></li>
+                    <li class="flex justify-between"><span>Service — ZR08 LMN</span><span class="text-gray-500">1,200 mi</span></li>
+                    <li class="flex justify-between"><span>Insurance — KY65 PQR</span><span class="text-gray-500">Oct 10</span></li>
+                  </ul>
+                </div>
+                <div class="rounded-xl border border-gray-200 p-3 sm:col-span-2">
+                  <p class="text-xs text-gray-400">Compliance Feed</p>
+                  <div class="mt-2 text-sm grid sm:grid-cols-3 gap-3">
+                    <div class="rounded-lg bg-gray-100 p-3">Walk-around — BX12 ABC ✅</div>
+                    <div class="rounded-lg bg-gray-100 p-3">Defect logged — mirror 🔧</div>
+                    <div class="rounded-lg bg-gray-100 p-3">Tacho break alert ⏱️</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logo Marquee -->
+    <div class="overflow-hidden py-6 border-y border-gray-200 bg-gray-50">
+      <div class="flex gap-12 marquee whitespace-nowrap px-6 text-gray-400 text-sm">
+        <span>Volvo</span><span>Arriva</span><span>Transdev</span>
+        <span>Go-Ahead</span><span>Stagecoach</span><span>Keolis</span>
+        <span>Volvo</span><span>Arriva</span><span>Transdev</span>
+        <span>Go-Ahead</span><span>Stagecoach</span><span>Keolis</span>
+      </div>
+    </div>
+
+    <!-- Decorative swoosh / arrow -->
+    <div class="relative h-24" aria-hidden="true">
+      <svg viewBox="0 0 1200 120" class="absolute inset-0 w-full h-full">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L6,3 z" fill="#16a34a" />
+          </marker>
+        </defs>
+        <path d="M0,80 C300,10 900,150 1200,30" fill="none" stroke="#86efac" stroke-width="2" marker-end="url(#arrow)"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- VALUE STATS (small KPI cards) -->
+  <section class="border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-2 sm:grid-cols-4 gap-6">
+      <div class="rounded-2xl border border-gray-200 p-6 text-center bg-white reveal">
+        <div class="text-3xl font-extrabold">99.9%</div>
+        <div class="text-sm text-gray-500 mt-1">Uptime</div>
+      </div>
+      <div class="rounded-2xl border border-gray-200 p-6 text-center bg-white reveal">
+        <div class="text-3xl font-extrabold">-35%</div>
+        <div class="text-sm text-gray-500 mt-1">Admin time</div>
+      </div>
+      <div class="rounded-2xl border border-gray-200 p-6 text-center bg-white reveal">
+        <div class="text-3xl font-extrabold">+22%</div>
+        <div class="text-sm text-gray-500 mt-1">On-time KPI</div>
+      </div>
+      <div class="rounded-2xl border border-gray-200 p-6 text-center bg-white reveal">
+        <div class="text-3xl font-extrabold">&lt;5min</div>
+        <div class="text-sm text-gray-500 mt-1">Defect → notify</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES GRID -->
+  <section id="features">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="max-w-2xl reveal">
+        <h2 class="text-3xl sm:text-4xl font-extrabold">
+          Everything you need to operate — <span class="text-green-600">without the chaos</span>
+        </h2>
+        <p class="mt-3 text-gray-600">Built for UK PSV, school transport, and council contracts.</p>
+      </div>
+
+      <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="rounded-2xl p-6 border border-gray-200 bg-white hover:border-gray-300 transition reveal">
+          <div class="w-10 h-10 rounded-xl bg-green-100 grid place-items-center text-green-600 mb-4">★</div>
+          <h3 class="font-semibold text-lg">PSV Operator Dashboard</h3>
+          <p class="mt-2 text-gray-600 text-sm">Live overview of vehicles, drivers, routes, and compliance alerts.</p>
+        </div>
+        <div class="rounded-2xl p-6 border border-gray-200 bg-white hover:border-gray-300 transition reveal">
+          <div class="w-10 h-10 rounded-xl bg-green-100 grid place-items-center text-green-600 mb-4">★</div>
+          <h3 class="font-semibold text-lg">Driver & Route Scheduling</h3>
+          <p class="mt-2 text-gray-600 text-sm">Prevent conflicts with a calendar-first workflow.</p>
+        </div>
+        <div class="rounded-2xl p-6 border border-gray-200 bg-white hover:border-gray-300 transition reveal">
+          <div class="w-10 h-10 rounded-xl bg-green-100 grid place-items-center text-green-600 mb-4">★</div>
+          <h3 class="font-semibold text-lg">Compliance & Walk-around</h3>
+          <p class="mt-2 text-gray-600 text-sm">DVSA-ready defects, daily checks, signatures, audit trails.</p>
+        </div>
+        <div class="rounded-2xl p-6 border border-gray-200 bg-white hover:border-gray-300 transition reveal">
+          <div class="w-10 h-10 rounded-xl bg-green-100 grid place-items-center text-green-600 mb-4">★</div>
+          <h3 class="font-semibold text-lg">Fleet & MOT Tracking</h3>
+          <p class="mt-2 text-gray-600 text-sm">See MOT, service, and insurance expiries at a glance.</p>
+        </div>
+        <div class="rounded-2xl p-6 border border-gray-200 bg-white hover:border-gray-300 transition reveal">
+          <div class="w-10 h-10 rounded-xl bg-green-100 grid place-items-center text-green-600 mb-4">★</div>
+          <h3 class="font-semibold text-lg">Parent & Council Portals</h3>
+          <p class="mt-2 text-gray-600 text-sm">Role-based access, isolated per organisation.</p>
+        </div>
+        <div class="rounded-2xl p-6 border border-gray-200 bg-white hover:border-gray-300 transition reveal">
+          <div class="w-10 h-10 rounded-xl bg-green-100 grid place-items-center text-green-600 mb-4">★</div>
+          <h3 class="font-semibold text-lg">Reports & Exports</h3>
+          <p class="mt-2 text-gray-600 text-sm">One-click PDF/CSV for compliance and performance.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS (Fleetio-style stat cards) -->
+  <section id="results" class="relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
+      <h2 class="text-3xl sm:text-4xl font-extrabold">Save time. Cut costs. Drive real results.</h2>
+      <div class="mt-8 grid md:grid-cols-3 gap-6">
+        <div class="rounded-2xl border border-green-300 bg-white p-8 soft-shadow">
+          <div class="text-6xl font-black tracking-tight">83%</div>
+          <p class="mt-4 text-gray-600">Reduced time spent on inspections</p>
+          <div class="mt-4 text-xs tracking-widest text-gray-400">STANLEY STEEMER</div>
+        </div>
+        <div class="rounded-2xl border border-green-300 bg-white p-8 soft-shadow">
+          <div class="text-6xl font-black tracking-tight">48%</div>
+          <p class="mt-4 text-gray-600">Saved on maintenance costs with Transentrix</p>
+          <div class="mt-4 text-xs tracking-widest text-gray-400">SMART WATT</div>
+        </div>
+        <div class="rounded-2xl border border-green-300 bg-white p-8 soft-shadow">
+          <div class="text-6xl font-black tracking-tight">10×</div>
+          <p class="mt-4 text-gray-600">Reduced time spent on fleet reports</p>
+          <div class="mt-4 text-xs tracking-widest text-gray-400">NEWKIRK</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATFORM ICONS GRID -->
+  <section id="platform" class="relative">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
+      <h2 class="text-3xl sm:text-4xl font-extrabold">The modern way to manage your fleet</h2>
+      <div class="mt-10 grid grid-cols-2 sm:grid-cols-3 gap-8">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-green-100 text-green-700 grid place-items-center">🔧</div>
+          <div class="text-sm font-medium">Fleet Maintenance</div>
+        </div>
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-green-100 text-green-700 grid place-items-center">🧾</div>
+          <div class="text-sm font-medium">Work Orders</div>
+        </div>
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-green-100 text-green-700 grid place-items-center">💲</div>
+          <div class="text-sm font-medium">Cost Tracking</div>
+        </div>
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-green-100 text-green-700 grid place-items-center">⛽</div>
+          <div class="text-sm font-medium">Fuel Management</div>
+        </div>
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-green-100 text-green-700 grid place-items-center">⚙️</div>
+          <div class="text-sm font-medium">Parts Inventory</div>
+        </div>
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-green-100 text-green-700 grid place-items-center">✅</div>
+          <div class="text-sm font-medium">Inspections</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom swoosh -->
+    <div class="relative h-24" aria-hidden="true">
+      <svg viewBox="0 0 1200 120" class="absolute inset-0 w-full h-full">
+        <defs>
+          <marker id="arrow2" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L6,3 z" fill="#16a34a" />
+          </marker>
+        </defs>
+        <path d="M0,90 C400,120 800,0 1200,70" fill="none" stroke="#86efac" stroke-width="2" marker-end="url(#arrow2)"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- OPTIMIZE EVERYTHING -->
+  <section id="optimize" class="relative">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
+      <h2 class="text-3xl sm:text-4xl font-extrabold">Optimize everything</h2>
+      <p class="mt-3 text-gray-600 max-w-3xl mx-auto">
+        Put a stop to stagnant spreadsheets. Transentrix centralizes your data — assets, drivers, fuel,
+        parts, costs and more — so you can make informed decisions, improve performance and scale operations at a glance.
+      </p>
+
+      <div class="mt-10 grid md:grid-cols-3 gap-6">
+        <div class="rounded-2xl border border-green-300 overflow-hidden">
+          <div class="h-40 speckle"></div>
+          <div class="p-6 text-gray-700">Use your data to truly understand the value and lifespan of your assets</div>
+        </div>
+        <div class="rounded-2xl border border-green-300 overflow-hidden">
+          <div class="h-40 speckle"></div>
+          <div class="p-6 text-gray-700">Analyze your maintenance and repairs to limit downtime and spending</div>
+        </div>
+        <div class="rounded-2xl border border-green-300 overflow-hidden">
+          <div class="h-40 speckle"></div>
+          <div class="p-6 text-gray-700">Forecast costs with lifecycle modeling and parts tracking</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CUSTOMERS / TESTIMONIALS -->
+  <section id="customers" class="border-t border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="grid lg:grid-cols-3 gap-10 items-start">
+        <div class="reveal">
+          <h2 class="text-3xl font-extrabold">What teams say</h2>
+          <p class="mt-3 text-gray-600">Real operators improving KPIs and compliance.</p>
+        </div>
+        <div class="lg:col-span-2">
+          <div class="embla overflow-hidden reveal">
+            <div class="embla__container flex gap-6">
+              <div class="embla__slide min-w-0 shrink-0 basis-[85%] md:basis-[48%] lg:basis-[32%] rounded-2xl border border-gray-200 p-6 bg-white">
+                <p class="font-medium">Cut admin time by 35% and never miss MOTs.</p>
+                <p class="text-gray-600 mt-2 text-sm">Transentrix streamlines our school runs and compliance.</p>
+                <p class="text-gray-400 mt-4 text-xs">Ops Manager, UK PSV</p>
+              </div>
+              <div class="embla__slide min-w-0 shrink-0 basis-[85%] md:basis-[48%] lg:basis-[32%] rounded-2xl border border-gray-200 p-6 bg-white">
+                <p class="font-medium">Parents love the live updates.</p>
+                <p class="text-gray-600 mt-2 text-sm">Routes and comms are finally in one place.</p>
+                <p class="text-gray-400 mt-4 text-xs">School Transport Lead</p>
+              </div>
+              <div class="embla__slide min-w-0 shrink-0 basis-[85%] md:basis-[48%] lg:basis-[32%] rounded-2xl border border-gray-200 p-6 bg-white">
+                <p class="font-medium">Defects to mechanics in minutes.</p>
+                <p class="text-gray-600 mt-2 text-sm">Audit trail keeps the council happy.</p>
+                <p class="text-gray-400 mt-4 text-xs">Fleet Supervisor</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-4">
+            <button id="prevBtn" class="px-3 py-2 rounded-lg border border-gray-200 hover:border-gray-300">Prev</button>
+            <button id="nextBtn" class="px-3 py-2 rounded-lg border border-gray-200 hover:border-gray-300">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="text-center max-w-2xl mx-auto reveal">
+        <h2 class="text-3xl sm:text-4xl font-extrabold">Simple pricing that scales</h2>
+        <p class="mt-3 text-gray-600">Start free. Upgrade when your fleet grows.</p>
+      </div>
+      <div class="mt-10 grid md:grid-cols-3 gap-6">
+        <div class="relative rounded-3xl border border-gray-200 bg-white p-6 reveal">
+          <h3 class="text-xl font-bold">Starter</h3>
+          <div class="mt-2 text-3xl font-extrabold">£0</div>
+          <p class="text-gray-500 mt-1">For trials and tiny fleets</p>
+          <ul class="mt-4 space-y-2 text-sm">
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Up to 2 vehicles</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Driver app</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Basic checks</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Email support</li>
+          </ul>
+          <a href="#get-started" class="mt-6 inline-flex w-full items-center justify-center px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 font-medium text-white">Choose Starter</a>
+        </div>
+        <div class="relative rounded-3xl border border-gray-200 bg-white p-6 ring-1 ring-green-600 reveal">
+          <span class="absolute -top-3 left-6 text-[11px] uppercase tracking-wider bg-green-600 text-white px-2 py-1 rounded-md">Most popular</span>
+          <h3 class="text-xl font-bold">Operator</h3>
+          <div class="mt-2 text-3xl font-extrabold">£79</div>
+          <p class="text-gray-500 mt-1">For growing teams</p>
+          <ul class="mt-4 space-y-2 text-sm">
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Up to 25 vehicles</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Scheduling & routes</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Defects & MOT alerts</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Exports & reports</li>
+          </ul>
+          <a href="#get-started" class="mt-6 inline-flex w-full items-center justify-center px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 font-medium text-white">Choose Operator</a>
+        </div>
+        <div class="relative rounded-3xl border border-gray-200 bg-white p-6 reveal">
+          <h3 class="text-xl font-bold">Enterprise</h3>
+          <div class="mt-2 text-3xl font-extrabold">Let’s talk</div>
+          <p class="text-gray-500 mt-1">Councils & multi-site fleets</p>
+          <ul class="mt-4 space-y-2 text-sm">
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Unlimited vehicles</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>SSO & RBAC</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Custom SLAs</li>
+            <li class="flex items-start gap-2"><span class="mt-1 inline-block w-1.5 h-1.5 rounded-full bg-green-600"></span>Dedicated success</li>
+          </ul>
+          <a href="#get-started" class="mt-6 inline-flex w-full items-center justify-center px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 font-medium text-white">Choose Enterprise</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="get-started" class="border-t border-gray-200">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+      <p class="text-green-700 tracking-widest text-xs font-semibold">READY TO GET STARTED?</p>
+      <h2 class="mt-2 text-3xl sm:text-4xl font-extrabold">Join thousands of satisfied customers using Transentrix</h2>
+      <p class="mt-3 text-gray-600">Questions? Call us at <a class="text-green-700 underline" href="#">+44 20 1234 5678</a></p>
+      <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="#" class="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-green-600 hover:bg-green-500 font-semibold text-white shadow-lg shadow-green-600/30">Book a Demo</a>
+        <a href="#" class="inline-flex items-center justify-center px-6 py-3 rounded-2xl border border-gray-200 hover:border-gray-300">Start free</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm text-gray-600">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-green-600 grid place-items-center"><span class="font-black text-white">T</span></div>
+          <span class="font-semibold text-gray-900">Transentrix</span>
+        </div>
+        <p class="mt-3">AI-driven transport management for PSV operators, schools, and councils.</p>
+      </div>
+      <div>
+        <p class="text-gray-900 font-semibold">Solutions</p>
+        <ul class="mt-2 space-y-2">
+          <li><a class="hover:text-gray-900" href="#">Fleet Management System</a></li>
+          <li><a class="hover:text-gray-900" href="#">Maintenance Software</a></li>
+          <li><a class="hover:text-gray-900" href="#">Fuel Management</a></li>
+          <li><a class="hover:text-gray-900" href="#">Automated Fleet Management</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-gray-900 font-semibold">Features</p>
+        <ul class="mt-2 space-y-2">
+          <li><a class="hover:text-gray-900" href="#">Maintenance Work Orders</a></li>
+          <li><a class="hover:text-gray-900" href="#">Parts Inventory Tracking</a></li>
+          <li><a class="hover:text-gray-900" href="#">Driver Scheduling</a></li>
+          <li><a class="hover:text-gray-900" href="#">Reports & Exports</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-gray-900 font-semibold">Connect</p>
+        <ul class="mt-2 space-y-2">
+          <li><a class="hover:text-gray-900" href="#">About Us</a></li>
+          <li><a class="hover:text-gray-900" href="#">Careers</a></li>
+          <li><a class="hover:text-gray-900" href="#">Help Center</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-gray-200 py-6 text-center text-xs text-gray-400">
+      © <span id="year"></span> Transentrix — All rights reserved.
+    </div>
+  </footer>
+
+  <!-- Floating social-proof pill -->
+  <div class="floating-pill">
+    <div class="flex items-stretch rounded-xl border border-green-600 bg-white overflow-hidden soft-shadow">
+      <div class="bg-green-600 text-white px-4 py-3 font-bold tracking-widest">48</div>
+      <div class="px-4 py-3 text-sm text-gray-700">Companies trialing Transentrix in the last 24 hours!</div>
+    </div>
+  </div>
+
+  <!-- Chat button placeholder -->
+  <button class="chat-btn" aria-label="Chat">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/>
+    </svg>
+  </button>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Reveal on scroll
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('show'); io.unobserve(e.target); } });
+    }, { threshold: 0.25 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // Embla carousel
+    document.addEventListener('DOMContentLoaded', () => {
+      const viewport = document.querySelector('.embla');
+      if (!viewport) return;
+      const embla = EmblaCarousel(viewport, { loop: true, align: 'start', skipSnaps: false });
+      document.getElementById('prevBtn').addEventListener('click', () => embla.scrollPrev());
+      document.getElementById('nextBtn').addEventListener('click', () => embla.scrollNext());
+    });
+  </script>
+</body>
+</html>

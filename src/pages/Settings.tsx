@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import {
   Palette,
   Sun,
@@ -36,28 +36,46 @@ import {
 } from 'lucide-react';
 
 const Settings = () => {
-  const { theme, toggleTheme, isDark } = useTheme();
+  const [isDark, setIsDark] = useState(false);
+  const [theme, setTheme] = useState('light');
   const [reducedMotion, setReducedMotion] = useState(false);
   const [highContrast, setHighContrast] = useState(false);
   const [fontSize, setFontSize] = useState('medium');
-  
-  // Debug information
-  console.log('🔍 Theme Debug Info:', {
-    theme,
-    isDark,
-    hasDarkClass: document.documentElement.classList.contains('dark'),
-    localStorage: {
-      theme: localStorage.getItem('theme')
+
+  // Initialize theme on component mount
+  useEffect(() => {
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    setIsDark(isDarkMode);
+    setTheme(isDarkMode ? 'dark' : 'light');
+  }, []);
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    setTheme(newIsDark ? 'dark' : 'light');
+    
+    if (newIsDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  });
-
-  const getThemeIcon = () => {
-    return isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />;
   };
 
-  const getThemeLabel = () => {
-    return isDark ? 'Dark Mode' : 'Light Mode';
+  const resetThemeSettings = () => {
+    setIsDark(false);
+    setTheme('light');
+    document.documentElement.classList.remove('dark');
+    setReducedMotion(false);
+    setHighContrast(false);
+    setFontSize('medium');
+    
+    // Reset CSS properties
+    document.documentElement.style.fontSize = '16px';
+    document.documentElement.style.removeProperty('--reduced-motion');
+    document.documentElement.classList.remove('high-contrast');
   };
+  
+
 
   const handleFontSizeChange = (size: string) => {
     setFontSize(size);
@@ -84,10 +102,7 @@ const Settings = () => {
     }
   };
 
-  const resetThemeSettings = () => {
-    localStorage.removeItem('theme');
-    window.location.reload();
-  };
+
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -98,13 +113,6 @@ const Settings = () => {
           <p className="text-muted-foreground mt-1">Customize your app experience</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={toggleTheme}
-            variant="outline"
-            className="text-xs"
-          >
-            {getThemeIcon()} {getThemeLabel()}
-          </Button>
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Save className="w-4 h-4 mr-2" />
             Save Changes

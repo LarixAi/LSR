@@ -245,3 +245,4 @@ $$ LANGUAGE plpgsql;
 -- Create a scheduled job to check for expiring documents (this would be set up in Supabase dashboard)
 -- SELECT cron.schedule('check-expiring-documents', '0 9 * * *', 'SELECT check_expiring_documents();');
 
+

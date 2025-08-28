@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, Link } from 'react-router-dom';
 import { useAdminAccess, AdminOnly } from '@/utils/adminAccess';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import {
   Sidebar,
   SidebarContent,
@@ -66,7 +66,7 @@ const TransportSidebar = () => {
   const location = useLocation();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isDark } = useTheme();
+
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   const handleSignOut = async () => {

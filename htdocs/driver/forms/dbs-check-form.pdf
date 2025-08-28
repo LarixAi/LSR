@@ -1,0 +1,124 @@
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Resources <<
+/Font <<
+/F1 4 0 R
+>>
+>>
+/Contents 5 0 R
+>>
+endobj
+
+4 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+5 0 obj
+<<
+/Length 1800
+>>
+stream
+BT
+/F1 16 Tf
+50 742 Td
+(DBS CHECK APPLICATION FORM) Tj
+0 -40 Td
+/F1 12 Tf
+(APPLICANT DETAILS) Tj
+0 -25 Td
+(Full Name: ______________________________) Tj
+0 -20 Td
+(Date of Birth: __________________________) Tj
+0 -20 Td
+(Place of Birth: _________________________) Tj
+0 -20 Td
+(Address: ________________________________) Tj
+0 -20 Td
+(_________________________________________) Tj
+0 -20 Td
+(Postcode: _______________________________) Tj
+0 -20 Td
+(Phone: __________________________________) Tj
+0 -20 Td
+(Email: __________________________________) Tj
+0 -30 Td
+(DBS CHECK TYPE) Tj
+0 -25 Td
+(□ Basic DBS Check) Tj
+0 -20 Td
+(□ Standard DBS Check) Tj
+0 -20 Td
+(□ Enhanced DBS Check) Tj
+0 -20 Td
+(□ Enhanced with Barred Lists) Tj
+0 -30 Td
+(POSITION DETAILS) Tj
+0 -25 Td
+(Job Title: ______________________________) Tj
+0 -20 Td
+(Department: _____________________________) Tj
+0 -20 Td
+(Start Date: _____________________________) Tj
+0 -30 Td
+(IDENTITY VERIFICATION) Tj
+0 -25 Td
+(Document 1 Type: ________________________) Tj
+0 -20 Td
+(Document Number: ________________________) Tj
+0 -25 Td
+(Document 2 Type: ________________________) Tj
+0 -20 Td
+(Document Number: ________________________) Tj
+0 -30 Td
+(DECLARATION) Tj
+0 -20 Td
+(I confirm all information is true and) Tj
+0 -15 Td
+(complete. I consent to this DBS check.) Tj
+0 -30 Td
+(Applicant Signature: ____________________) Tj
+0 -20 Td
+(Date: ___________________________________) Tj
+ET
+endstream
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000079 00000 n 
+0000000136 00000 n 
+0000000271 00000 n 
+0000000339 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+2191
+%%EOF

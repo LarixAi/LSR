@@ -241,3 +241,4 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_unread_notification_count(UUID) TO authenticated;
 
 
+

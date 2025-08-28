@@ -2,13 +2,20 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+console.log("Resend API Key exists:", !!resendApiKey);
+const resend = new Resend(resendApiKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, user-agent, x-platform",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+// Email configuration - using verified domain
+const fromEmail = "noreply@logisticssolutionresources.com";
+const adminEmail = Deno.env.get("ADMIN_EMAIL") || "transport@logisticssolutionresources.com";
 
 interface DemoRequestData {
   name: string;
@@ -16,6 +23,9 @@ interface DemoRequestData {
   company?: string;
   message?: string;
   fleetSize?: number;
+  phone?: string;
+  preferredDate?: string;
+  preferredTime?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -25,22 +35,39 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Received demo request");
-    const demoData: DemoRequestData = await req.json();
-    console.log("Demo data:", JSON.stringify(demoData, null, 2));
+    console.log("Received demo request at:", new Date().toISOString());
+    console.log("Using verified domain - from:", fromEmail, "to:", adminEmail);
     
-    const { name, email, company, message, fleetSize } = demoData;
+    // Check if Resend API key is configured
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY is not configured!");
+      return new Response(
+        JSON.stringify({ 
+          error: "Email service not configured. Please contact support.",
+          details: "RESEND_API_KEY missing" 
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    const demoData: DemoRequestData = await req.json();
+    console.log("Demo data received:", JSON.stringify(demoData, null, 2));
+    
+    const { name, email, company, message, fleetSize, phone, preferredDate, preferredTime } = demoData;
     
     // Send email to admin team
     const adminEmailResponse = await resend.emails.send({
-      from: "LSR Demo Requests <demo@logisticssolutionresources.com>",
-      to: ["admin@logisticssolutionresources.com"],
+      from: `Logistics Solution Resources Demo <${fromEmail}>`,
+      to: [adminEmail],
       subject: `New Demo Request from ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px 20px; text-align: center;">
+          <div style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 40px 20px; text-align: center;">
             <h1 style="color: white; margin: 0; font-size: 28px;">New Demo Request</h1>
-            <p style="color: #bfdbfe; margin: 10px 0 0 0;">LSR - Logistics Solution Resources</p>
+            <p style="color: #bbf7d0; margin: 10px 0 0 0;">Logistics Solution Resources - Transport Management System</p>
           </div>
           <div style="padding: 40px 20px; background: #f8fafc;">
             <h2 style="color: #1e293b; margin-bottom: 20px;">Demo Request Details</h2>
@@ -55,6 +82,12 @@ const handler = async (req: Request): Promise<Response> => {
                   <td style="padding: 10px 0; font-weight: bold; color: #374151;">Email:</td>
                   <td style="padding: 10px 0; color: #6b7280;">${email}</td>
                 </tr>
+                ${phone ? `
+                <tr>
+                  <td style="padding: 10px 0; font-weight: bold; color: #374151;">Phone:</td>
+                  <td style="padding: 10px 0; color: #6b7280;">${phone}</td>
+                </tr>
+                ` : ''}
                 ${company ? `
                 <tr>
                   <td style="padding: 10px 0; font-weight: bold; color: #374151;">Company:</td>
@@ -67,6 +100,18 @@ const handler = async (req: Request): Promise<Response> => {
                   <td style="padding: 10px 0; color: #6b7280;">${fleetSize} vehicles</td>
                 </tr>
                 ` : ''}
+                ${preferredDate ? `
+                <tr>
+                  <td style="padding: 10px 0; font-weight: bold; color: #374151;">Preferred Date:</td>
+                  <td style="padding: 10px 0; color: #6b7280;">${preferredDate}</td>
+                </tr>
+                ` : ''}
+                ${preferredTime ? `
+                <tr>
+                  <td style="padding: 10px 0; font-weight: bold; color: #374151;">Preferred Time:</td>
+                  <td style="padding: 10px 0; color: #6b7280;">${preferredTime}</td>
+                </tr>
+                ` : ''}
               </table>
             </div>
             
@@ -77,9 +122,9 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             ` : ''}
             
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin: 30px 0;">
-              <p style="color: #1e40af; margin: 0; font-weight: bold;">📧 Next Steps</p>
-              <p style="color: #1e40af; margin: 5px 0 0 0; font-size: 14px;">
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 30px 0;">
+              <p style="color: #16a34a; margin: 0; font-weight: bold;">📧 Next Steps</p>
+              <p style="color: #16a34a; margin: 5px 0 0 0; font-size: 14px;">
                 Please reach out to ${name} at ${email} to schedule their demo.
               </p>
             </div>
@@ -88,28 +133,40 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Admin email sent successfully:", adminEmailResponse);
+    console.log("Admin email response:", JSON.stringify(adminEmailResponse, null, 2));
+    
+    if (!adminEmailResponse.data) {
+      console.error("Failed to send admin email:", adminEmailResponse);
+      const errMsg = (adminEmailResponse as any)?.error?.error || (adminEmailResponse as any)?.error || "Failed to send admin notification email";
+      return new Response(
+        JSON.stringify({ error: errMsg }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
     // Send confirmation email to user
     const userEmailResponse = await resend.emails.send({
-      from: "LSR Team <demo@logisticssolutionresources.com>",
+      from: `Logistics Solution Resources Team <${fromEmail}>`,
       to: [email],
-      subject: "Thank you for requesting a demo - LSR",
+      subject: "Thank you for requesting a demo - Logistics Solution Resources",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px 20px; text-align: center;">
+          <div style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 40px 20px; text-align: center;">
             <h1 style="color: white; margin: 0; font-size: 28px;">Thank You!</h1>
-            <p style="color: #bfdbfe; margin: 10px 0 0 0;">LSR - Logistics Solution Resources</p>
+            <p style="color: #bbf7d0; margin: 10px 0 0 0;">Logistics Solution Resources - Transport Management System</p>
           </div>
           <div style="padding: 40px 20px; background: #f8fafc;">
             <h2 style="color: #1e293b; margin-bottom: 20px;">Hi ${name},</h2>
             <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-              Thank you for your interest in LSR! We've received your demo request and our team will be in touch within 24 hours to schedule your personalized demonstration.
+              Thank you for your interest in Logistics Solution Resources! We've received your demo request and our team will be in touch within 24 hours to schedule your personalized demonstration.
             </p>
             
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin: 30px 0;">
-              <h3 style="color: #1e40af; margin: 0 0 10px 0; font-size: 16px;">🚛 What to Expect</h3>
-              <ul style="color: #1e40af; margin: 0; padding-left: 20px; font-size: 14px;">
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 30px 0;">
+              <h3 style="color: #16a34a; margin: 0 0 10px 0; font-size: 16px;">🚛 What to Expect</h3>
+              <ul style="color: #16a34a; margin: 0; padding-left: 20px; font-size: 14px;">
                 <li>Personalized demo tailored to your fleet needs</li>
                 <li>Overview of transport management features</li>
                 <li>Discussion of pricing and implementation</li>
@@ -118,24 +175,28 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             
             <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
-              In the meantime, feel free to reach out to us at admin@logisticssolutionresources.com if you have any questions.
+              In the meantime, feel free to reach out to us if you have any questions.
             </p>
             
             <p style="color: #64748b; font-size: 14px;">
               Best regards,<br>
-              The LSR Team
+              The Logistics Solution Resources Team
             </p>
           </div>
         </div>
       `,
     });
 
-    console.log("User confirmation email sent successfully:", userEmailResponse);
+    console.log("User email response:", JSON.stringify(userEmailResponse, null, 2));
+    
+    if (!userEmailResponse.data) {
+      console.error("Failed to send user email:", userEmailResponse);
+    }
 
     return new Response(JSON.stringify({ 
-      success: true, 
+      success: true,
       adminEmailId: adminEmailResponse.data?.id,
-      userEmailId: userEmailResponse.data?.id 
+      userEmailId: userEmailResponse.data?.id
     }), {
       status: 200,
       headers: {
