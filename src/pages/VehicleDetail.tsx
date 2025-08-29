@@ -566,7 +566,7 @@ export default function VehicleDetail() {
                     <TableHead>Service Type</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Mileage</TableHead>
-                    <TableHead>Vendor</TableHead>
+                    <TableHead>Workshop</TableHead>
                     <TableHead>Cost</TableHead>
                     <TableHead>Next Service</TableHead>
                   </TableRow>

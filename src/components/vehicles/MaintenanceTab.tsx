@@ -468,7 +468,7 @@ const MaintenanceTab: React.FC = () => {
     { key: 'mileage', label: 'Miles', render: (item: any) => `${item.mileage.toLocaleString()} mi` },
     { key: 'serviceType', label: 'Service Tasks', render: (item: any) => item.serviceType },
     { key: 'issues', label: 'Issues', render: () => '-' },
-    { key: 'mechanic', label: 'Vendor', render: (item: any) => item.mechanic },
+    { key: 'mechanic', label: 'Workshop', render: (item: any) => item.mechanic },
     { key: 'totalCost', label: 'Total', render: (item: any) => `£${item.totalCost.toFixed(2)}` }
   ];
 
