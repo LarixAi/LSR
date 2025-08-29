@@ -556,21 +556,20 @@ export const useWalkAroundChecks = (vehicleId: string) => {
   return useQuery({
     queryKey: ['walk-around-checks', vehicleId],
     queryFn: async (): Promise<WalkAroundCheck[]> => {
+      console.log('Fetching walk-around checks for vehicle:', vehicleId);
+      
       const { data, error } = await supabase
         .from('walk_around_checks')
-        .select(`
-          *,
-          profiles:driver_id (
-            id,
-            first_name,
-            last_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('vehicle_id', vehicleId)
         .order('check_date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching walk-around checks:', error);
+        throw error;
+      }
+      
+      console.log('Walk-around checks data:', data);
       return data || [];
     },
     enabled: !!vehicleId,
@@ -581,21 +580,21 @@ export const useWalkAroundCheck = (checkId: string) => {
   return useQuery({
     queryKey: ['walk-around-check', checkId],
     queryFn: async (): Promise<WalkAroundCheck> => {
+      console.log('Fetching walk-around check with ID:', checkId);
+      
+      // Try without the join first
       const { data, error } = await supabase
         .from('walk_around_checks')
-        .select(`
-          *,
-          profiles:driver_id (
-            id,
-            first_name,
-            last_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('id', checkId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching walk-around check:', error);
+        throw error;
+      }
+      
+      console.log('Walk-around check data:', data);
       return data;
     },
     enabled: !!checkId,
@@ -660,6 +659,35 @@ export const useDeleteWalkAroundCheck = () => {
     onSuccess: (checkId) => {
       queryClient.invalidateQueries({ queryKey: ['walk-around-checks'] });
     },
+  });
+};
+
+// Debug function to test database access
+export const useDebugWalkAroundChecks = () => {
+  return useQuery({
+    queryKey: ['debug-walk-around-checks'],
+    queryFn: async () => {
+      console.log('Testing walk-around checks table access...');
+      
+      // Test 1: Check if table exists and we can access it
+      const { data: tableTest, error: tableError } = await supabase
+        .from('walk_around_checks')
+        .select('count')
+        .limit(1);
+      
+      console.log('Table access test:', { tableTest, tableError });
+      
+      // Test 2: Try to get all records
+      const { data: allData, error: allError } = await supabase
+        .from('walk_around_checks')
+        .select('*')
+        .limit(5);
+      
+      console.log('All data test:', { allData, allError, count: allData?.length });
+      
+      return { tableTest, tableError, allData, allError };
+    },
+    enabled: true,
   });
 };
 
