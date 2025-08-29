@@ -558,46 +558,79 @@ export const useWalkAroundChecks = (vehicleId: string) => {
     queryFn: async (): Promise<WalkAroundCheck[]> => {
       console.log('Fetching walk-around checks for vehicle:', vehicleId);
       
-      const { data, error } = await supabase
-        .from('walk_around_checks')
-        .select('*')
-        .eq('vehicle_id', vehicleId)
-        .order('check_date', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching walk-around checks:', error);
-        throw error;
+      // Validate UUID format for vehicle ID
+      if (!vehicleId || !isValidUUID(vehicleId)) {
+        console.warn('Invalid UUID format for vehicleId:', vehicleId);
+        return [];
       }
       
-      console.log('Walk-around checks data:', data);
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from('walk_around_checks')
+          .select('*')
+          .eq('vehicle_id', vehicleId)
+          .order('check_date', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching walk-around checks:', error);
+          throw error;
+        }
+        
+        console.log('Walk-around checks data:', data);
+        return data || [];
+      } catch (error) {
+        console.error('Exception in useWalkAroundChecks:', error);
+        throw error;
+      }
     },
-    enabled: !!vehicleId,
+    enabled: !!vehicleId && isValidUUID(vehicleId),
   });
+};
+
+// UUID validation utility
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
 };
 
 export const useWalkAroundCheck = (checkId: string) => {
   return useQuery({
     queryKey: ['walk-around-check', checkId],
-    queryFn: async (): Promise<WalkAroundCheck> => {
+    queryFn: async (): Promise<WalkAroundCheck | null> => {
       console.log('Fetching walk-around check with ID:', checkId);
       
-      // Try without the join first
-      const { data, error } = await supabase
-        .from('walk_around_checks')
-        .select('*')
-        .eq('id', checkId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching walk-around check:', error);
-        throw error;
+      // Validate UUID format
+      if (!checkId || !isValidUUID(checkId)) {
+        console.warn('Invalid UUID format for checkId:', checkId);
+        return null;
       }
       
-      console.log('Walk-around check data:', data);
-      return data;
+      try {
+        // Use maybeSingle() instead of single() to handle non-existent records gracefully
+        const { data, error } = await supabase
+          .from('walk_around_checks')
+          .select('*')
+          .eq('id', checkId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching walk-around check:', error);
+          throw error;
+        }
+        
+        if (!data) {
+          console.log('No walk-around check found with ID:', checkId);
+          return null;
+        }
+        
+        console.log('Walk-around check data:', data);
+        return data;
+      } catch (error) {
+        console.error('Exception in useWalkAroundCheck:', error);
+        throw error;
+      }
     },
-    enabled: !!checkId,
+    enabled: !!checkId && isValidUUID(checkId),
   });
 };
 
@@ -626,6 +659,11 @@ export const useUpdateWalkAroundCheck = () => {
   
   return useMutation({
     mutationFn: async ({ checkId, updates }: { checkId: string; updates: Partial<WalkAroundCheck> }) => {
+      // Validate UUID format
+      if (!checkId || !isValidUUID(checkId)) {
+        throw new Error(`Invalid UUID format for checkId: ${checkId}`);
+      }
+      
       const { data, error } = await supabase
         .from('walk_around_checks')
         .update(updates)
@@ -648,6 +686,11 @@ export const useDeleteWalkAroundCheck = () => {
   
   return useMutation({
     mutationFn: async (checkId: string) => {
+      // Validate UUID format
+      if (!checkId || !isValidUUID(checkId)) {
+        throw new Error(`Invalid UUID format for checkId: ${checkId}`);
+      }
+      
       const { error } = await supabase
         .from('walk_around_checks')
         .delete()

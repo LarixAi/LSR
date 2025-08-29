@@ -95,6 +95,9 @@ const WalkAroundCheckDetail: React.FC = () => {
 
   const loading = checkLoading || questionsLoading;
   const error = checkError ? checkError.message : null;
+  
+  // Handle case where no walk-around check is found
+  const checkNotFound = !loading && !error && !walkAroundCheck;
 
   // If there's an error or no data, use mock data for demonstration
   const check = walkAroundCheck ? {
@@ -261,13 +264,20 @@ const WalkAroundCheckDetail: React.FC = () => {
     );
   }
 
-  if (error || !check) {
+  if (error || checkNotFound || !check) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Inspection</h2>
-          <p className="text-gray-600 mb-4">{error || 'Inspection not found'}</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {checkNotFound ? 'Inspection Not Found' : 'Error Loading Inspection'}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {checkNotFound 
+              ? `No walk-around check found with ID: ${checkId}`
+              : (error || 'Inspection not found')
+            }
+          </p>
           <Button onClick={() => navigate('/vehicles')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Vehicles
