@@ -831,7 +831,7 @@ export const useWorkOrders = (vehicleId: string) => {
         .from('work_orders')
         .select('*')
         .eq('vehicle_id', vehicleId)
-        .order('created_date', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
