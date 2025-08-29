@@ -188,7 +188,7 @@ export default function VehicleDetail() {
   // Mock walk-around checks for demonstration
   const mockWalkAroundChecks: WalkAroundCheck[] = [
     {
-      id: 'check-1',
+      id: '550e8400-e29b-41d4-a716-446655440001',
       vehicle_id: vehicleId || '',
       driver_id: 'driver-1',
       driver_name: 'kenny laing',
@@ -236,7 +236,7 @@ export default function VehicleDetail() {
       ]
     },
     {
-      id: 'check-2',
+      id: '550e8400-e29b-41d4-a716-446655440002',
       vehicle_id: vehicleId || '',
       driver_id: 'driver-2',
       driver_name: 'John Smith',
@@ -284,7 +284,7 @@ export default function VehicleDetail() {
       ]
     },
     {
-      id: 'check-3',
+      id: '550e8400-e29b-41d4-a716-446655440003',
       vehicle_id: vehicleId || '',
       driver_id: 'driver-3',
       driver_name: 'Sarah Johnson',
