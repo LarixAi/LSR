@@ -358,7 +358,7 @@ const ComplianceTab: React.FC = () => {
         <span className="ml-1">{item.status}</span>
       </Badge>
     )},
-    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `£${item.totalCost.toFixed(2)}` : '-' }
   ];
 
   const borColumns = [
@@ -374,7 +374,7 @@ const ComplianceTab: React.FC = () => {
         <span className="ml-1">{item.status}</span>
       </Badge>
     )},
-    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `£${item.totalCost.toFixed(2)}` : '-' }
   ];
 
   const documentColumns = [
@@ -390,7 +390,7 @@ const ComplianceTab: React.FC = () => {
         <span className="ml-1">{item.status}</span>
       </Badge>
     )},
-    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `£${item.totalCost.toFixed(2)}` : '-' }
   ];
 
   const regulatoryColumns = [
@@ -406,7 +406,7 @@ const ComplianceTab: React.FC = () => {
         <span className="ml-1">{item.status}</span>
       </Badge>
     )},
-    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `£${item.totalCost.toFixed(2)}` : '-' }
   ];
 
   return (

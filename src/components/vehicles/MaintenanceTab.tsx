@@ -457,7 +457,7 @@ const MaintenanceTab: React.FC = () => {
         {item.status.replace('_', ' ')}
       </Badge>
     )},
-    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `£${item.totalCost.toFixed(2)}` : '-' }
   ];
 
   const serviceColumns = [
@@ -469,7 +469,7 @@ const MaintenanceTab: React.FC = () => {
     { key: 'serviceType', label: 'Service Tasks', render: (item: any) => item.serviceType },
     { key: 'issues', label: 'Issues', render: () => '-' },
     { key: 'mechanic', label: 'Vendor', render: (item: any) => item.mechanic },
-    { key: 'totalCost', label: 'Total', render: (item: any) => `$${item.totalCost.toFixed(2)}` }
+    { key: 'totalCost', label: 'Total', render: (item: any) => `£${item.totalCost.toFixed(2)}` }
   ];
 
   const workOrderColumns = [
@@ -488,7 +488,7 @@ const MaintenanceTab: React.FC = () => {
         {item.status.replace('_', ' ')}
       </Badge>
     )},
-    { key: 'totalCost', label: 'Total', render: (item: any) => `$${item.totalCost.toFixed(2)}` }
+    { key: 'totalCost', label: 'Total', render: (item: any) => `£${item.totalCost.toFixed(2)}` }
   ];
 
   const inspectionColumns = [
@@ -503,7 +503,7 @@ const MaintenanceTab: React.FC = () => {
         {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
       </Badge>
     )},
-    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `£${item.totalCost.toFixed(2)}` : '-' }
   ];
 
   return (
