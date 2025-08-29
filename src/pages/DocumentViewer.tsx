@@ -33,14 +33,159 @@ export default function DocumentViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch documents from backend
-  const { data: documents = [] } = useVehicleDocuments(vehicleId || '');
+  // Mock document data for demonstration
+  const mockDocuments = [
+    {
+      id: 'doc-1',
+      vehicle_id: vehicleId || '',
+      document_type: 'Registration',
+      document_name: 'Vehicle Registration Certificate',
+      file_url: '/documents/registration.pdf',
+      expiry_date: '2025-01-15',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+      file_size: '2.4 MB',
+      file_type: 'PDF',
+      uploaded_by: 'John Smith',
+      description: 'Official vehicle registration certificate issued by DVLA',
+      notes: 'Registration valid until January 2025. Vehicle meets all current standards.',
+      tags: ['Legal', 'Required', 'Annual']
+    },
+    {
+      id: 'doc-2',
+      vehicle_id: vehicleId || '',
+      document_type: 'Insurance',
+      document_name: 'Motor Vehicle Insurance Certificate',
+      file_url: '/documents/insurance.pdf',
+      expiry_date: '2024-12-31',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+      file_size: '1.8 MB',
+      file_type: 'PDF',
+      uploaded_by: 'Sarah Johnson',
+      description: 'Comprehensive motor vehicle insurance policy',
+      notes: 'Policy covers all drivers, comprehensive coverage including breakdown assistance.',
+      tags: ['Legal', 'Required', 'Insurance']
+    },
+    {
+      id: 'doc-3',
+      vehicle_id: vehicleId || '',
+      document_type: 'MOT Certificate',
+      document_name: 'MOT Test Certificate',
+      file_url: '/documents/mot.pdf',
+      expiry_date: '2024-06-15',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+      file_size: '1.2 MB',
+      file_type: 'PDF',
+      uploaded_by: 'Mike Wilson',
+      description: 'MOT test certificate confirming vehicle roadworthiness',
+      notes: 'Vehicle passed MOT with no advisories. Next test due June 2024.',
+      tags: ['Legal', 'Required', 'Annual', 'Safety']
+    },
+    {
+      id: 'doc-4',
+      vehicle_id: vehicleId || '',
+      document_type: 'PSV License',
+      document_name: 'Public Service Vehicle License',
+      file_url: '/documents/psv-license.pdf',
+      expiry_date: '2025-03-20',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+      file_size: '3.1 MB',
+      file_type: 'PDF',
+      uploaded_by: 'Admin User',
+      description: 'PSV operator license for commercial passenger transport',
+      notes: 'License valid for commercial passenger transport operations.',
+      tags: ['Legal', 'Required', 'Commercial', 'PSV']
+    },
+    {
+      id: 'doc-5',
+      vehicle_id: vehicleId || '',
+      document_type: 'Service History',
+      document_name: 'Complete Service History',
+      file_url: '/documents/service-history.pdf',
+      expiry_date: null,
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+      file_size: '5.7 MB',
+      file_type: 'PDF',
+      uploaded_by: 'Service Manager',
+      description: 'Complete service and maintenance history',
+      notes: 'Full service history from new. All services completed on schedule.',
+      tags: ['Maintenance', 'History', 'Service']
+    },
+    {
+      id: 'doc-6',
+      vehicle_id: vehicleId || '',
+      document_type: 'Tax Certificate',
+      document_name: 'Vehicle Tax Certificate',
+      file_url: '/documents/tax-certificate.pdf',
+      expiry_date: '2024-08-31',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+      file_size: '0.8 MB',
+      file_type: 'PDF',
+      uploaded_by: 'Admin User',
+      description: 'Vehicle tax certificate and payment confirmation',
+      notes: 'Tax paid annually. Next payment due August 2024.',
+      tags: ['Legal', 'Required', 'Tax']
+    },
+    {
+      id: 'doc-7',
+      vehicle_id: vehicleId || '',
+      document_type: 'Operator License',
+      document_name: 'Transport Operator License',
+      file_url: '/documents/operator-license.pdf',
+      expiry_date: '2026-05-10',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+      file_size: '4.2 MB',
+      file_type: 'PDF',
+      uploaded_by: 'Admin User',
+      description: 'Transport operator license for commercial operations',
+      notes: 'Operator license valid for commercial transport operations.',
+      tags: ['Legal', 'Required', 'Commercial', 'Operator']
+    },
+    {
+      id: 'doc-8',
+      vehicle_id: vehicleId || '',
+      document_type: 'Safety Certificate',
+      document_name: 'Vehicle Safety Inspection Certificate',
+      file_url: '/documents/safety-certificate.pdf',
+      expiry_date: '2024-09-30',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+      file_size: '1.5 MB',
+      file_type: 'PDF',
+      uploaded_by: 'Safety Inspector',
+      description: 'Vehicle safety inspection certificate',
+      notes: 'Safety inspection passed. Next inspection due September 2024.',
+      tags: ['Safety', 'Required', 'Inspection']
+    }
+  ];
 
   useEffect(() => {
     setLoading(true);
     
-    // Find the document by ID from real data
-    const foundDocument = documents.find(doc => doc.id === documentId);
+    // Find the document by ID from mock data
+    const foundDocument = mockDocuments.find(doc => doc.id === documentId);
     
     if (foundDocument) {
       setDocument(foundDocument);
@@ -49,7 +194,7 @@ export default function DocumentViewer() {
       setError('Document not found');
     }
     setLoading(false);
-  }, [documentId, documents]);
+  }, [documentId]);
 
   const getFileIcon = (fileType: string) => {
     switch (fileType?.toLowerCase()) {

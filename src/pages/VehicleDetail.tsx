@@ -84,8 +84,108 @@ export default function VehicleDetail() {
   const { data: maintenanceSchedule = [] } = useMaintenanceSchedule(vehicleId || '');
   const { data: documents = [] } = useVehicleDocuments(vehicleId || '');
 
-  // Use real documents from backend
-  const displayDocuments = documents;
+  // Mock documents for demonstration
+  const mockDocuments: VehicleDocument[] = [
+    {
+      id: 'doc-1',
+      vehicle_id: vehicleId || '',
+      document_type: 'Registration',
+      document_name: 'Vehicle Registration Certificate',
+      file_url: '/documents/registration.pdf',
+      expiry_date: '2025-01-15',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: 'doc-2',
+      vehicle_id: vehicleId || '',
+      document_type: 'Insurance',
+      document_name: 'Motor Vehicle Insurance Certificate',
+      file_url: '/documents/insurance.pdf',
+      expiry_date: '2024-12-31',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: 'doc-3',
+      vehicle_id: vehicleId || '',
+      document_type: 'MOT Certificate',
+      document_name: 'MOT Test Certificate',
+      file_url: '/documents/mot.pdf',
+      expiry_date: '2024-06-15',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: 'doc-4',
+      vehicle_id: vehicleId || '',
+      document_type: 'PSV License',
+      document_name: 'Public Service Vehicle License',
+      file_url: '/documents/psv-license.pdf',
+      expiry_date: '2025-03-20',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: 'doc-5',
+      vehicle_id: vehicleId || '',
+      document_type: 'Service History',
+      document_name: 'Complete Service History',
+      file_url: '/documents/service-history.pdf',
+      expiry_date: null,
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: 'doc-6',
+      vehicle_id: vehicleId || '',
+      document_type: 'Tax Certificate',
+      document_name: 'Vehicle Tax Certificate',
+      file_url: '/documents/tax-certificate.pdf',
+      expiry_date: '2024-08-31',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: 'doc-7',
+      vehicle_id: vehicleId || '',
+      document_type: 'Operator License',
+      document_name: 'Transport Operator License',
+      file_url: '/documents/operator-license.pdf',
+      expiry_date: '2026-05-10',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: 'doc-8',
+      vehicle_id: vehicleId || '',
+      document_type: 'Safety Certificate',
+      document_name: 'Vehicle Safety Inspection Certificate',
+      file_url: '/documents/safety-certificate.pdf',
+      expiry_date: '2024-09-30',
+      status: 'Valid',
+      uploaded_at: '2024-01-15T10:00:00Z',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    }
+  ];
+
+  // Use mock documents for demonstration (replace with real data when backend is ready)
+  const displayDocuments = mockDocuments;
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
