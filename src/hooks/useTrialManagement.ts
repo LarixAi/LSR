@@ -58,6 +58,14 @@ export const useTrialStatus = () => {
         // Get the most recent trial record
         const trial = trials && trials.length > 0 ? trials[0] : null;
 
+        console.log('Trial Status Debug:', {
+          organizationId: profile.organization_id,
+          trials: trials,
+          trial: trial,
+          trialStatus: trial?.trial_status,
+          trialEndDate: trial?.trial_end_date
+        });
+
         // Get current driver count
         const { data: drivers, error: driversError } = await supabase
           .from('profiles')
@@ -80,6 +88,14 @@ export const useTrialStatus = () => {
         
         const isActive = trial?.trial_status === 'active' && daysLeft > 0;
         const maxDrivers = trial?.max_drivers || 10;
+
+        console.log('Trial Calculation:', {
+          daysLeft,
+          isActive,
+          trialStatus: trial?.trial_status,
+          endDate: endDate.toISOString(),
+          now: now.toISOString()
+        });
 
         return {
           isActive,

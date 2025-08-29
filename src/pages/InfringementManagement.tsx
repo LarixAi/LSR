@@ -1,424 +1,243 @@
+
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { useInfringementStats, useInfringements } from '@/hooks/useInfringements';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Scale, 
-  Plus, 
-  Search, 
-  AlertTriangle, 
-  FileText,
-  Calendar,
-  TrendingUp,
-  DollarSign,
-  Eye,
-  Download
-} from 'lucide-react';
+import { AlertTriangle, FileText, Calendar, DollarSign, Scale, Eye } from 'lucide-react';
+import { format } from 'date-fns';
 
-const InfringementManagement = () => {
-  const { user, profile, loading } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDriver, setSelectedDriver] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  
-  // Fetch real data from backend
-  const { data: infringements = [], isLoading: infringementsLoading } = useInfringements();
-  const infringementStats = useInfringementStats();
+interface InfringementTrackerProps {
+  driverId: string;
+}
 
-  if (loading || infringementsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-          <p className="text-lg">Loading infringement management...</p>
-        </div>
-      </div>
-    );
-  }
+const InfringementTracker: React.FC<InfringementTrackerProps> = ({ driverId }) => {
+  const [selectedInfringement, setSelectedInfringement] = useState<string | null>(null);
 
-  if (!user || !profile) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Only admins and council can access
-  if (!['admin', 'council'].includes(profile.role)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  // Filter infringements based on search and driver selection
-  const filteredInfringements = infringements.filter(inf => {
-    const matchesSearch = !searchTerm || 
-      inf.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (inf.driver?.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (inf.driver?.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (inf.vehicle?.vehicle_number || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDriver = !selectedDriver || inf.driver_id === selectedDriver;
-    
-    return matchesSearch && matchesDriver;
-  });
-
-  const driverSummary = [
+  // Mock infringement data
+  const infringements = [
     {
-      driverId: '1',
-      driverName: 'John Smith',
-      totalInfringements: 3,
-      totalPoints: 9,
-      totalFines: 450.00,
-      riskLevel: 'high'
+      id: '1',
+      type: 'Speed Violation',
+      description: 'Exceeding speed limit by 15 km/h',
+      date: '2024-05-15',
+      location: 'Highway A1, Mile 45',
+      fineAmount: 150,
+      points: 3,
+      status: 'paid',
+      dueDate: '2024-06-15',
+      referenceNumber: 'SPD-2024-001',
+      severity: 'moderate'
     },
     {
-      driverId: '2',
-      driverName: 'Sarah Johnson',
-      totalInfringements: 1,
-      totalPoints: 0,
-      totalFines: 80.00,
-      riskLevel: 'low'
-    },
-    {
-      driverId: '3',
-      driverName: 'Mike Davis',
-      totalInfringements: 2,
-      totalPoints: 6,
-      totalFines: 380.00,
-      riskLevel: 'medium'
+      id: '2',
+      type: 'Documentation',
+      description: 'Vehicle inspection certificate expired',
+      date: '2024-04-20',
+      location: 'Checkpoint B',
+      fineAmount: 200,
+      points: 2,
+      status: 'resolved',
+      dueDate: '2024-05-20',
+      referenceNumber: 'DOC-2024-002',
+      severity: 'minor'
     }
   ];
 
+  const currentPoints = infringements.reduce((total, inf) => total + inf.points, 0);
+  const totalFines = infringements.reduce((total, inf) => total + inf.fineAmount, 0);
+  const activeInfringements = infringements.filter(inf => inf.status !== 'resolved').length;
+
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>;
       case 'paid':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>;
-      case 'disputed':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Disputed</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Paid</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
       case 'overdue':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Overdue</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Overdue</Badge>;
+      case 'resolved':
+        return <Badge className="bg-blue-100 text-blue-800">Resolved</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
-  const getRiskLevelBadge = (level: string) => {
-    switch (level) {
-      case 'low':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Low Risk</Badge>;
-      case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Medium Risk</Badge>;
-      case 'high':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">High Risk</Badge>;
-      default:
-        return <Badge variant="secondary">{level}</Badge>;
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'minor': return 'text-yellow-600';
+      case 'moderate': return 'text-orange-600';
+      case 'major': return 'text-red-600';
+      default: return 'text-gray-600';
     }
   };
-
-  // Use real statistics from the hook
-  const totalFines = infringementStats.total_fines;
-  const pendingFines = infringements.filter(inf => inf.status === 'pending').reduce((sum, inf) => sum + (inf.fine_amount || 0), 0);
-  const totalPoints = infringementStats.total_points;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Scale className="w-8 h-8 text-red-600" />
-            Infringement Management
-          </h1>
-          <p className="text-gray-600 mt-1">Track and manage driver infringements and violations</p>
-        </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-red-600 hover:bg-red-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Record Infringement
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Record New Infringement</DialogTitle>
-            </DialogHeader>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Infringements</p>
+                <p className="text-2xl font-bold text-red-600">{activeInfringements}</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Points</p>
+                <p className="text-2xl font-bold text-orange-600">{currentPoints}</p>
+                <p className="text-xs text-gray-500">Out of 12 limit</p>
+              </div>
+              <Scale className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Fines</p>
+                <p className="text-2xl font-bold text-blue-600">${totalFines}</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Record Status</p>
+                <Badge className="bg-green-100 text-green-800">Good Standing</Badge>
+              </div>
+              <FileText className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Infringements List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Infringement History</CardTitle>
+          <CardDescription>
+            Track all traffic violations and compliance issues
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {infringements.length === 0 ? (
+            <div className="text-center py-8">
+              <AlertTriangle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Clean Record</h3>
+              <p className="text-gray-600">No infringements on record. Keep up the great work!</p>
+            </div>
+          ) : (
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="driver">Driver</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select driver" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="john">John Smith</SelectItem>
-                    <SelectItem value="sarah">Sarah Johnson</SelectItem>
-                    <SelectItem value="mike">Mike Davis</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="vehicle">Vehicle</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select vehicle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LSR-001">LSR-001</SelectItem>
-                    <SelectItem value="LSR-002">LSR-002</SelectItem>
-                    <SelectItem value="LSR-003">LSR-003</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="type">Infringement Type</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="speeding">Speeding</SelectItem>
-                    <SelectItem value="parking">Parking Violation</SelectItem>
-                    <SelectItem value="weight">Weight Violation</SelectItem>
-                    <SelectItem value="hours">Driving Hours Violation</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="date">Date</Label>
-                <Input id="date" type="date" />
-              </div>
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input id="location" placeholder="Location of infringement" />
-              </div>
-              <div>
-                <Label htmlFor="fine">Fine Amount (£)</Label>
-                <Input id="fine" type="number" step="0.01" placeholder="0.00" />
-              </div>
-              <div>
-                <Label htmlFor="points">Penalty Points</Label>
-                <Input id="points" type="number" placeholder="0" />
-              </div>
-              <Button className="w-full bg-red-600 hover:bg-red-700">Record Infringement</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+              {infringements.map((infringement) => (
+                <div key={infringement.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h4 className="font-medium">{infringement.type}</h4>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs ${getSeverityColor(infringement.severity)}`}
+                        >
+                          {infringement.severity}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{infringement.description}</p>
+                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <span className="flex items-center">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {format(new Date(infringement.date), 'MMM dd, yyyy')}
+                        </span>
+                        <span>Ref: {infringement.referenceNumber}</span>
+                        <span>{infringement.location}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {getStatusBadge(infringement.status)}
+                    </div>
+                  </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <FileText className="w-8 h-8 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-600">Total Infringements</p>
-                <p className="text-2xl font-bold">{infringementStats.total_infringements}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-600">Total Fines</p>
-                <p className="text-2xl font-bold">£{totalFines.toFixed(2)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-8 h-8 text-yellow-600" />
-              <div>
-                <p className="text-sm text-gray-600">Pending Fines</p>
-                <p className="text-2xl font-bold text-yellow-600">£{pendingFines.toFixed(2)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-red-600" />
-              <div>
-                <p className="text-sm text-gray-600">Total Points</p>
-                <p className="text-2xl font-bold">{totalPoints}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Tabs defaultValue="infringements" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="infringements">All Infringements</TabsTrigger>
-          <TabsTrigger value="driver-summary">Driver Summary</TabsTrigger>
-          <TabsTrigger value="reports">Reports & Analytics</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="infringements" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Scale className="w-5 h-5" />
-                Infringement Records
-              </CardTitle>
-              <div className="flex gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search infringements..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Select>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="disputed">Disputed</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Driver</TableHead>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Fine Amount</TableHead>
-                    <TableHead>Points</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {infringements.map((infringement) => (
-                    <TableRow key={infringement.id}>
-                      <TableCell className="font-medium">{infringement.driverName}</TableCell>
-                      <TableCell>{infringement.vehicleNumber}</TableCell>
-                      <TableCell>{infringement.infringementType}</TableCell>
-                      <TableCell>{infringement.date}</TableCell>
-                      <TableCell>{infringement.location}</TableCell>
-                      <TableCell>£{infringement.fineAmount.toFixed(2)}</TableCell>
-                      <TableCell>{infringement.points}</TableCell>
-                      <TableCell>{getStatusBadge(infringement.status)}</TableCell>
-                      <TableCell>{infringement.dueDate}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-6 text-sm">
+                      <div className="flex items-center text-red-600">
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        ${infringement.fineAmount}
+                      </div>
+                      <div className="flex items-center text-orange-600">
+                        <Scale className="w-4 h-4 mr-1" />
+                        {infringement.points} points
+                      </div>
+                      {infringement.status === 'pending' && (
+                        <div className="text-gray-600">
+                          Due: {format(new Date(infringement.dueDate), 'MMM dd, yyyy')}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="driver-summary" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Driver Risk Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Driver Name</TableHead>
-                    <TableHead>Total Infringements</TableHead>
-                    <TableHead>Total Points</TableHead>
-                    <TableHead>Total Fines</TableHead>
-                    <TableHead>Risk Level</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {driverSummary.map((driver) => (
-                    <TableRow key={driver.driverId}>
-                      <TableCell className="font-medium">{driver.driverName}</TableCell>
-                      <TableCell>{driver.totalInfringements}</TableCell>
-                      <TableCell>{driver.totalPoints}</TableCell>
-                      <TableCell>£{driver.totalFines.toFixed(2)}</TableCell>
-                      <TableCell>{getRiskLevelBadge(driver.riskLevel)}</TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Reports & Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Infringement Analytics</h3>
-                <p className="text-gray-600 mb-6">
-                  Generate detailed reports on driver behavior, infringement trends, and risk analysis.
-                </p>
-                <div className="flex gap-4 justify-center">
-                  <Button className="bg-red-600 hover:bg-red-700">
-                    <Download className="w-4 h-4 mr-2" />
-                    Monthly Report
-                  </Button>
-                  <Button variant="outline">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Custom Date Range
-                  </Button>
+                      )}
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Eye className="w-4 h-4 mr-1" />
+                      View Details
+                    </Button>
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Points System Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Points System Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span>Current Points</span>
+              <span className="font-semibold">{currentPoints}/12</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className={`h-2 rounded-full ${
+                  currentPoints <= 3 ? 'bg-green-500' :
+                  currentPoints <= 6 ? 'bg-yellow-500' :
+                  currentPoints <= 9 ? 'bg-orange-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${(currentPoints / 12) * 100}%` }}
+              ></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <p className="font-medium text-green-800">0-3 Points</p>
+                <p className="text-green-600">Good Standing</p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                <p className="font-medium text-yellow-800">4-9 Points</p>
+                <p className="text-yellow-600">Warning Level</p>
+              </div>
+              <div className="text-center p-3 bg-red-50 rounded-lg">
+                <p className="font-medium text-red-800">10+ Points</p>
+                <p className="text-red-600">License Suspension Risk</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default InfringementManagement;
+export default InfringementTracker;

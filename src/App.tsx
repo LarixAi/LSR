@@ -1,12 +1,14 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SecurityProvider } from "./contexts/SecurityContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
+import { SettingsProvider } from "./contexts/SettingsContext";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -25,12 +27,12 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VehicleManagement = lazy(() => import("./pages/VehicleManagement"));
 const VehicleManagementSettings = lazy(() => import("./pages/VehicleManagementSettings"));
 const JobManagement = lazy(() => import("./pages/JobManagement"));
-
-const TimeManagement = lazy(() => import("./pages/TimeManagement"));
+const AIAssistants = lazy(() => import("./pages/AIAssistants"));
+const TimeManagement = lazy(() => import("./pages/TimeManagementRefactored")); // Use refactored version
 const LicenseManagement = lazy(() => import("./pages/LicenseManagement"));
 const DriverManagement = lazy(() => import("./pages/DriverManagement"));
 const DriverDetail = lazy(() => import("./pages/DriverDetail"));
-const Documents = lazy(() => import("./pages/DocumentsEnhanced"));
+const Documents = lazy(() => import("./pages/DocumentsEnhanced")); // Use enhanced version
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const IncidentReports = lazy(() => import("./pages/IncidentReports"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
@@ -51,9 +53,9 @@ const RoutesPage = lazy(() => import("./pages/Routes"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const WorkOrders = lazy(() => import("./pages/WorkOrders"));
 const DefectReports = lazy(() => import("./pages/DefectReports"));
-const PartsSupplies = lazy(() => import("./pages/PartsSupplies"));
+const PartsSupplies = lazy(() => import("./pages/PartsSuppliesRefactored")); // Use refactored version
 const NotificationCenterPage = lazy(() => import("./pages/NotificationCenter"));
-const VehicleDetails = lazy(() => import("./pages/VehicleDetails"));
+const VehicleDetail = lazy(() => import("./pages/VehicleDetail"));
 const VehicleServicePage = lazy(() => import("./pages/VehicleServicePage"));
 const FuelManagement = lazy(() => import("./pages/FuelManagement"));
 const Mechanics = lazy(() => import("./pages/Mechanics"));
@@ -64,7 +66,7 @@ const MechanicDashboard = lazy(() => import("./pages/MechanicDashboard"));
 // New pages - Admin specific
 const TireManagement = lazy(() => import("./pages/TireManagement"));
 const InfringementManagement = lazy(() => import("./pages/InfringementManagement"));
-const AdminSchedule = lazy(() => import("./pages/AdminSchedule"));
+const AdminSchedule = lazy(() => import("./pages/AdminSchedule")); // Use AdminSchedule instead of Schedule
 const AdminInventoryDashboard = lazy(() => import("./pages/AdminInventoryDashboard"));
 const AdminMechanicRequests = lazy(() => import("./pages/AdminMechanicRequests"));
 const AdminTrainingManagement = lazy(() => import("./pages/AdminTrainingManagement"));
@@ -76,11 +78,11 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const DataSubjectRights = lazy(() => import("./components/DataSubjectRights"));
 const DPIA = lazy(() => import("./components/DPIA"));
 const LocationConsent = lazy(() => import("./components/LocationConsent"));
-const RailReplacement = lazy(() => import("./pages/RailReplacement"));
+const RailReplacement = lazy(() => import("./pages/RailReplacementEnhanced")); // Use enhanced version
 
 // New pages - Driver specific
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
-const DriverJobs = lazy(() => import("./pages/DriverJobs"));
+const DriverJobs = lazy(() => import("./pages/DriverJobsRefactored")); // Use refactored version
 const DriverSchedule = lazy(() => import("./pages/DriverSchedule"));
 const DriverIncidents = lazy(() => import("./pages/DriverIncidents"));
 const DriverCompliance = lazy(() => import("./pages/DriverCompliance"));
@@ -98,7 +100,6 @@ const ParentLayout = lazy(() => import("./components/layout/ParentLayout"));
 const ParentRouteTracker = lazy(() => import("./components/parent/ParentRouteTracker"));
 const ParentCommunicationCenter = lazy(() => import("./components/parent/ParentCommunicationCenter"));
 const ParentNotificationCenter = lazy(() => import("./components/parent/NotificationCenter"));
-
 
 const ParentSchedule = lazy(() => import("./pages/ParentSchedule"));
 
@@ -120,9 +121,21 @@ const APIManagement = lazy(() => import("./pages/APIManagement"));
 const PersonalAssistants = lazy(() => import("./pages/PersonalAssistants"));
 const FleetReportsPage = lazy(() => import("./pages/FleetReportsPage"));
 const BookDemoPage = lazy(() => import("./pages/BookDemoPage"));
-// const TrialTestPage = lazy(() => import("./pages/TrialTestPage")); // Hidden - no longer needed
 const SystemDiagnostic = lazy(() => import("./pages/SystemDiagnostic"));
 
+// Additional pages from logisticssolutionresources-07-main-2 - Use functional versions
+const Schedule = lazy(() => import("./pages/AdminSchedule")); // Use AdminSchedule instead of placeholder
+const SchoolRoutes = lazy(() => import("./pages/SchoolRoutesEnhanced")); // Use enhanced version
+const InventoryManagement = lazy(() => import("./pages/InventoryManagement"));
+const Inspections = lazy(() => import("./pages/Inspections"));
+const VehicleCheckQuestions = lazy(() => import("./pages/VehicleCheckQuestions"));
+const Licenses = lazy(() => import("./pages/Licenses"));
+const Incidents = lazy(() => import("./pages/Incidents"));
+const FleetReports = lazy(() => import("./pages/FleetReports"));
+const ComplianceReports = lazy(() => import("./pages/ComplianceReports"));
+const SupportTickets = lazy(() => import("./pages/SupportTickets"));
+const HelpDocumentation = lazy(() => import("./pages/HelpDocumentation"));
+const BookDemo = lazy(() => import("./pages/BookDemo"));
 
 const AgreementManagement = lazy(() => import("./pages/admin/AgreementManagement"));
 const EmailVerification = lazy(() => import("./pages/EmailVerification"));
@@ -152,10 +165,12 @@ const App = () => {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+        <ThemeProvider defaultTheme="light" storageKey="transport-theme">
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+            <SettingsProvider>
             <AuthProvider>
                               <PasswordChangeWrapper>
                   <SecurityProvider>
@@ -532,7 +547,12 @@ const App = () => {
                         } />
                         <Route path="/vehicle-details/:id" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
-                            <VehicleDetails />
+                            <VehicleDetail />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/vehicles/:vehicleId" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <VehicleDetail />
                           </ProtectedRoute>
                         } />
                         <Route path="/vehicle-service" element={
@@ -700,6 +720,13 @@ const App = () => {
                           </ProtectedRoute>
                         } />
 
+                        {/* Fleet Reports */}
+                        <Route path="/fleet-reports" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <FleetReports />
+                          </ProtectedRoute>
+                        } />
+
                         {/* Compliance Reports */}
                         <Route path="/compliance-reports" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
@@ -728,12 +755,101 @@ const App = () => {
                           </ProtectedRoute>
                         } />
 
+                        {/* Schedule - Use AdminSchedule (functional) instead of placeholder */}
+                        <Route path="/schedule" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AdminSchedule />
+                          </ProtectedRoute>
+                        } />
 
+                        {/* School Routes - Use enhanced version */}
+                        <Route path="/school-routes" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <SchoolRoutes />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Route Planning */}
+                        <Route path="/route-planning" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <RoutePlanning />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Personal Assistants */}
+                        <Route path="/personal-assistants" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <PersonalAssistants />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Invoice Management */}
+                        <Route path="/invoice-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <InvoiceManagement />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Quotation Management */}
+                        <Route path="/quotation-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <QuotationManagement />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Inventory Management */}
+                        <Route path="/inventory-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <InventoryManagement />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Compliance Dashboard */}
+                        <Route path="/compliance-dashboard" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <ComplianceDashboard />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Infringement Management */}
+                        <Route path="/admin/infringement-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <InfringementManagement />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Tachograph Manager */}
+                        <Route path="/tachograph-manager" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <TachographManager />
+                          </ProtectedRoute>
+                        } />
 
                         {/* Advanced Notifications */}
                         <Route path="/notifications" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <AdvancedNotifications />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Support Tickets */}
+                        <Route path="/support-tickets" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <SupportTickets />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Help Documentation */}
+                        <Route path="/help-documentation" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <HelpDocumentation />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* AI Assistants */}
+                        <Route path="/ai-assistants" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AIAssistants />
                           </ProtectedRoute>
                         } />
 
@@ -754,8 +870,10 @@ const App = () => {
                    </SecurityProvider>
                  </PasswordChangeWrapper>
             </AuthProvider>
+            </SettingsProvider>
           </BrowserRouter>
         </TooltipProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

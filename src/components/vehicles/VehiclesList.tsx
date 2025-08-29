@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,6 +11,7 @@ import AddVehicleDialog from './AddVehicleDialog';
 import { toast } from 'sonner';
 
 const VehiclesList = () => {
+  const navigate = useNavigate();
   const { data: vehicles = [], isLoading, error } = useVehicles();
   const deleteVehicle = useDeleteVehicle();
   const [editingVehicle, setEditingVehicle] = React.useState<any>(null);
@@ -149,10 +151,14 @@ const VehiclesList = () => {
                   </TableHeader>
                   <TableBody>
                     {vehicles.map((vehicle) => (
-                      <TableRow key={vehicle.id}>
-                        <TableCell>
+                      <TableRow 
+                        key={vehicle.id} 
+                        className="cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => navigate(`/vehicles/${vehicle.id}`)}
+                      >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div>
-                            <div className="font-medium">{vehicle.vehicle_number}</div>
+                            <div className="font-medium hover:text-blue-600 transition-colors">{vehicle.vehicle_number}</div>
                             <div className="text-sm text-gray-500">{vehicle.license_plate}</div>
                             <div className="text-xs text-gray-400">
                               {vehicle.make} {vehicle.model} ({vehicle.year})

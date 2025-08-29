@@ -10,6 +10,7 @@ import EditVehicleDialog from '@/components/vehicles/EditVehicleDialog';
 import VehicleCreationWithInspections from '@/components/vehicles/VehicleCreationWithInspections';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function VehicleManagement() {
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
@@ -124,143 +125,54 @@ export default function VehicleManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Vehicle Management</h1>
-          <p className="text-gray-600 mt-1">Fleet management with ORV & BOR roadworthiness compliance</p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={handleOpenSettings}
-            variant="outline"
-            className="inline-flex items-center"
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Fleet Settings
-          </Button>
-          {vehicles.length > 0 && (
-            <Button 
-              onClick={handleClearAllVehicles} 
-              variant="destructive" 
-              className="inline-flex items-center"
-              disabled={deleteVehicle.isPending}
-            >
-              <Database className="mr-2 h-4 w-4" />
-              {deleteVehicle.isPending ? 'Clearing...' : 'Clear All Vehicles'}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* ORV & BOR Compliance Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Add vehicle-card class to all cards in this section */}
-        <Card className="border-orange-200 bg-orange-50 vehicle-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Shield className="h-4 w-4 text-orange-600" />
-              ORV (Off-Road Vehicle) Status
-            </CardTitle>
-            <Badge variant={vehiclesOffRoad > 0 ? "destructive" : "default"} className="badge">
-              {vehiclesOffRoad} Off-Road
-            </Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Compliance Rate</span>
-                <span className="font-semibold">{orvComplianceRate}%</span>
-              </div>
-              <Progress value={orvComplianceRate} className="h-2" />
-              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                <div>Maintenance: {maintenanceVehicles}</div>
-                <div>Out of Service: {outOfServiceVehicles}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-blue-200 bg-blue-50 vehicle-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Scale className="h-4 w-4 text-blue-600" />
-              BOR (Back On Road) Status
-            </CardTitle>
-            <Badge variant={vehiclesReturningSoon > 0 ? "default" : "secondary"} className="badge">
-              {vehiclesReturningSoon} Returning Soon
-            </Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Return Readiness</span>
-                <span className="font-semibold">{borComplianceRate}%</span>
-              </div>
-              <Progress value={borComplianceRate} className="h-2" />
-              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                <div>Ready to Return: {vehiclesReturningSoon}</div>
-                <div>In Process: {vehiclesOffRoad - vehiclesReturningSoon}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="stats-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium stats-label">Total Vehicles</CardTitle>
-            <Car className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold stats-number">{totalVehicles}</div>
-            <p className="text-xs text-muted-foreground mt-1 stats-label">
-              Fleet size
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium stats-label">Active</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold stats-number">{activeVehicles}</div>
-            <p className="text-xs text-muted-foreground mt-1 stats-label">
-              {totalVehicles > 0 ? Math.round((activeVehicles / totalVehicles) * 100) : 0}% of fleet
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium stats-label">In Maintenance</CardTitle>
-            <Wrench className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold stats-number">{maintenanceVehicles}</div>
-            <p className="text-xs text-muted-foreground mt-1 stats-label">
-              ORV: Planned/Unplanned
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Out of Service</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{outOfServiceVehicles}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              ORV: Regulatory/Operational
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+    <PageLayout
+      title="Vehicle Management"
+      description="Fleet management with ORV & BOR roadworthiness compliance"
+      actionButton={{
+        label: "Add Vehicle",
+        onClick: handleAddVehicle,
+        icon: <Plus className="h-4 w-4 mr-2" />
+      }}
+      summaryCards={[
+        {
+          title: "Total Vehicles",
+          value: totalVehicles,
+          subtitle: "Fleet size",
+          icon: <Car className="h-4 w-4" />
+        },
+        {
+          title: "Active",
+          value: activeVehicles,
+          subtitle: `${totalVehicles > 0 ? Math.round((activeVehicles / totalVehicles) * 100) : 0}% of fleet`,
+          icon: <CheckCircle className="h-4 w-4" />,
+          color: "text-green-600"
+        },
+        {
+          title: "In Maintenance",
+          value: maintenanceVehicles,
+          subtitle: "ORV: Planned/Unplanned",
+          icon: <Wrench className="h-4 w-4" />,
+          color: "text-yellow-600"
+        },
+        {
+          title: "Out of Service",
+          value: outOfServiceVehicles,
+          subtitle: "ORV: Regulatory/Operational",
+          icon: <AlertTriangle className="h-4 w-4" />,
+          color: "text-red-600"
+        }
+      ]}
+      searchValue=""
+      onSearchChange={() => {}}
+      tabs={[
+        { value: "overview", label: "Overview" },
+        { value: "compliance", label: "Compliance" },
+        { value: "maintenance", label: "Maintenance" }
+      ]}
+      activeTab="overview"
+      onTabChange={() => {}}
+      isLoading={loading}
+    >
 
       {/* Compliance Quick Actions */}
       {vehicles.length > 0 && (
@@ -335,6 +247,6 @@ export default function VehicleManagement() {
           // React Query will automatically refetch
         }}
       />
-    </div>
+    </PageLayout>
   );
 }

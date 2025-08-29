@@ -13,7 +13,7 @@ export enum LogLevel {
 interface LogEntry {
   level: LogLevel;
   message: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   timestamp: string;
   component?: string;
 }
@@ -26,7 +26,7 @@ class Logger {
     this.component = component;
   }
 
-  private log(level: LogLevel, message: string, data?: Record<string, any>) {
+  private log(level: LogLevel, message: string, data?: Record<string, unknown>) {
     const entry: LogEntry = {
       level,
       message,
@@ -79,38 +79,38 @@ class Logger {
     }
   }
 
-  debug(message: string, data?: Record<string, any>) {
+  debug(message: string, data?: Record<string, unknown>) {
     this.log(LogLevel.DEBUG, message, data);
   }
 
-  info(message: string, data?: Record<string, any>) {
+  info(message: string, data?: Record<string, unknown>) {
     this.log(LogLevel.INFO, message, data);
   }
 
-  warn(message: string, data?: Record<string, any>) {
+  warn(message: string, data?: Record<string, unknown>) {
     this.log(LogLevel.WARN, message, data);
   }
 
-  error(message: string, data?: Record<string, any>) {
+  error(message: string, data?: Record<string, unknown>) {
     this.log(LogLevel.ERROR, message, data);
   }
 }
 
-// Simple logger instance for easy usage
+// Simple logger instance for easy usage with stricter types
 export const logger = {
-  devLog: (message: string, data?: any) => {
+  devLog: (message: string, data?: unknown) => {
     if (import.meta.env.DEV) {
       console.log(`[DEV] ${message}`, data || '');
     }
   },
-  error: (message: string, error?: any) => {
-    const errorInfo = error instanceof Error ? error.message : error;
+  error: (message: string, error?: unknown) => {
+    const errorInfo = error instanceof Error ? error.message : String(error);
     console.error(`[ERROR] ${message}`, errorInfo || '');
   },
-  warn: (message: string, data?: any) => {
+  warn: (message: string, data?: unknown) => {
     console.warn(`[WARN] ${message}`, data || '');
   },
-  info: (message: string, data?: any) => {
+  info: (message: string, data?: unknown) => {
     if (import.meta.env.DEV) {
       console.info(`[INFO] ${message}`, data || '');
     }

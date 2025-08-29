@@ -42,7 +42,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useWorkOrders, WorkOrder, CreateWorkOrderData, UpdateWorkOrderData } from '@/hooks/useWorkOrders';
+import { useWorkOrders, useCreateWorkOrder, useUpdateWorkOrder, useDeleteWorkOrder, WorkOrder, CreateWorkOrderData, UpdateWorkOrderData } from '@/hooks/useWorkOrders';
+import PageLayout from '@/components/layout/PageLayout';
 
 const WorkOrders = () => {
   const { user, profile, loading } = useAuth();
@@ -63,28 +64,33 @@ const WorkOrders = () => {
     title: '',
     description: '',
     vehicle_id: '',
-    defect_type: 'mechanical',
-    severity: 'medium',
+    work_order_number: '',
+    work_type: 'preventive',
     priority: 'medium',
+    status: 'open',
     location: '',
-    estimated_cost: 0,
     estimated_hours: 0,
-    work_notes: ''
+    scheduled_date: '',
+    due_date: '',
+    notes: ''
   });
 
-  // Use the new work orders hook
+  // Use the work orders hooks
   const {
     workOrders,
     isLoading,
     error,
-    createWorkOrder,
-    updateWorkOrder,
-    deleteWorkOrder,
-    isCreating,
-    isUpdating,
-    isDeleting,
-    workOrderStats
+    stats: workOrderStats
   } = useWorkOrders(selectedOrganizationId);
+
+  const createWorkOrder = useCreateWorkOrder();
+  const updateWorkOrder = useUpdateWorkOrder();
+  const deleteWorkOrder = useDeleteWorkOrder();
+
+  // Extract loading states from mutation hooks
+  const isCreating = createWorkOrder.isPending;
+  const isUpdating = updateWorkOrder.isPending;
+  const isDeleting = deleteWorkOrder.isPending;
 
   // Fetch vehicles for dropdown
   const { data: vehicles = [] } = useQuery({
@@ -129,29 +135,30 @@ const WorkOrders = () => {
   // Filter work orders based on search and filters
   const filteredWorkOrders = workOrders.filter(workOrder => {
     const matchesSearch = workOrder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         workOrder.defect_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         workOrder.vehicle?.vehicle_number?.toLowerCase().includes(searchTerm.toLowerCase());
+                         workOrder.work_order_number.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesSeverity = severityFilter === 'all' || workOrder.severity === severityFilter;
+    const matchesPriority = severityFilter === 'all' || workOrder.priority === severityFilter;
     const matchesStatus = statusFilter === 'all' || workOrder.status === statusFilter;
-    const matchesDefectType = defectTypeFilter === 'all' || workOrder.defect_type === defectTypeFilter;
+    const matchesWorkType = defectTypeFilter === 'all' || workOrder.work_type === defectTypeFilter;
 
-    return matchesSearch && matchesSeverity && matchesStatus && matchesDefectType;
+    return matchesSearch && matchesPriority && matchesStatus && matchesWorkType;
   });
 
   // Filter by tab
   const getTabWorkOrders = (tab: string) => {
     switch (tab) {
-      case 'reported':
-        return filteredWorkOrders.filter(wo => wo.status === 'reported');
-      case 'investigating':
-        return filteredWorkOrders.filter(wo => wo.status === 'investigating');
-      case 'repairing':
-        return filteredWorkOrders.filter(wo => wo.status === 'repairing');
-      case 'resolved':
-        return filteredWorkOrders.filter(wo => wo.status === 'resolved');
-      case 'closed':
-        return filteredWorkOrders.filter(wo => wo.status === 'closed');
+      case 'open':
+        return filteredWorkOrders.filter(wo => wo.status === 'open');
+      case 'assigned':
+        return filteredWorkOrders.filter(wo => wo.status === 'assigned');
+      case 'in_progress':
+        return filteredWorkOrders.filter(wo => wo.status === 'in_progress');
+      case 'on_hold':
+        return filteredWorkOrders.filter(wo => wo.status === 'on_hold');
+      case 'completed':
+        return filteredWorkOrders.filter(wo => wo.status === 'completed');
+      case 'cancelled':
+        return filteredWorkOrders.filter(wo => wo.status === 'cancelled');
       default:
         return filteredWorkOrders;
     }
@@ -159,25 +166,29 @@ const WorkOrders = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'reported':
+      case 'open':
         return 'bg-blue-100 text-blue-800';
-      case 'investigating':
+      case 'assigned':
         return 'bg-yellow-100 text-yellow-800';
-      case 'repairing':
+      case 'in_progress':
         return 'bg-orange-100 text-orange-800';
-      case 'resolved':
+      case 'on_hold':
+        return 'bg-red-100 text-red-800';
+      case 'completed':
         return 'bg-green-100 text-green-800';
-      case 'closed':
+      case 'cancelled':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
       case 'critical':
         return 'bg-red-100 text-red-800';
+      case 'urgent':
+        return 'bg-orange-100 text-orange-800';
       case 'high':
         return 'bg-orange-100 text-orange-800';
       case 'medium':
@@ -189,15 +200,15 @@ const WorkOrders = () => {
     }
   };
 
-  const getDefectTypeColor = (type: string) => {
+  const getWorkTypeColor = (type: string) => {
     switch (type) {
-      case 'safety':
+      case 'emergency':
         return 'bg-red-100 text-red-800';
-      case 'mechanical':
+      case 'corrective':
         return 'bg-blue-100 text-blue-800';
-      case 'electrical':
-        return 'bg-purple-100 text-purple-800';
-      case 'cosmetic':
+      case 'preventive':
+        return 'bg-green-100 text-green-800';
+      case 'inspection':
         return 'bg-gray-100 text-gray-800';
       case 'other':
         return 'bg-gray-100 text-gray-800';
@@ -216,7 +227,7 @@ const WorkOrders = () => {
       return;
     }
 
-    createWorkOrder(formData, {
+    createWorkOrder.mutate(formData, {
       onSuccess: () => {
         toast({
           title: 'Success',
@@ -227,13 +238,15 @@ const WorkOrders = () => {
           title: '',
           description: '',
           vehicle_id: '',
-          defect_type: 'mechanical',
-          severity: 'medium',
+          work_order_number: '',
+          work_type: 'preventive',
           priority: 'medium',
+          status: 'open',
           location: '',
-          estimated_cost: 0,
           estimated_hours: 0,
-          work_notes: ''
+          scheduled_date: '',
+          due_date: '',
+          notes: ''
         });
       },
       onError: (error) => {
@@ -249,9 +262,9 @@ const WorkOrders = () => {
   const handleUpdateWorkOrder = () => {
     if (!selectedWorkOrder) return;
 
-    updateWorkOrder({
+    updateWorkOrder.mutate({
       id: selectedWorkOrder.id,
-      data: formData
+      ...formData
     }, {
       onSuccess: () => {
         toast({
@@ -273,7 +286,7 @@ const WorkOrders = () => {
 
   const handleDeleteWorkOrder = (id: string) => {
     if (confirm('Are you sure you want to delete this work order?')) {
-      deleteWorkOrder(id, {
+      deleteWorkOrder.mutate(id, {
         onSuccess: () => {
           toast({
             title: 'Success',
@@ -297,13 +310,15 @@ const WorkOrders = () => {
       title: workOrder.title,
       description: workOrder.description || '',
       vehicle_id: workOrder.vehicle_id,
-      defect_type: workOrder.defect_type,
-      severity: workOrder.severity,
+      work_order_number: workOrder.work_order_number,
+      work_type: workOrder.work_type,
       priority: workOrder.priority || 'medium',
+      status: workOrder.status || 'open',
       location: workOrder.location || '',
-      estimated_cost: workOrder.estimated_cost,
       estimated_hours: workOrder.estimated_hours || 0,
-      work_notes: workOrder.work_notes || ''
+      scheduled_date: workOrder.scheduled_date || '',
+      due_date: workOrder.due_date || '',
+      notes: workOrder.notes || ''
     });
     setShowEditDialog(true);
   };
@@ -314,157 +329,101 @@ const WorkOrders = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Work Orders</h1>
-          <p className="text-gray-600 mt-2">Manage vehicle defects and repairs</p>
-        </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Work Order
-        </Button>
-      </div>
+    <PageLayout
+      title="Work Orders"
+      description="Manage vehicle defects and repairs"
+      actionButton={{
+        label: "New Work Order",
+        onClick: () => setShowCreateDialog(true),
+        icon: <Plus className="h-4 w-4 mr-2" />
+      }}
+      summaryCards={workOrderStats ? [
+        {
+          title: "Total Work Orders",
+          value: workOrderStats.total,
+          subtitle: "All time",
+          icon: <FileText className="h-4 w-4" />
+        },
+        {
+          title: "In Progress",
+          value: workOrderStats.byStatus.in_progress + workOrderStats.byStatus.assigned,
+          subtitle: "In Progress & Assigned",
+          icon: <Wrench className="h-4 w-4" />
+        },
+        {
+          title: "Critical Issues",
+          value: workOrderStats.byPriority.critical,
+          subtitle: "Critical priority",
+          icon: <AlertTriangle className="h-4 w-4" />,
+          color: "text-red-600"
+        },
+        {
+          title: "Total Cost",
+          value: `£${workOrderStats.totalCost.toFixed(2)}`,
+          subtitle: "Total cost",
+          icon: <DollarSign className="h-4 w-4" />,
+          color: "text-green-600"
+        }
+      ] : []}
+      searchPlaceholder="Search work orders..."
+      searchValue={searchTerm}
+      onSearchChange={setSearchTerm}
+      filters={[
+        {
+          label: "All Priorities",
+          value: severityFilter,
+          options: [
+            { value: "all", label: "All Priorities" },
+            { value: "low", label: "Low" },
+            { value: "medium", label: "Medium" },
+            { value: "high", label: "High" },
+            { value: "urgent", label: "Urgent" },
+            { value: "critical", label: "Critical" }
+          ],
+          onChange: setSeverityFilter
+        },
+        {
+          label: "All Statuses",
+          value: statusFilter,
+          options: [
+            { value: "all", label: "All Statuses" },
+            { value: "open", label: "Open" },
+            { value: "assigned", label: "Assigned" },
+            { value: "in_progress", label: "In Progress" },
+            { value: "on_hold", label: "On Hold" },
+            { value: "completed", label: "Completed" }
+          ],
+          onChange: setStatusFilter
+        },
+        {
+          label: "All Types",
+          value: defectTypeFilter,
+          options: [
+            { value: "all", label: "All Types" },
+            { value: "preventive", label: "Preventive" },
+            { value: "corrective", label: "Corrective" },
+            { value: "emergency", label: "Emergency" },
+            { value: "inspection", label: "Inspection" },
+            { value: "other", label: "Other" }
+          ],
+          onChange: setDefectTypeFilter
+        }
+      ]}
+      tabs={[
+        { value: "all", label: "All Work Orders" },
+        { value: "open", label: "Open" },
+        { value: "assigned", label: "Assigned" },
+        { value: "in_progress", label: "In Progress" },
+        { value: "completed", label: "Completed" }
+      ]}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      isLoading={isLoading}
+    >
 
-      {/* Stats Cards */}
-      {workOrderStats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Work Orders</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{workOrderStats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                All time
-              </p>
-            </CardContent>
-          </Card>
+      {/* Work Orders Content */}
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <Wrench className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {workOrderStats.byStatus.investigating + workOrderStats.byStatus.repairing}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Investigating & Repairing
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Issues</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{workOrderStats.bySeverity.critical}</div>
-              <p className="text-xs text-muted-foreground">
-                Safety priority
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">£{workOrderStats.totalEstimatedCost.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                Estimated total
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Search work orders..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="severity">Severity</Label>
-              <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All severities" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Severities</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="reported">Reported</SelectItem>
-                  <SelectItem value="investigating">Investigating</SelectItem>
-                  <SelectItem value="repairing">Repairing</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="defectType">Defect Type</Label>
-              <Select value={defectTypeFilter} onValueChange={setDefectTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="safety">Safety</SelectItem>
-                  <SelectItem value="mechanical">Mechanical</SelectItem>
-                  <SelectItem value="electrical">Electrical</SelectItem>
-                  <SelectItem value="cosmetic">Cosmetic</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Work Orders Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="all">All ({filteredWorkOrders.length})</TabsTrigger>
-          <TabsTrigger value="reported">Reported ({workOrderStats?.byStatus.reported || 0})</TabsTrigger>
-          <TabsTrigger value="investigating">Investigating ({workOrderStats?.byStatus.investigating || 0})</TabsTrigger>
-          <TabsTrigger value="repairing">Repairing ({workOrderStats?.byStatus.repairing || 0})</TabsTrigger>
-          <TabsTrigger value="resolved">Resolved ({workOrderStats?.byStatus.resolved || 0})</TabsTrigger>
-          <TabsTrigger value="closed">Closed ({workOrderStats?.byStatus.closed || 0})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="space-y-6">
+      {/* Work Orders List */}
           {isLoading ? (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
@@ -498,23 +457,23 @@ const WorkOrders = () => {
                           <Badge className={getStatusColor(workOrder.status)}>
                             {workOrder.status}
                           </Badge>
-                          <Badge className={getSeverityColor(workOrder.severity)}>
-                            {workOrder.severity}
+                          <Badge className={getPriorityColor(workOrder.priority)}>
+                            {workOrder.priority}
                           </Badge>
-                          <Badge className={getDefectTypeColor(workOrder.defect_type)}>
-                            {workOrder.defect_type}
+                          <Badge className={getWorkTypeColor(workOrder.work_type)}>
+                            {workOrder.work_type}
                           </Badge>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-4">
                           <div>
-                            <span className="font-medium">Defect #:</span> {workOrder.defect_number}
+                            <span className="font-medium">Work Order #:</span> {workOrder.work_order_number}
                           </div>
                           <div>
                             <span className="font-medium">Vehicle:</span> {workOrder.vehicle?.vehicle_number || 'N/A'}
                           </div>
                           <div>
-                            <span className="font-medium">Reported:</span> {new Date(workOrder.reported_date).toLocaleDateString()}
+                            <span className="font-medium">Created:</span> {new Date(workOrder.created_at).toLocaleDateString()}
                           </div>
                         </div>
 
@@ -524,16 +483,16 @@ const WorkOrders = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <span className="font-medium">Estimated Cost:</span> £{workOrder.estimated_cost.toFixed(2)}
+                            <span className="font-medium">Estimated Hours:</span> {workOrder.estimated_hours || 0} hrs
                           </div>
                           <div>
-                            <span className="font-medium">Actual Cost:</span> £{workOrder.actual_cost.toFixed(2)}
+                            <span className="font-medium">Scheduled Date:</span> {workOrder.scheduled_date ? new Date(workOrder.scheduled_date).toLocaleDateString() : 'Not scheduled'}
                           </div>
                           <div>
-                            <span className="font-medium">Reported By:</span> {workOrder.reported_by_profile?.first_name} {workOrder.reported_by_profile?.last_name}
+                            <span className="font-medium">Due Date:</span> {workOrder.due_date ? new Date(workOrder.due_date).toLocaleDateString() : 'Not set'}
                           </div>
                           <div>
-                            <span className="font-medium">Assigned To:</span> {workOrder.assigned_mechanic?.first_name} {workOrder.assigned_mechanic?.last_name} || 'Unassigned'
+                            <span className="font-medium">Location:</span> {workOrder.location || 'Not specified'}
                           </div>
                         </div>
                       </div>
@@ -567,8 +526,7 @@ const WorkOrders = () => {
               ))}
             </div>
           )}
-        </TabsContent>
-      </Tabs>
+      {/* End of Work Orders List */}
 
       {/* Create Work Order Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -958,7 +916,7 @@ const WorkOrders = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 };
 

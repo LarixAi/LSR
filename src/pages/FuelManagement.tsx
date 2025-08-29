@@ -4,7 +4,6 @@ import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +32,7 @@ import {
   BarChart3,
   Filter
 } from 'lucide-react';
+import PageLayout from '@/components/layout/PageLayout';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useFuelPurchases, useCreateFuelPurchase, useUpdateFuelPurchase, useDeleteFuelPurchase, useFuelStatistics, type FuelPurchaseWithDetails, type CreateFuelPurchaseData } from '@/hooks/useFuelPurchases';
@@ -177,457 +177,408 @@ const FuelManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fuel Management</h1>
-          <p className="text-muted-foreground">
-            Track and manage fuel consumption, costs, and efficiency
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => refetch()} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Purchase
-          </Button>
-        </div>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <PageLayout
+      title="Fuel Management"
+      description="Track and manage fuel consumption, costs, and efficiency"
+      actionButton={{
+        label: "Add Purchase",
+        onClick: () => setShowAddDialog(true),
+        icon: <Plus className="w-4 h-4 mr-2" />
+      }}
+      summaryCards={[
+        {
+          title: "Total Spent",
+          value: `£${statistics.totalSpent.toFixed(2)}`,
+          icon: <DollarSign className="h-4 w-4" />,
+          color: "text-green-600"
+        },
+        {
+          title: "Total Fuel",
+          value: `${statistics.totalQuantity.toFixed(1)}L`,
+          icon: <Fuel className="h-4 w-4" />,
+          color: "text-blue-600"
+        },
+        {
+          title: "Avg Price/L",
+          value: `£${statistics.averagePrice.toFixed(2)}`,
+          icon: <TrendingUp className="h-4 w-4" />,
+          color: "text-orange-600"
+        },
+        {
+          title: "Purchases",
+          value: statistics.purchaseCount,
+          icon: <BarChart3 className="h-4 w-4" />,
+          color: "text-purple-600"
+        }
+      ]}
+      searchPlaceholder="Search purchases..."
+      searchValue={searchTerm}
+      onSearchChange={setSearchTerm}
+      filters={[
+        {
+          label: "All Fuel Types",
+          value: fuelTypeFilter,
+          options: [
+            { value: "all", label: "All Types" },
+            { value: "diesel", label: "Diesel" },
+            { value: "petrol", label: "Petrol" },
+            { value: "electric", label: "Electric" }
+          ],
+          onChange: setFuelTypeFilter
+        }
+      ]}
+      tabs={[
+        { value: "overview", label: "Overview" },
+        { value: "purchases", label: "Purchase History" },
+        { value: "analytics", label: "Analytics" }
+      ]}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      isLoading={isLoading}
+    >
+      {/* Content based on active tab */}
+      {activeTab === 'overview' && (
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Spent</p>
-                <p className="text-2xl font-bold">£{statistics.totalSpent.toFixed(2)}</p>
+          <CardHeader>
+            <CardTitle>Recent Fuel Purchases</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredPurchases.length === 0 ? (
+              <div className="text-center py-8">
+                <Fuel className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No fuel purchases found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Start tracking your fuel consumption by adding your first purchase.
+                </p>
+                <Button onClick={() => setShowAddDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add First Purchase
+                </Button>
               </div>
-              <DollarSign className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Fuel</p>
-                <p className="text-2xl font-bold">{statistics.totalQuantity.toFixed(1)}L</p>
-              </div>
-              <Fuel className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Price/L</p>
-                <p className="text-2xl font-bold">£{statistics.averagePrice.toFixed(2)}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Purchases</p>
-                <p className="text-2xl font-bold">{statistics.purchaseCount}</p>
-              </div>
-              <BarChart3 className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="purchases">Purchase History</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Fuel Purchases</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-                  <p>Loading fuel purchases...</p>
-                </div>
-              ) : filteredPurchases.length === 0 ? (
-                <div className="text-center py-8">
-                  <Fuel className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No fuel purchases found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Start tracking your fuel consumption by adding your first purchase.
-                  </p>
-                  <Button onClick={() => setShowAddDialog(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add First Purchase
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredPurchases.slice(0, 5).map((purchase) => (
-                    <div key={purchase.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Fuel className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{purchase.vehicle_number}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(purchase.purchase_date), 'MMM dd, yyyy')} • {purchase.location}
-                          </p>
-                        </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredPurchases.slice(0, 5).map((purchase) => (
+                  <div key={purchase.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Fuel className="w-5 h-5 text-blue-600" />
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">£{purchase.total_cost.toFixed(2)}</p>
-                        <p className="text-sm text-muted-foreground">{purchase.quantity}L {purchase.fuel_type}</p>
+                      <div>
+                        <p className="font-medium">{purchase.vehicle_number}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(purchase.purchase_date), 'MMM dd, yyyy')} • {purchase.location}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="purchases" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Purchase History</CardTitle>
-                <div className="flex gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search purchases..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-64"
-                    />
+                    <div className="text-right">
+                      <p className="font-medium">£{purchase.total_cost.toFixed(2)}</p>
+                      <p className="text-sm text-muted-foreground">{purchase.quantity}L {purchase.fuel_type}</p>
+                    </div>
                   </div>
-                  <Select value={fuelTypeFilter} onValueChange={setFuelTypeFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="diesel">Diesel</SelectItem>
-                      <SelectItem value="petrol">Petrol</SelectItem>
-                      <SelectItem value="electric">Electric</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                ))}
               </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    {['admin', 'council'].includes(profile.role) && <TableHead>Driver</TableHead>}
-                    <TableHead>Date</TableHead>
-                    <TableHead>Fuel Type</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Total Cost</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'purchases' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Purchase History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vehicle</TableHead>
+                  {['admin', 'council'].includes(profile.role) && <TableHead>Driver</TableHead>}
+                  <TableHead>Date</TableHead>
+                  <TableHead>Fuel Type</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Total Cost</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPurchases.map((purchase) => (
+                  <TableRow key={purchase.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{purchase.vehicle_number}</div>
+                        <div className="text-sm text-muted-foreground">{purchase.license_plate}</div>
+                      </div>
+                    </TableCell>
+                    {['admin', 'council'].includes(profile.role) && (
+                      <TableCell>{purchase.driver_name}</TableCell>
+                    )}
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{format(new Date(purchase.purchase_date), 'MMM dd, yyyy')}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {format(new Date(purchase.created_at), 'HH:mm')}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getFuelTypeBadge(purchase.fuel_type)}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{purchase.quantity}L</div>
+                        <div className="text-sm text-muted-foreground">£{purchase.unit_price}/L</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>£{purchase.total_cost.toFixed(2)}</TableCell>
+                    <TableCell>{purchase.location}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewingPurchase(purchase)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(purchase)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(purchase.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPurchases.map((purchase) => (
-                    <TableRow key={purchase.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{purchase.vehicle_number}</div>
-                          <div className="text-sm text-muted-foreground">{purchase.license_plate}</div>
-                        </div>
-                      </TableCell>
-                      {['admin', 'council'].includes(profile.role) && (
-                        <TableCell>{purchase.driver_name}</TableCell>
-                      )}
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{format(new Date(purchase.purchase_date), 'MMM dd, yyyy')}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {format(new Date(purchase.created_at), 'HH:mm')}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getFuelTypeBadge(purchase.fuel_type)}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{purchase.quantity}L</div>
-                          <div className="text-sm text-muted-foreground">£{purchase.unit_price}/L</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>£{purchase.total_cost.toFixed(2)}</TableCell>
-                      <TableCell>{purchase.location}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setViewingPurchase(purchase)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(purchase)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(purchase.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'analytics' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Fuel Type Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {Object.entries(statistics.byFuelType).map(([type, data]) => (
+                <div key={type} className="flex items-center justify-between py-2">
+                  <div className="flex items-center space-x-2">
+                    {getFuelTypeBadge(type)}
+                    <span className="font-medium">{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium">{data.quantity.toFixed(1)}L</div>
+                    <div className="text-sm text-muted-foreground">£{data.cost.toFixed(2)}</div>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Fuel Type Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.entries(statistics.byFuelType).map(([type, data]) => (
-                  <div key={type} className="flex items-center justify-between py-2">
-                    <div className="flex items-center space-x-2">
-                      {getFuelTypeBadge(type)}
-                      <span className="font-medium">{type.charAt(0).toUpperCase() + type.slice(1)}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{data.quantity.toFixed(1)}L</div>
-                      <div className="text-sm text-muted-foreground">£{data.cost.toFixed(2)}</div>
-                    </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Trends</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {Object.entries(statistics.monthlyData).slice(0, 6).map(([month, data]) => (
+                <div key={month} className="flex items-center justify-between py-2">
+                  <span className="font-medium">{format(new Date(month + '-01'), 'MMM yyyy')}</span>
+                  <div className="text-right">
+                    <div className="font-medium">{data.quantity.toFixed(1)}L</div>
+                    <div className="text-sm text-muted-foreground">£{data.cost.toFixed(2)}</div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.entries(statistics.monthlyData).slice(0, 6).map(([month, data]) => (
-                  <div key={month} className="flex items-center justify-between py-2">
-                    <span className="font-medium">{format(new Date(month + '-01'), 'MMM yyyy')}</span>
-                    <div className="text-right">
-                      <div className="font-medium">{data.quantity.toFixed(1)}L</div>
-                      <div className="text-sm text-muted-foreground">£{data.cost.toFixed(2)}</div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Add/Edit Purchase Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPurchase ? 'Edit Fuel Purchase' : 'Add Fuel Purchase'}
-            </DialogTitle>
-            <DialogDescription>
-              Record a new fuel purchase for your vehicle.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="vehicle">Vehicle</Label>
-              <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({...formData, vehicle_id: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select vehicle" />
-                </SelectTrigger>
-                <SelectContent>
-                  {vehicles.map((vehicle) => (
-                    <SelectItem key={vehicle.id} value={vehicle.id}>
-                      {vehicle.vehicle_number} - {vehicle.license_plate}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fuel_type">Fuel Type</Label>
-              <Select value={formData.fuel_type} onValueChange={(value: any) => setFormData({...formData, fuel_type: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="diesel">Diesel</SelectItem>
-                  <SelectItem value="petrol">Petrol</SelectItem>
-                  <SelectItem value="electric">Electric</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingPurchase ? 'Edit Fuel Purchase' : 'Add Fuel Purchase'}
+              </DialogTitle>
+              <DialogDescription>
+                Record a new fuel purchase for your vehicle.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity (L)</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  step="0.01"
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})}
-                  required
-                />
+                <Label htmlFor="vehicle">Vehicle</Label>
+                <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({...formData, vehicle_id: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select vehicle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.vehicle_number} - {vehicle.license_plate}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="unit_price">Price per L</Label>
-                <Input
-                  id="unit_price"
-                  type="number"
-                  step="0.01"
-                  value={formData.unit_price}
-                  onChange={(e) => setFormData({...formData, unit_price: parseFloat(e.target.value) || 0})}
-                  required
-                />
+                <Label htmlFor="fuel_type">Fuel Type</Label>
+                <Select value={formData.fuel_type} onValueChange={(value: any) => setFormData({...formData, fuel_type: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="diesel">Diesel</SelectItem>
+                    <SelectItem value="petrol">Petrol</SelectItem>
+                    <SelectItem value="electric">Electric</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="total_cost">Total Cost</Label>
-              <Input
-                id="total_cost"
-                type="number"
-                step="0.01"
-                value={formData.total_cost}
-                onChange={(e) => setFormData({...formData, total_cost: parseFloat(e.target.value) || 0})}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
-                placeholder="Fuel station name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="purchase_date">Purchase Date</Label>
-              <Input
-                id="purchase_date"
-                type="date"
-                value={formData.purchase_date}
-                onChange={(e) => setFormData({...formData, purchase_date: e.target.value})}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                placeholder="Any additional notes..."
-              />
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createFuelPurchase.isPending || updateFuelPurchase.isPending}>
-                {createFuelPurchase.isPending || updateFuelPurchase.isPending ? 'Saving...' : 'Save Purchase'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Purchase Dialog */}
-      <Dialog open={!!viewingPurchase} onOpenChange={() => setViewingPurchase(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Fuel Purchase Details</DialogTitle>
-          </DialogHeader>
-          {viewingPurchase && (
-            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Vehicle</Label>
-                  <p>{viewingPurchase.vehicle_number} - {viewingPurchase.license_plate}</p>
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Quantity (L)</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    step="0.01"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})}
+                    required
+                  />
                 </div>
-                <div>
-                  <Label className="text-sm font-medium">Fuel Type</Label>
-                  <p>{getFuelTypeBadge(viewingPurchase.fuel_type)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Quantity</Label>
-                  <p>{viewingPurchase.quantity}L</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Unit Price</Label>
-                  <p>£{viewingPurchase.unit_price}/L</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Total Cost</Label>
-                  <p>£{viewingPurchase.total_cost.toFixed(2)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Purchase Date</Label>
-                  <p>{format(new Date(viewingPurchase.purchase_date), 'MMM dd, yyyy')}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Location</Label>
-                  <p>{viewingPurchase.location || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Odometer</Label>
-                  <p>{viewingPurchase.odometer_reading || 'N/A'}</p>
+                <div className="space-y-2">
+                  <Label htmlFor="unit_price">Price per L</Label>
+                  <Input
+                    id="unit_price"
+                    type="number"
+                    step="0.01"
+                    value={formData.unit_price}
+                    onChange={(e) => setFormData({...formData, unit_price: parseFloat(e.target.value) || 0})}
+                    required
+                  />
                 </div>
               </div>
-              {viewingPurchase.notes && (
-                <div>
-                  <Label className="text-sm font-medium">Notes</Label>
-                  <p className="text-sm text-muted-foreground">{viewingPurchase.notes}</p>
+
+              <div className="space-y-2">
+                <Label htmlFor="total_cost">Total Cost</Label>
+                <Input
+                  id="total_cost"
+                  type="number"
+                  step="0.01"
+                  value={formData.total_cost}
+                  onChange={(e) => setFormData({...formData, total_cost: parseFloat(e.target.value) || 0})}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  placeholder="Fuel station name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="purchase_date">Purchase Date</Label>
+                <Input
+                  id="purchase_date"
+                  type="date"
+                  value={formData.purchase_date}
+                  onChange={(e) => setFormData({...formData, purchase_date: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  placeholder="Any additional notes..."
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createFuelPurchase.isPending || updateFuelPurchase.isPending}>
+                  {createFuelPurchase.isPending || updateFuelPurchase.isPending ? 'Saving...' : 'Save Purchase'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Purchase Dialog */}
+        <Dialog open={!!viewingPurchase} onOpenChange={() => setViewingPurchase(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Fuel Purchase Details</DialogTitle>
+            </DialogHeader>
+            {viewingPurchase && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Vehicle</Label>
+                    <p>{viewingPurchase.vehicle_number} - {viewingPurchase.license_plate}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Fuel Type</Label>
+                    <p>{getFuelTypeBadge(viewingPurchase.fuel_type)}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Quantity</Label>
+                    <p>{viewingPurchase.quantity}L</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Unit Price</Label>
+                    <p>£{viewingPurchase.unit_price}/L</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Total Cost</Label>
+                    <p>£{viewingPurchase.total_cost.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Purchase Date</Label>
+                    <p>{format(new Date(viewingPurchase.purchase_date), 'MMM dd, yyyy')}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Location</Label>
+                    <p>{viewingPurchase.location || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Odometer</Label>
+                    <p>{viewingPurchase.odometer_reading || 'N/A'}</p>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+                {viewingPurchase.notes && (
+                  <div>
+                    <Label className="text-sm font-medium">Notes</Label>
+                    <p className="text-sm text-muted-foreground">{viewingPurchase.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+    </PageLayout>
   );
 };
 

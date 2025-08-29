@@ -7,6 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 
+import { useTheme } from '@/components/theme-provider';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSettings } from '@/contexts/SettingsContext';
+import AvatarUpload from '@/components/AvatarUpload';
+import { toast } from 'sonner';
+import { useThemeColors } from '@/hooks/useThemeColors';
+
 import {
   Palette,
   Sun,
@@ -35,74 +42,133 @@ import {
   Sparkles
 } from 'lucide-react';
 
-const Settings = () => {
-  const [isDark, setIsDark] = useState(false);
-  const [theme, setTheme] = useState('light');
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-  const [fontSize, setFontSize] = useState('medium');
+interface ThemeColor {
+  name: string;
+  value: string;
+  hue: string;
+}
 
-  // Initialize theme on component mount
+const predefinedColors: ThemeColor[] = [
+  { name: 'Green', value: 'green', hue: '142' },
+  { name: 'Blue', value: 'blue', hue: '210' },
+  { name: 'Purple', value: 'purple', hue: '260' },
+  { name: 'Orange', value: 'orange', hue: '30' },
+  { name: 'Red', value: 'red', hue: '0' },
+  { name: 'Teal', value: 'teal', hue: '180' },
+  { name: 'Indigo', value: 'indigo', hue: '240' },
+  { name: 'Pink', value: 'pink', hue: '340' },
+];
+
+const Settings = () => {
+  const { theme, setTheme } = useTheme();
+  const { user, profile } = useAuth();
+  const { applyColorTheme } = useThemeColors();
+  const { settings, updateSetting, resetSettings, isLoading } = useSettings();
+  
+  // Local state for UI interactions
+  const [selectedColor, setSelectedColor] = useState(settings.themeColor);
+  const [isCustomColor, setIsCustomColor] = useState(settings.themeColor === 'custom');
+
+  const isDark = theme === 'dark';
+
+  // Load saved theme color on component mount
   useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    setIsDark(isDarkMode);
-    setTheme(isDarkMode ? 'dark' : 'light');
-  }, []);
+    const savedColor = localStorage.getItem('themeColor');
+    const savedHue = localStorage.getItem('themeHue');
+    if (savedColor) {
+      setSelectedColor(savedColor);
+      if (savedColor === 'custom' && savedHue) {
+        setIsCustomColor(true);
+        updateSetting('customHue', savedHue);
+        applyColorThemeLocal(savedHue);
+      } else {
+        const color = predefinedColors.find(c => c.value === savedColor);
+        if (color) {
+          applyColorThemeLocal(color.hue);
+        }
+      }
+    }
+  }, [theme, updateSetting]); // Re-run when theme changes
+
+  const applyColorThemeLocal = (hue: string) => {
+    applyColorTheme(hue, theme);
+  };
+
+  const handleColorChange = (value: string) => {
+    setSelectedColor(value);
+    setIsCustomColor(false);
+    updateSetting('themeColor', value);
+    
+    const color = predefinedColors.find(c => c.value === value);
+    if (color) {
+      applyColorThemeLocal(color.hue);
+      localStorage.setItem('themeColor', value);
+      localStorage.setItem('themeHue', color.hue);
+      toast.success(`Theme color changed to ${color.name}`);
+    }
+  };
+
+  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const hue = e.target.value;
+    updateSetting('customHue', hue);
+    setIsCustomColor(true);
+    setSelectedColor('custom');
+    updateSetting('themeColor', 'custom');
+    
+    applyColorThemeLocal(hue);
+    localStorage.setItem('themeColor', 'custom');
+    localStorage.setItem('themeHue', hue);
+  };
 
   const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-    setTheme(newIsDark ? 'dark' : 'light');
+    const newTheme = isDark ? 'light' : 'dark';
+    setTheme(newTheme);
     
-    if (newIsDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    // Reapply color theme with new mode
+    const savedHue = localStorage.getItem('themeHue') || '142';
+    applyColorThemeLocal(savedHue);
+    
+    toast.success(`Switched to ${newTheme} mode`);
   };
 
   const resetThemeSettings = () => {
-    setIsDark(false);
+    resetSettings();
     setTheme('light');
-    document.documentElement.classList.remove('dark');
-    setReducedMotion(false);
-    setHighContrast(false);
-    setFontSize('medium');
-    
-    // Reset CSS properties
-    document.documentElement.style.fontSize = '16px';
-    document.documentElement.style.removeProperty('--reduced-motion');
-    document.documentElement.classList.remove('high-contrast');
+    setSelectedColor('green');
+    setIsCustomColor(false);
+    toast.success('Settings reset to defaults');
   };
-  
 
+  const handleAvatarUpdate = (newAvatarUrl: string) => {
+    // This will be handled by the AvatarUpload component
+    console.log('Avatar updated:', newAvatarUrl);
+  };
 
-  const handleFontSizeChange = (size: string) => {
-    setFontSize(size);
-    // Apply font size to document
-    const root = document.documentElement;
-    root.style.fontSize = size === 'small' ? '14px' : size === 'large' ? '18px' : '16px';
+  const handleFontSizeChange = (size: 'small' | 'medium' | 'large') => {
+    updateSetting('fontSize', size);
+    toast.success(`Font size changed to ${size}`);
   };
 
   const handleReducedMotion = (enabled: boolean) => {
-    setReducedMotion(enabled);
-    if (enabled) {
-      document.documentElement.style.setProperty('--reduced-motion', 'reduce');
-    } else {
-      document.documentElement.style.removeProperty('--reduced-motion');
-    }
+    updateSetting('reducedMotion', enabled);
+    toast.success(`Reduced motion ${enabled ? 'enabled' : 'disabled'}`);
   };
 
   const handleHighContrast = (enabled: boolean) => {
-    setHighContrast(enabled);
-    if (enabled) {
-      document.documentElement.classList.add('high-contrast');
-    } else {
-      document.documentElement.classList.remove('high-contrast');
-    }
+    updateSetting('highContrast', enabled);
+    toast.success(`High contrast ${enabled ? 'enabled' : 'disabled'}`);
   };
 
-
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -172,14 +238,14 @@ const Settings = () => {
                         <Sun className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="font-medium text-foreground">Light Mode</div>
-                        <div className="text-sm text-muted-foreground">Bright and clean interface</div>
+                        <h3 className="font-semibold text-foreground">Light Mode</h3>
+                        <p className="text-sm text-muted-foreground">Clean and bright interface</p>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <div className="h-3 bg-background border border-border rounded"></div>
-                      <div className="h-3 bg-muted rounded w-3/4"></div>
-                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                      <div className="h-2 bg-muted rounded"></div>
+                      <div className="h-2 bg-muted rounded w-3/4"></div>
+                      <div className="h-2 bg-muted rounded w-1/2"></div>
                     </div>
                   </div>
 
@@ -199,42 +265,68 @@ const Settings = () => {
                         <Moon className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="font-medium text-foreground">Dark Mode</div>
-                        <div className="text-sm text-muted-foreground">Easy on the eyes</div>
+                        <h3 className="font-semibold text-foreground">Dark Mode</h3>
+                        <p className="text-sm text-muted-foreground">Easy on the eyes</p>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <div className="h-3 bg-background border border-border rounded"></div>
-                      <div className="h-3 bg-muted rounded w-3/4"></div>
-                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                      <div className="h-2 bg-muted rounded"></div>
+                      <div className="h-2 bg-muted rounded w-3/4"></div>
+                      <div className="h-2 bg-muted rounded w-1/2"></div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Current Theme Info */}
+              {/* Theme Colors */}
               <div className="space-y-4">
-                <Label className="text-base font-medium text-foreground">Current Theme</Label>
-                <div className="p-4 bg-muted/50 border border-border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-foreground">
-                        {isDark ? 'Dark Theme' : 'Light Theme'}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Theme: {theme} | Dark Class: {document.documentElement.classList.contains('dark') ? 'Applied' : 'Not Applied'}
-                      </div>
+                <Label className="text-base font-medium">Theme Colors</Label>
+                <div className="grid grid-cols-4 gap-3">
+                  {predefinedColors.map((color) => (
+                    <div
+                      key={color.value}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                        selectedColor === color.value
+                          ? 'border-primary shadow-lg ring-2 ring-primary/20'
+                          : 'border-border hover:border-border/80'
+                      }`}
+                      onClick={() => handleColorChange(color.value)}
+                    >
+                      <div 
+                        className="w-full h-8 rounded mb-2"
+                        style={{ backgroundColor: `hsl(${color.hue}, 72%, 40%)` }}
+                      ></div>
+                      <p className="text-sm font-medium text-center">{color.name}</p>
                     </div>
-                    <Badge variant={isDark ? 'default' : 'secondary'} className="font-medium">
-                      {isDark ? 'Dark' : 'Light'}
-                    </Badge>
-                  </div>
+                  ))}
                 </div>
               </div>
 
-              <Separator />
+              {/* Custom Color */}
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Custom Color</Label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="color"
+                    value={`hsl(${settings.customHue}, 72%, 40%)`}
+                    onChange={handleCustomColorChange}
+                    className="w-16 h-12 rounded border cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <input
+                      type="range"
+                      min="0"
+                      max="360"
+                      value={settings.customHue}
+                      onChange={handleCustomColorChange}
+                      className="w-full"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Hue: {settings.customHue}°
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* Accessibility Settings */}
               <div className="space-y-4">
@@ -251,14 +343,14 @@ const Settings = () => {
                       <div className="text-sm text-muted-foreground">Adjust text size for better readability</div>
                     </div>
                     <div className="flex gap-2">
-                      {['small', 'medium', 'large'].map((size) => (
+                      {(['small', 'medium', 'large'] as const).map((size) => (
                         <Button
                           key={size}
-                          variant={fontSize === size ? 'default' : 'outline'}
+                          variant={settings.fontSize === size ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => handleFontSizeChange(size)}
                           className={`capitalize transition-all ${
-                            fontSize === size 
+                            settings.fontSize === size 
                               ? 'shadow-md ring-2 ring-primary/20' 
                               : 'hover:shadow-sm'
                           }`}
@@ -277,7 +369,7 @@ const Settings = () => {
                     <div className="text-sm text-muted-foreground">Minimize animations and transitions</div>
                   </div>
                   <Switch 
-                    checked={reducedMotion} 
+                    checked={settings.reducedMotion} 
                     onCheckedChange={handleReducedMotion}
                   />
                 </div>
@@ -289,7 +381,7 @@ const Settings = () => {
                     <div className="text-sm text-muted-foreground">Increase contrast for better visibility</div>
                   </div>
                   <Switch 
-                    checked={highContrast} 
+                    checked={settings.highContrast} 
                     onCheckedChange={handleHighContrast}
                   />
                 </div>
@@ -367,8 +459,62 @@ const Settings = () => {
                 Account Settings
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Account settings will be implemented here.</p>
+            <CardContent className="space-y-6">
+              {/* Profile Information */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Profile Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Full Name</Label>
+                    <input
+                      id="name"
+                      type="text"
+                      defaultValue={profile?.full_name || user?.email || ''}
+                      className="w-full p-2 border rounded-md bg-background text-foreground"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <input
+                      id="email"
+                      type="email"
+                      defaultValue={user?.email || ''}
+                      className="w-full p-2 border rounded-md bg-background text-foreground"
+                      placeholder="Enter your email"
+                      disabled
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Avatar Upload */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Profile Picture</h3>
+                <AvatarUpload
+                  currentAvatarUrl={profile?.avatar_url}
+                  onAvatarUpdate={handleAvatarUpdate}
+                />
+              </div>
+
+              {/* Account Actions */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Account Actions</h3>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Data
+                  </Button>
+                  <Button variant="outline" className="flex-1">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import Data
+                  </Button>
+                  <Button variant="destructive" className="flex-1">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Account
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -382,8 +528,50 @@ const Settings = () => {
                 Notification Settings
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Notification settings will be implemented here.</p>
+            <CardContent className="space-y-6">
+              {/* Email Notifications */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Email Notifications</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Email Notifications</div>
+                      <div className="text-sm text-muted-foreground">Receive notifications via email</div>
+                    </div>
+                    <Switch 
+                      checked={settings.emailNotifications} 
+                      onCheckedChange={(enabled) => updateSetting('emailNotifications', enabled)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Push Notifications */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Push Notifications</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Push Notifications</div>
+                      <div className="text-sm text-muted-foreground">Receive notifications on your device</div>
+                    </div>
+                    <Switch 
+                      checked={settings.pushNotifications} 
+                      onCheckedChange={(enabled) => updateSetting('pushNotifications', enabled)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Sound</div>
+                      <div className="text-sm text-muted-foreground">Play sound for notifications</div>
+                    </div>
+                    <Switch 
+                      checked={settings.soundEnabled} 
+                      onCheckedChange={(enabled) => updateSetting('soundEnabled', enabled)}
+                    />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -397,8 +585,57 @@ const Settings = () => {
                 Advanced Settings
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Advanced settings will be implemented here.</p>
+            <CardContent className="space-y-6">
+              {/* Performance */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Performance</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Auto Save</div>
+                      <div className="text-sm text-muted-foreground">Automatically save changes</div>
+                    </div>
+                    <Switch 
+                      checked={settings.autoSave} 
+                      onCheckedChange={(enabled) => updateSetting('autoSave', enabled)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Analytics */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Analytics</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Analytics</div>
+                      <div className="text-sm text-muted-foreground">Help improve the app with usage data</div>
+                    </div>
+                    <Switch 
+                      checked={settings.analyticsEnabled} 
+                      onCheckedChange={(enabled) => updateSetting('analyticsEnabled', enabled)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Developer Options */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Developer Options</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Debug Mode</div>
+                      <div className="text-sm text-muted-foreground">Enable debug logging</div>
+                    </div>
+                    <Switch 
+                      checked={settings.debugMode} 
+                      onCheckedChange={(enabled) => updateSetting('debugMode', enabled)}
+                    />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

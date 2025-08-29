@@ -1,724 +1,339 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocation, Link } from 'react-router-dom';
-import { useAdminAccess, AdminOnly } from '@/utils/adminAccess';
-
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  LayoutDashboard,
   Users,
   Truck,
   FileText,
   Settings,
-  User,
   MapPin,
   AlertTriangle,
-  Shield,
-  Calendar,
-  Clock,
-  Wrench,
-  LogOut,
-  CheckSquare,
-  TrendingUp,
-  BarChart3,
-  Route,
-  Briefcase,
-  Building2,
-  Activity,
-  Database,
-  Network,
-  ChevronDown,
-  ChevronRight,
-  DollarSign,
-  Mail,
-  CircleDot,
-  Scale,
   Fuel,
-  Package,
+  HelpCircle,
   Bell,
+  Package,
+  ClipboardList,
+  Zap,
+  UserCheck,
+  CircleCheck,
+  ChevronRight,
+  MoreHorizontal,
+  Wrench,
+  Clock,
+  FileCheck,
+  ArrowUpRight,
+  Calendar,
+  School,
   Train,
-  UserPlus,
+  Briefcase,
+  DollarSign,
+  Shield,
+  ClipboardCheck,
+  CheckSquare,
+  AlertCircle,
+  Mail,
+  Warehouse,
+  BarChart,
+  Activity,
+  Bot,
   Ticket,
-  HelpCircle
+  BookOpen,
+  Code,
+  Cloud,
+  TrendingUp,
+  Route,
+  LayoutDashboard,
+  MessageSquare,
+  Building2,
+  Smartphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const TransportSidebar = () => {
   const { profile, user } = useAuth();
-  const { isAdmin, hasAdminPrivileges } = useAdminAccess();
   const location = useLocation();
-  const { toast } = useToast();
   const navigate = useNavigate();
-
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const { toast } = useToast();
+  const { state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to sign out',
-        variant: 'destructive',
-      });
-    } else {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error && !error.message?.includes('session')) {
+        toast({
+          title: 'Error',
+          description: 'Failed to sign out',
+          variant: 'destructive',
+        });
+      } else {
+        navigate('/auth');
+      }
+    } catch (err) {
       navigate('/auth');
     }
   };
 
-  const getUserInitials = () => {
-    if (profile?.first_name && profile?.last_name) {
-      return `${profile.first_name.charAt(0)}${profile.last_name.charAt(0)}`.toUpperCase();
-    }
-    if (profile?.first_name) {
-      return profile.first_name.charAt(0).toUpperCase();
-    }
-    if (user?.email) {
-      return user.email.charAt(0).toUpperCase();
-    }
-    return 'U';
-  };
-
-  const getFullName = () => {
-    if (profile?.first_name && profile?.last_name) {
-      return `${profile.first_name} ${profile.last_name}`;
-    }
-    if (profile?.first_name) {
-      return profile.first_name;
-    }
-    return user?.email || 'User';
-  };
-
-  // Transport-focused navigation based on role
-  const getNavigationSections = () => {
-    if (!profile) return [];
-
-    const baseOverview = [
-      {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutDashboard,
-        description: 'Main overview'
+  const toggleExpanded = (title: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(title)) {
+        newSet.delete(title);
+      } else {
+        newSet.add(title);
       }
-    ];
+      return newSet;
+    });
+  };
 
-    switch (profile.role) {
-      case 'admin':
-      case 'council':
-        return [
-          {
-            title: 'Overview',
-            items: [
-              ...baseOverview,
-              {
-                title: 'Analytics',
-                url: '/analytics',
-                icon: TrendingUp,
-                description: 'Performance metrics'
-              }
-            ]
-          },
-          {
-            title: 'Fleet Management',
-            items: [
-              {
-                title: 'Vehicles',
-                url: '/vehicles',
-                icon: Truck,
-                description: 'Fleet management',
-                badge: { text: 'MOT Due', variant: 'destructive' } // Example badge
-              },
-              {
-                title: 'Drivers',
-                url: '/drivers',
-                icon: Users,
-                description: 'Driver management'
-              },
-              {
-                title: 'Mechanics',
-                url: '/mechanics',
-                icon: Wrench,
-                description: 'Maintenance staff'
-              },
-              {
-                title: 'Tire Management',
-                url: '/admin/tire-management',
-                icon: CircleDot,
-                description: 'Tire inventory and tracking'
-              },
-              {
-                title: 'Infringement Management',
-                url: '/admin/infringement-management',
-                icon: Scale,
-                description: 'Driver infringement tracking'
-              },
-              {
-                title: 'Fuel Management',
-                url: '/fuel-management',
-                icon: Fuel,
-                description: 'Fuel tracking and analytics'
-              }
-            ]
-          },
-          {
-            title: 'Operations',
-            items: [
-              {
-                title: 'Jobs',
-                url: '/jobs',
-                icon: Briefcase,
-                description: 'Job assignments'
-              },
-              {
-                title: 'Schedule',
-                url: '/admin-schedule',
-                icon: Calendar,
-                description: 'Resource scheduling'
-              },
-              {
-                title: 'School Routes',
-                url: '/routes',
-                icon: Route,
-                description: 'School route management'
-              },
-              {
-                title: 'Rail Replacement',
-                url: '/rail-replacement',
-                icon: Train,
-                description: 'Rail replacement bus services'
-              },
-              {
-                title: 'Personal Assistants',
-                url: '/personal-assistants',
-                icon: UserPlus,
-                description: 'Manage Personal Assistants for school routes'
-              },
-              {
-                title: 'Route Planning',
-                url: '/route-planning',
-                icon: MapPin,
-                description: 'Advanced route planning & pricing'
-              }
-            ]
-          },
-          {
-            title: 'Financial',
-            items: [
-              {
-                title: 'Invoice Management',
-                url: '/invoice-management',
-                icon: FileText,
-                description: 'Create and manage invoices'
-              },
-              {
-                title: 'Quotation Management',
-                url: '/quotation-management',
-                icon: DollarSign,
-                description: 'View and manage customer quotations'
-              },
-              {
-                title: 'Inventory Management',
-                url: '/admin/inventory',
-                icon: Package,
-                description: 'Parts inventory and approval workflows',
-                badge: { text: 'New', variant: 'default' }
-              }
-            ]
-          },
-          {
-            title: 'Communication',
-            items: [
-              {
-                title: 'Email Management',
-                url: '/admin/emails',
-                icon: Mail,
-                description: 'Send emails and manage templates'
-              },
-              {
-                title: 'Advanced Notifications',
-                url: '/notifications',
-                icon: Bell,
-                description: 'Send and manage notifications'
-              }
-            ]
-          },
-          {
-            title: 'Compliance',
-            items: [
-              {
-                title: 'Compliance Dashboard',
-                url: '/admin/compliance-dashboard',
-                icon: Activity,
-                description: 'Real-time compliance monitoring'
-              },
-              {
-                title: 'Tachograph Manager',
-                url: '/admin/tachograph-management',
-                icon: Clock,
-                description: 'Digital & analogue tachograph management'
-              },
-              {
-                title: 'Inspections',
-                url: '/inspections',
-                icon: CheckSquare,
-                description: 'Vehicle inspections'
-              },
-              {
-                title: 'Vehicle Check Questions',
-                url: '/admin/smart-inspections',
-                icon: CheckSquare,
-                description: 'Advanced inspection system'
-              },
-              {
-                title: 'Licenses',
-                url: '/licenses',
-                icon: Shield,
-                description: 'License tracking'
-              },
-              {
-                title: 'Documents',
-                url: '/documents',
-                icon: FileText,
-                description: 'Document management'
-              },
-              {
-                title: 'Incidents',
-                url: '/incident-reports',
-                icon: AlertTriangle,
-                description: 'Incident reports'
-              }
-            ]
-          },
-          {
-            title: 'Reports',
-            items: [
-              {
-                title: 'Fleet Reports',
-                url: '/reports/fleet',
-                icon: BarChart3,
-                description: 'Fleet analytics'
-              },
-              {
-                title: 'Compliance Reports',
-                url: '/reports/compliance',
-                icon: Shield,
-                description: 'Compliance analytics'
-              }
-            ]
-          },
-          {
-            title: 'Support & Help',
-            items: [
-              {
-                title: 'Support Tickets',
-                url: '/admin/support-tickets',
-                icon: Ticket,
-                description: 'Manage support tickets and requests'
-              },
-              {
-                title: 'Help & Documentation',
-                url: '/help-support',
-                icon: HelpCircle,
-                description: 'Help center and documentation'
-              }
-            ]
-          }
-        ];
-
-      case 'driver':
-        return [
-          {
-            title: 'My Dashboard',
-            items: baseOverview
-          },
-          {
-            title: 'My Work',
-            items: [
-              {
-                title: 'My Jobs',
-                url: '/driver-jobs',
-                icon: Briefcase,
-                description: 'Current assignments'
-              },
-              {
-                title: 'My Schedule',
-                url: '/driver-schedule',
-                icon: Calendar,
-                description: 'Today\'s schedule'
-              },
-              {
-                title: 'Time Clock',
-                url: '/time-management',
-                icon: Clock,
-                description: 'Clock in/out'
-              }
-            ]
-          },
-          {
-            title: 'Vehicle & Compliance',
-            items: [
-              {
-                title: 'Vehicle Checks',
-                url: '/driver/vehicle-checks',
-                icon: CheckSquare,
-                description: 'Daily inspections'
-              },
-              {
-                title: 'Vehicle Inspections',
-                url: '/vehicle-inspections',
-                icon: CheckSquare,
-                description: 'Smart inspection system'
-              },
-              {
-                title: 'My Compliance',
-                url: '/driver-compliance',
-                icon: Shield,
-                description: 'License status'
-              },
-              {
-                title: 'Documents',
-                url: '/driver/documents',
-                icon: FileText,
-                description: 'My documents'
-              },
-              {
-                title: 'Fuel System',
-                url: '/driver/fuel',
-                icon: Fuel,
-                description: 'Record fuel purchases'
-              }
-            ]
-          },
-          {
-            title: 'Communication',
-            items: [
-              {
-                title: 'Notifications',
-                url: '/notifications',
-                icon: Bell,
-                description: 'Send and receive notifications'
-              }
-            ]
-          }
-        ];
-
-      case 'parent':
-        return [
-          {
-            title: 'My Family',
-            items: [
-              {
-                title: 'Parent Dashboard',
-                url: '/parent/dashboard',
-                icon: LayoutDashboard,
-                description: 'Track your children\'s transportation'
-              },
-              {
-                title: 'Children',
-                url: '/parent/children',
-                icon: Users,
-                description: 'Manage children information'
-              }
-            ]
-          },
-          {
-            title: 'Transportation',
-            items: [
-              {
-                title: 'Live Tracking',
-                url: '/parent/tracking',
-                icon: MapPin,
-                description: 'Track bus in real-time'
-              },
-              {
-                title: 'Schedule',
-                url: '/parent/schedule',
-                icon: Calendar,
-                description: 'Transport timetable'
-              },
-              {
-                title: 'Communication',
-                url: '/parent/communication',
-                icon: Mail,
-                description: 'Contact transport company'
-              },
-              {
-                title: 'Notifications',
-                url: '/notifications',
-                icon: Bell,
-                description: 'Send and receive notifications'
-              }
-            ]
-          }
-        ];
-
-      case 'mechanic':
-        return [
-          {
-            title: 'Workshop',
-            items: [
-              ...baseOverview,
-              {
-                title: 'Work Orders',
-                url: '/work-orders',
-                icon: Wrench,
-                description: 'Assigned tasks'
-              }
-            ]
-          },
-          {
-            title: 'Inspections',
-            items: [
-              {
-                title: 'Vehicle Inspections',
-                url: '/vehicle-inspections',
-                icon: CheckSquare,
-                description: 'Inspection reports'
-              },
-              {
-                title: 'Defect Reports',
-                url: '/defects',
-                icon: AlertTriangle,
-                description: 'Defect tracking'
-              }
-            ]
-          },
-          {
-            title: 'Inventory',
-            items: [
-              {
-                title: 'Parts & Supplies',
-                url: '/inventory',
-                icon: FileText,
-                description: 'Parts management'
-              }
-            ]
-          },
-          {
-            title: 'Communication',
-            items: [
-              {
-                title: 'Notifications',
-                url: '/notifications',
-                icon: Bell,
-                description: 'Send and receive notifications'
-              }
-            ]
-          }
-        ];
-
-      default:
-        return [{ title: 'Overview', items: baseOverview }];
+  const getUserName = () => {
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name} ${profile.last_name}`.toLowerCase();
     }
+    return user?.email?.split('@')[0] || 'user';
   };
 
-  const navigationSections = getNavigationSections();
+  // Organized navigation items with collapsible groups - UPDATED TO MATCH ACTUAL ROUTES
+  const navigationItems = [
+    { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
+    
+    // Fleet Management Group
+    {
+      title: 'Fleet Management',
+      icon: Truck,
+      hasArrow: true,
+      items: [
+        { title: 'Vehicles', url: '/vehicles', icon: Truck },
+        { title: 'Drivers', url: '/drivers', icon: Users },
+        { title: 'Mechanics', url: '/mechanics', icon: Wrench },
+        { title: 'Tire Management', url: '/admin/tire-management', icon: Settings },
+        { title: 'Fuel Management', url: '/fuel-management', icon: Fuel },
+        { title: 'Defect Reports', url: '/defect-reports', icon: AlertTriangle },
+        { title: 'Parts & Supplies', url: '/parts-supplies', icon: Package },
+        { title: 'Work Orders', url: '/work-orders', icon: ClipboardList },
+      ]
+    },
+    
+    // Operations Group
+    {
+      title: 'Operations',
+      icon: Route,
+      hasArrow: true,
+      items: [
+        { title: 'Jobs', url: '/jobs', icon: Briefcase },
+        { title: 'Schedule', url: '/schedule', icon: Calendar },
+        { title: 'Route Planning', url: '/route-planning', icon: MapPin },
+        { title: 'School Routes', url: '/school-routes', icon: School },
+        { title: 'Rail Replacement', url: '/rail-replacement', icon: Train },
+        { title: 'Personal Assistants', url: '/personal-assistants', icon: Users },
+        { title: 'Time Management', url: '/time-management', icon: Clock },
+      ]
+    },
+    
+    // Finance Group
+    {
+      title: 'Finance',
+      icon: DollarSign,
+      hasArrow: true,
+      items: [
+        { title: 'Invoice Management', url: '/invoice-management', icon: FileText },
+        { title: 'Quotation Management', url: '/quotation-management', icon: FileText },
+        { title: 'Inventory Management', url: '/inventory-management', icon: Package },
+        { title: 'Subscriptions', url: '/subscriptions', icon: DollarSign },
+      ]
+    },
+    
+    // Compliance Group
+    {
+      title: 'Compliance',
+      icon: Shield,
+      hasArrow: true,
+      items: [
+        { title: 'Compliance Dashboard', url: '/compliance-dashboard', icon: Shield },
+        { title: 'Infringement Management', url: '/admin/infringement-management', icon: AlertTriangle },
+        { title: 'Tachograph Manager', url: '/tachograph-manager', icon: Activity },
+        { title: 'Inspections', url: '/inspections', icon: ClipboardCheck },
+        { title: 'Vehicle Check Questions', url: '/vehicle-check-questions', icon: CheckSquare },
+        { title: 'Licenses', url: '/licenses', icon: FileText },
+        { title: 'Incidents', url: '/incidents', icon: AlertCircle },
+        { title: 'Incident Reports', url: '/incident-reports', icon: AlertTriangle },
+      ]
+    },
+    
+    // Communication Group
+    {
+      title: 'Communication',
+      icon: MessageSquare,
+      hasArrow: true,
+      items: [
+        { title: 'Email Management', url: '/email-management', icon: Mail },
+        { title: 'Advanced Notifications', url: '/notifications', icon: Bell },
+        { title: 'Support Tickets', url: '/support-tickets', icon: Ticket },
+        { title: 'Admin Support Tickets', url: '/admin/support-tickets', icon: Ticket },
+      ]
+    },
+    
+    // Reports Group
+    {
+      title: 'Reports',
+      icon: BarChart,
+      hasArrow: true,
+      items: [
+        { title: 'Fleet Reports', url: '/fleet-reports', icon: BarChart },
+        { title: 'Compliance Reports', url: '/compliance-reports', icon: FileText },
+        { title: 'Analytics', url: '/analytics', icon: Activity },
+        { title: 'System Diagnostic', url: '/system-diagnostic', icon: Activity },
+      ]
+    },
+    
+    // Support & Tools
+    {
+      title: 'Support & Tools',
+      icon: HelpCircle,
+      hasArrow: true,
+      items: [
+        { title: 'AI Assistants', url: '/ai-assistants', icon: Bot },
+        { title: 'Help & Documentation', url: '/help-documentation', icon: BookOpen },
+        { title: 'Staff Directory', url: '/staff-directory', icon: Users },
+        { title: 'API Management', url: '/api-management', icon: Code },
+        { title: 'Documents', url: '/documents', icon: FileText },
+        { title: 'Admin Driver Documents', url: '/admin-driver-documents', icon: FileText },
+      ]
+    },
+  ];
 
-  const toggleSection = (sectionTitle: string) => {
-    setOpenSections(prev => ({
-      ...prev,
-      [sectionTitle]: !prev[sectionTitle]
-    }));
-  };
-
-  const isCurrentSectionActive = (items: any[]) => {
-    return items.some(item => location.pathname === item.url.split('?')[0]);
+  const isActiveRoute = (url: string) => {
+    return location.pathname === url || location.pathname.startsWith(url + '/');
   };
 
   return (
     <Sidebar 
-      className="border-r border-border bg-background sidebar"
-      collapsible="offcanvas"
+      className="bg-sidebar text-sidebar-foreground border-0"
     >
-      <SidebarHeader 
-        className="p-3 border-b border-border bg-card sidebar-header"
-      >
-        <Link to="/dashboard" className="flex items-center space-x-2 group-data-[collapsible=icon]:justify-center">
-          <div 
-            className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-r from-primary to-primary/80"
-          >
-            <Truck className="w-4 h-4 text-primary-foreground" />
+      <SidebarHeader className="px-4 py-3 border-b border-sidebar-border">
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg font-semibold">Logistics Solution Resources</span>
+              <ChevronRight className="h-4 w-4 text-sidebar-accent-foreground" />
+            </div>
+            <div className="text-sm text-sidebar-accent-foreground">{getUserName()}</div>
           </div>
-          <div className="group-data-[collapsible=icon]:hidden">
-            <span 
-              className="text-sm font-bold text-foreground"
-            >
-              Logistics Solution Resources
-            </span>
-          </div>
-        </Link>
+        </div>
       </SidebarHeader>
 
-      <SidebarContent 
-        className="overflow-y-auto py-2 bg-background sidebar-content"
-      >
-        {/* User Profile Section - Compact */}
-        {profile && (
-          <div className="px-2 mb-3">
-            <div 
-              className="flex items-center space-x-2 p-2 rounded-lg group-data-[collapsible=icon]:px-1 border border-border bg-card user-profile-section"
-            >
-              <Avatar className="h-7 w-7 flex-shrink-0">
-                <AvatarImage src={profile?.avatar_url || ''} alt={getFullName()} />
-                <AvatarFallback 
-                  className="text-primary-foreground text-xs bg-gradient-to-r from-primary to-primary/80"
-                >
-                  {getUserInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                <p 
-                  className="text-xs font-medium truncate text-foreground"
-                >
-                  {getFullName()}
-                </p>
-                <p 
-                  className="text-xs capitalize text-muted-foreground"
-                >
-                  {profile.role}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Navigation Sections with Dropdowns */}
-        <div className="space-y-1 px-2">
-          {navigationSections.map((section) => {
-            const isOpen = openSections[section.title] ?? isCurrentSectionActive(section.items);
-            const hasActiveItem = isCurrentSectionActive(section.items);
-            
-            return (
-              <Collapsible key={section.title} open={isOpen} onOpenChange={() => toggleSection(section.title)}>
-                <CollapsibleTrigger asChild>
-                  <button className={`
-                    w-full flex items-center justify-between px-2 py-2 rounded-md text-left transition-all duration-200 collapsible-trigger
-                    ${hasActiveItem 
-                      ? 'active' 
-                      : ''
-                    }
-                    group-data-[collapsible=icon]:justify-center
-                  `}>
-                    <span className="text-xs font-medium group-data-[collapsible=icon]:hidden">{section.title}</span>
-                    <div className="group-data-[collapsible=icon]:hidden">
-                      {isOpen ? <ChevronDown className="w-3 h-3 text-gray-600" /> : <ChevronRight className="w-3 h-3 text-gray-600" />}
-                    </div>
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-0.5 mt-1 group-data-[collapsible=icon]:hidden">
-                  {section.items.map((item) => {
-                    const isActive = location.pathname === item.url.split('?')[0];
-                    return (
-                      <Link
-                        key={item.title}
-                        to={item.url}
-                        className={`
-                          flex items-center space-x-2 px-3 py-1.5 ml-2 rounded-md transition-all duration-200 text-xs sidebar-item
-                          ${isActive 
-                            ? 'active' 
-                            : ''
-                          }
-                        `}
-                      >
-                        <item.icon className={`w-3.5 h-3.5 flex-shrink-0 nav-icon ${isActive ? 'active' : ''}`} />
-                        <span className="truncate font-medium">{item.title}</span>
-                        {item.badge && (
-                          <Badge variant={item.badge.variant as any} className="text-xs h-4">
-                            {item.badge.text}
-                          </Badge>
+      <SidebarContent className="px-3 py-2">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => {
+                const isExpanded = expandedItems.has(item.title);
+                const hasSubItems = item.items && item.items.length > 0;
+                const isActive = item.url ? isActiveRoute(item.url) : false;
+                
+                if (hasSubItems) {
+                  // Render group with sub-items
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <div>
+                        <button
+                          onClick={() => toggleExpanded(item.title)}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent",
+                            isExpanded && "bg-sidebar-accent/50"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4 shrink-0 text-sidebar-accent-foreground" />
+                          <span className="flex-1 text-sm text-left">{item.title}</span>
+                          <ChevronRight className={cn(
+                            "h-3 w-3 text-sidebar-accent-foreground transition-transform",
+                            isExpanded && "rotate-90"
+                          )} />
+                        </button>
+                        
+                        {isExpanded && (
+                          <div className="ml-3 pl-3 mt-1 border-l border-sidebar-border">
+                            {item.items.map((subItem) => {
+                              const isSubActive = isActiveRoute(subItem.url);
+                              return (
+                                <Link
+                                  key={subItem.title}
+                                  to={subItem.url}
+                                  className={cn(
+                                    "flex items-center gap-3 px-3 py-1.5 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent",
+                                    isSubActive && "bg-sidebar-accent"
+                                  )}
+                                >
+                                  <subItem.icon className={cn(
+                                    "h-3.5 w-3.5 shrink-0",
+                                    isSubActive ? "text-sidebar-foreground" : "text-sidebar-accent-foreground"
+                                  )} />
+                                  <span className="text-sm">{subItem.title}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
                         )}
-                      </Link>
-                    );
-                  })}
-                </CollapsibleContent>
-              </Collapsible>
-            );
-          })}
-        </div>
-
-        {/* Admin & Account Quick Links */}
-        <div className="mt-4 px-2 space-y-1">
-          <AdminOnly>
-            <div className="space-y-0.5">
-              <Link 
-                to="/staff-directory" 
-                className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-all duration-200 sidebar-item ${
-                  location.pathname === '/staff-directory' 
-                    ? 'active' 
-                    : ''
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5 nav-icon" />
-                <span className="group-data-[collapsible=icon]:hidden">Staff Directory</span>
-              </Link>
-              <Link 
-                to="/admin/api-management" 
-                className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-all duration-200 sidebar-item ${
-                  location.pathname === '/admin/api-management' 
-                    ? 'active' 
-                    : ''
-                }`}
-              >
-                <Network className="w-3.5 h-3.5 nav-icon" />
-                <span className="group-data-[collapsible=icon]:hidden">API Management</span>
-              </Link>
-            </div>
-          </AdminOnly>
-          
-          <div className="border-t border-border pt-2 space-y-0.5">
-            <Link 
-              to="/profile" 
-              className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-all duration-200 ${
-                location.pathname === '/profile' 
-                  ? 'bg-accent text-accent-foreground border border-border' 
-                  : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="group-data-[collapsible=icon]:hidden">Profile</span>
-            </Link>
-            <Link 
-              to={profile?.role === 'driver' ? '/driver/settings' : '/settings'} 
-              className={`flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs transition-all duration-200 ${
-                (profile?.role === 'driver' ? location.pathname === '/driver/settings' : location.pathname === '/settings') 
-                  ? 'bg-accent text-accent-foreground border border-border' 
-                  : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span className="group-data-[collapsible=icon]:hidden">Settings</span>
-            </Link>
-          </div>
-        </div>
+                      </div>
+                    </SidebarMenuItem>
+                  );
+                } else {
+                  // Render single item
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent",
+                          isActive && "bg-sidebar-accent"
+                        )}
+                      >
+                        <Link to={item.url} className="flex items-center gap-3 w-full">
+                          <item.icon className={cn(
+                            "h-4 w-4 shrink-0",
+                            isActive ? "text-sidebar-foreground" : "text-sidebar-accent-foreground"
+                          )} />
+                          <span className="text-sm">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
-      {/* Sign Out Footer */}
-      <SidebarFooter className="p-2 border-t border-border bg-muted/50 sidebar-footer">
-        <Button
-          onClick={handleSignOut}
-          variant="outline"
-          size="sm"
-          className="w-full flex items-center justify-center space-x-2 text-muted-foreground border-border hover:bg-accent hover:border-border/80 h-8 text-xs transition-all duration-200"
-        >
-          <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>
-        </Button>
+      <SidebarFooter className="px-3 py-3 mt-auto">
+        <div className="space-y-1">
+          <SidebarMenuButton
+            asChild
+            className="text-sidebar-foreground hover:bg-sidebar-accent rounded-lg px-3 py-2"
+          >
+            <Link to="/settings" className="flex items-center gap-3">
+              <Settings className="h-4 w-4 text-sidebar-accent-foreground" />
+              <span className="text-sm">Settings</span>
+            </Link>
+          </SidebarMenuButton>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

@@ -5,6 +5,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import SafeSidebarTrigger from './layout/SafeSidebarTrigger';
 import UserProfileDropdown from './header/UserProfileDropdown';
 import HeaderNotificationSystem from './notifications/HeaderNotificationSystem';
+import SubscriptionStatus from './header/SubscriptionStatus';
 
 
 const Header = () => {
@@ -80,9 +81,10 @@ const Header = () => {
             </div>
           )}
 
-          {/* Right Section - Notifications and Profile */}
+          {/* Right Section - Notifications, Subscription, and Profile */}
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             <HeaderNotificationSystem />
+            <SubscriptionStatus />
             <UserProfileDropdown />
           </div>
         </div>

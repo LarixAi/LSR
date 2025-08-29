@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/components/theme-provider';
 
 import { useAdminAccess } from '@/utils/adminAccess';
 import {
@@ -37,8 +38,14 @@ const MobileNavigation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const { isAdmin, hasAdminPrivileges } = useAdminAccess();
+
+  const isDark = theme === 'dark';
+  const toggleTheme = () => {
+    setTheme(isDark ? 'light' : 'dark');
+  };
 
   if (!isMobile) return null;
 

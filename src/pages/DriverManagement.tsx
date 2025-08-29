@@ -1,15 +1,35 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Plus, Users, UserCheck, UserX, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  Plus, 
+  Users, 
+  UserCheck, 
+  UserX, 
+  Clock, 
+  Search, 
+  MoreHorizontal,
+  Mail,
+  Car,
+  Globe,
+  Shield,
+  MapPin
+} from 'lucide-react';
 import { useDrivers } from '@/hooks/useDrivers';
-import DriversList from '@/components/drivers/DriversList';
 import AddDriverForm from '@/components/drivers/AddDriverForm';
 import { PasswordChangeDialog } from '@/components/admin/PasswordChangeDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
 
 export default function DriverManagement() {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const [addDriverOpen, setAddDriverOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
@@ -20,6 +40,10 @@ export default function DriverManagement() {
     last_name?: string;
     organization_id?: string;
   } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const { data: drivers = [], isLoading, error, refetch } = useDrivers();
 
   // Test Supabase connection
@@ -93,11 +117,80 @@ export default function DriverManagement() {
   const activeDrivers = drivers.filter(driver => driver.is_active).length;
   const inactiveDrivers = drivers.filter(driver => !driver.is_active).length;
   const newDrivers = drivers.filter(driver => {
-    const hireDate = driver.hire_date ? new Date(driver.hire_date) : null;
+    const hireDate = driver.created_at ? new Date(driver.created_at) : null;
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return hireDate && hireDate > thirtyDaysAgo;
   }).length;
+
+  // Filter drivers based on search and filters
+  const filteredDrivers = drivers.filter(driver => {
+    const matchesSearch = searchTerm === '' || 
+      `${driver.first_name} ${driver.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      driver.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && driver.is_active) ||
+      (statusFilter === 'inactive' && !driver.is_active);
+    
+    const matchesType = typeFilter === 'all' || driver.role === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDrivers(filteredDrivers.map(driver => driver.id));
+    } else {
+      setSelectedDrivers([]);
+    }
+  };
+
+  const handleSelectDriver = (driverId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedDrivers([...selectedDrivers, driverId]);
+    } else {
+      setSelectedDrivers(selectedDrivers.filter(id => id !== driverId));
+    }
+  };
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  };
+
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? 'bg-green-500' : 'bg-gray-400';
+  };
+
+  const getStatusText = (isActive: boolean) => {
+    return isActive ? 'Active' : 'No Access';
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return <Shield className="w-4 h-4" />;
+      case 'driver':
+        return <Car className="w-4 h-4" />;
+      default:
+        return <Users className="w-4 h-4" />;
+    }
+  };
+
+  const getRoleText = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Account Owner';
+      case 'driver':
+        return 'Driver';
+      default:
+        return 'Employee';
+    }
+  };
+
+  const handleDriverClick = (driverId: string) => {
+    navigate(`/drivers/${driverId}`);
+  };
 
   if (error) {
     return (
@@ -124,6 +217,7 @@ export default function DriverManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Driver Management</h1>
@@ -196,12 +290,175 @@ export default function DriverManagement() {
         </Card>
       </div>
 
-      {/* Drivers List */}
-      <DriversList 
-        drivers={drivers} 
-        isLoading={isLoading} 
-        onPasswordChange={handlePasswordChange}
-      />
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="User Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">No Access</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="User Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="driver">Driver</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline">Filters</Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Drivers Table */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedDrivers.length === filteredDrivers.length && filteredDrivers.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead className="cursor-pointer">
+                    <div className="flex items-center gap-1">
+                      Name
+                      <span className="text-gray-400">▲</span>
+                    </div>
+                  </TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>User Status</TableHead>
+                  <TableHead>User Type</TableHead>
+                  <TableHead>User Role</TableHead>
+                  <TableHead>Login Count</TableHead>
+                  <TableHead>Classifications</TableHead>
+                  <TableHead>Group</TableHead>
+                  <TableHead>Assigned Vehicles</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDrivers.map((driver) => (
+                  <TableRow 
+                    key={driver.id}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => handleDriverClick(driver.id)}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox 
+                        checked={selectedDrivers.includes(driver.id)}
+                        onCheckedChange={(checked) => handleSelectDriver(driver.id, checked as boolean)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-medium text-blue-600">
+                          {getInitials(driver.first_name, driver.last_name)}
+                        </div>
+                        <div>
+                          <div className="font-medium hover:text-blue-600 transition-colors">{driver.first_name} {driver.last_name}</div>
+                          <Badge variant="outline" className="text-xs">Sample</Badge>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <a href={`mailto:${driver.email}`} className="text-green-600 hover:underline flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        {driver.email}
+                      </a>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${getStatusColor(driver.is_active)}`}></div>
+                        <span className={driver.is_active ? 'underline cursor-pointer' : ''}>
+                          {getStatusText(driver.is_active)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        {getRoleIcon(driver.role)}
+                        <span>{getRoleText(driver.role)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Badge variant="secondary" className="text-xs">Employee</Badge>
+                        {driver.role === 'driver' && (
+                          <Badge variant="secondary" className="text-xs">Operator</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        <span>Main Office</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Car className="w-3 h-3" />
+                        <span className="text-green-600 hover:underline cursor-pointer">
+                          {driver.role === 'driver' ? '1001 [2020 Ford Transit]' : '-'}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {(!filteredDrivers || filteredDrivers.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center py-8">
+                      <div className="flex flex-col items-center space-y-2">
+                        <UserX className="w-8 h-8 text-gray-400" />
+                        <span className="text-gray-500">No drivers found</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {filteredDrivers.length > 0 && (
+            <div className="p-4 border-t">
+              <div className="flex justify-between items-center text-sm text-gray-600">
+                <span>1-{filteredDrivers.length} of {filteredDrivers.length}</span>
+                <span>Showing {filteredDrivers.length} results</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Add Driver Dialog */}
       <AddDriverForm

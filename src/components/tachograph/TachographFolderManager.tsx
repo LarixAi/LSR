@@ -28,7 +28,7 @@ const TachographFolderManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [selectedParentFolder, setSelectedParentFolder] = useState<string | null>(null);
+  const [selectedParentFolder, setSelectedParentFolder] = useState<string>('none');
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'files'>('name');
   const { toast } = useToast();
   const { profile } = useAuth();
@@ -40,29 +40,47 @@ const TachographFolderManager: React.FC = () => {
     queryFn: async () => {
       if (!profile?.organization_id) return [];
 
-      const { data, error } = await supabase
-        .from('tachograph_folders')
-        .select('*')
-        .eq('organization_id', profile.organization_id)
-        .order('name');
+      try {
+        const { data, error } = await supabase
+          .from('tachograph_folders')
+          .select('*')
+          .eq('organization_id', profile.organization_id)
+          .order('name');
 
-      if (error) {
-        console.error('Error fetching folders:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load folders",
-          variant: "destructive"
-        });
+        if (error) {
+          console.error('Error fetching folders:', error);
+          
+          // If table doesn't exist, show a helpful message
+          if (error.code === 'PGRST205') {
+            toast({
+              title: "Setup Required",
+              description: "Tachograph folders table needs to be created. Please contact your administrator.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Error",
+              description: "Failed to load folders",
+              variant: "destructive"
+            });
+          }
+          return [];
+        }
+
+        return data || [];
+      } catch (err) {
+        console.error('Unexpected error fetching folders:', err);
         return [];
       }
-
-      return data || [];
     },
-    enabled: !!profile?.organization_id
+    enabled: !!profile?.organization_id,
+    retry: false // Don't retry if table doesn't exist
   });
 
   // Transform flat data to hierarchical structure
   useEffect(() => {
+    if (!foldersData || !Array.isArray(foldersData)) return;
+    
     const buildHierarchy = (items: any[], parentId: string | null = null): TachographFolder[] => {
       return items
         .filter(item => item.parent_folder_id === parentId)
@@ -72,7 +90,8 @@ const TachographFolderManager: React.FC = () => {
         }));
     };
 
-    setFolders(buildHierarchy(foldersData));
+    const hierarchicalFolders = buildHierarchy(foldersData);
+    setFolders(hierarchicalFolders);
     setLoading(false);
   }, [foldersData]);
 
@@ -100,7 +119,7 @@ const TachographFolderManager: React.FC = () => {
         description: `Folder "${newFolderName}" created successfully.`
       });
       setNewFolderName('');
-      setSelectedParentFolder(null);
+      setSelectedParentFolder('none');
       setFolderDialogOpen(false);
     },
     onError: (error) => {
@@ -141,7 +160,7 @@ const TachographFolderManager: React.FC = () => {
     if (!newFolderName.trim()) return;
     createFolderMutation.mutate({
       name: newFolderName.trim(),
-      parent_folder_id: selectedParentFolder
+      parent_folder_id: selectedParentFolder === 'none' ? null : selectedParentFolder
     });
   };
 
@@ -219,6 +238,9 @@ const TachographFolderManager: React.FC = () => {
     );
   }
 
+  // Check if there was an error with table not existing
+  const hasTableError = foldersData.length === 0 && !isLoading;
+
   return (
     <Card>
       <CardHeader>
@@ -255,7 +277,51 @@ const TachographFolderManager: React.FC = () => {
       
       <CardContent>
         <div className="space-y-4">
-          {folders.length === 0 ? (
+          {hasTableError ? (
+            <div className="text-center py-8">
+              <Folder className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-2">Tachograph Folders Setup Required</p>
+              <p className="text-sm text-gray-500 mb-4">
+                The tachograph folders table needs to be created in the database.
+              </p>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="mr-2"
+                  variant="outline"
+                >
+                  Retry
+                </Button>
+                <Button 
+                  onClick={() => {
+                    // Copy the SQL to clipboard
+                    navigator.clipboard.writeText(`
+-- Run this SQL in your database:
+CREATE TABLE IF NOT EXISTS public.tachograph_folders (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    parent_folder_id UUID REFERENCES public.tachograph_folders(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    file_count INTEGER DEFAULT 0,
+    description TEXT,
+    is_active BOOLEAN DEFAULT true,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+                    `);
+                    toast({
+                      title: "SQL Copied",
+                      description: "Database setup SQL has been copied to clipboard"
+                    });
+                  }}
+                  variant="outline"
+                >
+                  Copy Setup SQL
+                </Button>
+              </div>
+            </div>
+          ) : folders.length === 0 ? (
             <div className="text-center py-8">
               <Folder className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No folders found</p>
@@ -301,7 +367,7 @@ const TachographFolderManager: React.FC = () => {
                     <SelectValue placeholder="Select parent folder" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No parent folder</SelectItem>
+                    <SelectItem value="none">No parent folder</SelectItem>
                     {folders.map(folder => (
                       <SelectItem key={folder.id} value={folder.id}>
                         {folder.name}
