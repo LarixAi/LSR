@@ -8,6 +8,8 @@ import { useVehicles, useDeleteVehicle, useVehicleStats, type Vehicle } from '@/
 import VehiclesList from '@/components/vehicles/VehiclesList';
 import EditVehicleDialog from '@/components/vehicles/EditVehicleDialog';
 import VehicleCreationWithInspections from '@/components/vehicles/VehicleCreationWithInspections';
+import ComplianceTab from '@/components/vehicles/ComplianceTab';
+import MaintenanceTab from '@/components/vehicles/MaintenanceTab';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
@@ -15,6 +17,7 @@ import PageLayout from '@/components/layout/PageLayout';
 export default function VehicleManagement() {
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
   
   // Use new React Query hooks
@@ -169,73 +172,81 @@ export default function VehicleManagement() {
         { value: "compliance", label: "Compliance" },
         { value: "maintenance", label: "Maintenance" }
       ]}
-      activeTab="overview"
-      onTabChange={() => {}}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
       isLoading={loading}
     >
 
-      {/* Compliance Quick Actions */}
-      {vehicles.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Compliance Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <div className="text-center">
-                  <div className="font-semibold">ORV Documentation</div>
-                  <div className="text-xs text-gray-600">Manage off-road declarations</div>
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <>
+          {/* Compliance Quick Actions */}
+          {vehicles.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Compliance Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <FileText className="h-6 w-6 text-blue-600" />
+                    <div className="text-center">
+                      <div className="font-semibold">ORV Documentation</div>
+                      <div className="text-xs text-gray-600">Manage off-road declarations</div>
+                    </div>
+                  </Button>
+                  
+                  <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <Clock className="h-6 w-6 text-orange-600" />
+                    <div className="text-center">
+                      <div className="font-semibold">BOR Return Process</div>
+                      <div className="text-xs text-gray-600">Vehicle return to service</div>
+                    </div>
+                  </Button>
+                  
+                  <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <TrendingUp className="h-6 w-6 text-green-600" />
+                    <div className="text-center">
+                      <div className="font-semibold">Compliance Reports</div>
+                      <div className="text-xs text-gray-600">View compliance analytics</div>
+                    </div>
+                  </Button>
                 </div>
-              </Button>
-              
-              <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-                <Clock className="h-6 w-6 text-orange-600" />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Empty State or Vehicles List */}
+          {!loading && vehicles.length === 0 ? (
+            <Card>
+              <CardContent className="p-8">
                 <div className="text-center">
-                  <div className="font-semibold">BOR Return Process</div>
-                  <div className="text-xs text-gray-600">Vehicle return to service</div>
+                  <Car className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Vehicles Found</h3>
+                  <p className="text-gray-600 mb-6">
+                    You haven't added any vehicles to your fleet yet. Start by adding your first vehicle with mandatory inspection schedules to get started with vehicle management and ORV/BOR compliance tracking.
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button onClick={handleAddVehicle} className="inline-flex items-center">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Your First Vehicle
+                    </Button>
+                    <Button onClick={handleOpenSettings} variant="outline" className="inline-flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configure Fleet Settings
+                    </Button>
+                  </div>
                 </div>
-              </Button>
-              
-              <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-                <div className="text-center">
-                  <div className="font-semibold">Compliance Reports</div>
-                  <div className="text-xs text-gray-600">View compliance analytics</div>
-                </div>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <VehiclesList />
+          )}
+        </>
       )}
 
-      {/* Empty State or Vehicles List */}
-      {!loading && vehicles.length === 0 ? (
-        <Card>
-          <CardContent className="p-8">
-            <div className="text-center">
-              <Car className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Vehicles Found</h3>
-              <p className="text-gray-600 mb-6">
-                You haven't added any vehicles to your fleet yet. Start by adding your first vehicle with mandatory inspection schedules to get started with vehicle management and ORV/BOR compliance tracking.
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Button onClick={handleAddVehicle} className="inline-flex items-center">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Vehicle
-                </Button>
-                <Button onClick={handleOpenSettings} variant="outline" className="inline-flex items-center">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configure Fleet Settings
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <VehiclesList />
-      )}
+      {activeTab === 'compliance' && <ComplianceTab />}
+      {activeTab === 'maintenance' && <MaintenanceTab />}
 
       {/* Edit Vehicle Dialog */}
       <EditVehicleDialog
