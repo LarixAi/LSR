@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Wrench, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Wrench,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
   Calendar,
   TrendingUp,
   Car,
@@ -19,7 +20,12 @@ import {
   Eye,
   Download,
   Plus,
-  CalendarDays,
+  Search,
+  Filter,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
   DollarSign,
   Users,
   Gauge,
@@ -29,28 +35,32 @@ import {
 import { format } from 'date-fns';
 
 interface MaintenanceData {
-  // Maintenance Schedules
   maintenanceSchedules: {
     id: string;
     vehicleId: string;
     vehicleNumber: string;
+    vehicleName: string;
+    vehicleImage?: string;
     maintenanceType: 'scheduled' | 'preventive' | 'corrective' | 'emergency';
     description: string;
     scheduledDate: string;
-    estimatedDuration: number; // hours
+    estimatedDuration: number;
     estimatedCost: number;
     priority: 'low' | 'medium' | 'high' | 'urgent';
     status: 'scheduled' | 'in_progress' | 'completed' | 'overdue' | 'cancelled';
     assignedMechanic?: string;
     partsRequired: string[];
     notes: string;
+    watchers?: string[];
+    totalCost?: number;
+    isLocked?: boolean;
   }[];
-  
-  // Service History
   serviceHistory: {
     id: string;
     vehicleId: string;
     vehicleNumber: string;
+    vehicleName: string;
+    vehicleImage?: string;
     serviceType: string;
     serviceDate: string;
     mileage: number;
@@ -61,13 +71,17 @@ interface MaintenanceData {
     nextServiceDate: string;
     nextServiceMileage: number;
     status: 'completed' | 'in_progress' | 'scheduled';
+    watchers?: string[];
+    priority?: string;
+    totalCost?: number;
+    isLocked?: boolean;
   }[];
-  
-  // Work Orders
   workOrders: {
     id: string;
     vehicleId: string;
     vehicleNumber: string;
+    vehicleName: string;
+    vehicleImage?: string;
     workOrderNumber: string;
     title: string;
     description: string;
@@ -85,44 +99,37 @@ interface MaintenanceData {
     location: string;
     partsRequired: string[];
     notes: string;
+    watchers?: string[];
+    totalCost?: number;
+    isLocked?: boolean;
   }[];
-  
-  // Inspections
   inspections: {
     id: string;
     vehicleId: string;
     vehicleNumber: string;
+    vehicleName: string;
+    vehicleImage?: string;
     inspectionType: 'daily' | 'weekly' | 'monthly' | 'annual' | 'pre_trip' | 'post_trip';
     inspectionDate: string;
     inspector: string;
     status: 'pass' | 'fail' | 'conditional_pass';
-    score: number; // percentage
-    defects: {
-      id: string;
-      description: string;
-      severity: 'minor' | 'major' | 'critical';
-      rectified: boolean;
-      rectificationDate?: string;
-    }[];
+    score: number;
+    defects: { id: string; description: string; severity: 'minor' | 'major' | 'critical'; rectified: boolean; rectificationDate?: string; }[];
     notes: string;
     nextInspectionDate: string;
+    watchers?: string[];
+    priority?: string;
+    totalCost?: number;
+    isLocked?: boolean;
   }[];
-  
-  // Maintenance Statistics
-  stats: {
-    totalVehicles: number;
-    vehiclesInMaintenance: number;
-    scheduledMaintenance: number;
-    overdueMaintenance: number;
-    completedThisMonth: number;
-    totalCostThisMonth: number;
-    averageRepairTime: number; // hours
-    maintenanceEfficiency: number; // percentage
-  };
 }
 
 const MaintenanceTab: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [vehicleFilter, setVehicleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
 
   // Mock maintenance data
   const maintenanceData: MaintenanceData = {
@@ -131,230 +138,162 @@ const MaintenanceTab: React.FC = () => {
         id: 'ms-1',
         vehicleId: 'v1',
         vehicleNumber: 'BUS001',
+        vehicleName: '2016 Ford F-150',
         maintenanceType: 'scheduled',
-        description: 'Annual service and MOT preparation',
+        description: 'Engine Oil & Filter Replacement',
         scheduledDate: '2024-09-15',
-        estimatedDuration: 8,
-        estimatedCost: 1200,
-        priority: 'high',
+        estimatedDuration: 2,
+        estimatedCost: 150.00,
+        priority: 'medium',
         status: 'scheduled',
         assignedMechanic: 'John Smith',
-        partsRequired: ['Oil filter', 'Air filter', 'Brake pads'],
-        notes: 'Include full brake system inspection'
+        partsRequired: ['Oil Filter', 'Engine Oil'],
+        notes: 'Regular maintenance schedule',
+        totalCost: 150.00
       },
       {
         id: 'ms-2',
         vehicleId: 'v2',
-        vehicleNumber: 'BUS002',
-        maintenanceType: 'corrective',
-        description: 'Engine fault diagnosis and repair',
-        scheduledDate: '2024-08-30',
-        estimatedDuration: 12,
-        estimatedCost: 2500,
-        priority: 'urgent',
-        status: 'in_progress',
-        assignedMechanic: 'Mike Johnson',
-        partsRequired: ['Engine sensors', 'ECU module'],
-        notes: 'Engine warning light investigation required'
-      },
-      {
-        id: 'ms-3',
-        vehicleId: 'v3',
-        vehicleNumber: 'BUS003',
+        vehicleNumber: 'NBG-001',
+        vehicleName: '2014 Chevrolet Express Cargo',
         maintenanceType: 'preventive',
-        description: 'Brake system maintenance',
+        description: 'Brake Inspection & Service',
         scheduledDate: '2024-09-20',
-        estimatedDuration: 6,
-        estimatedCost: 800,
-        priority: 'medium',
+        estimatedDuration: 4,
+        estimatedCost: 300.00,
+        priority: 'high',
         status: 'scheduled',
-        partsRequired: ['Brake fluid', 'Brake pads'],
-        notes: 'Routine brake system check'
+        assignedMechanic: 'Mike Johnson',
+        partsRequired: ['Brake Pads', 'Brake Fluid'],
+        notes: 'Preventive maintenance',
+        totalCost: 300.00
       }
     ],
-    
     serviceHistory: [
       {
         id: 'sh-1',
         vehicleId: 'v1',
         vehicleNumber: 'BUS001',
-        serviceType: 'Annual Service',
-        serviceDate: '2024-07-15',
-        mileage: 45000,
+        vehicleName: '2016 Ford F-150',
+        serviceType: 'Engine Oil & Filter Replacement',
+        serviceDate: '2024-08-10',
+        mileage: 55208,
         mechanic: 'John Smith',
-        cost: 1100,
-        description: 'Full annual service including oil change, filters, and safety checks',
-        partsUsed: ['Oil filter', 'Air filter', 'Fuel filter', 'Brake fluid'],
-        nextServiceDate: '2025-07-15',
-        nextServiceMileage: 55000,
-        status: 'completed'
+        cost: 360.94,
+        description: 'Regular oil change and filter replacement',
+        partsUsed: ['Oil Filter', 'Engine Oil', 'Drain Plug Gasket'],
+        nextServiceDate: '2024-11-10',
+        nextServiceMileage: 60208,
+        status: 'completed',
+        totalCost: 360.94
       },
       {
         id: 'sh-2',
         vehicleId: 'v2',
-        vehicleNumber: 'BUS002',
-        serviceType: 'Brake Repair',
-        serviceDate: '2024-08-10',
-        mileage: 38000,
+        vehicleNumber: 'NBG-001',
+        vehicleName: '2014 Chevrolet Express Cargo',
+        serviceType: 'Transmission Fluid Drain & Refill',
+        serviceDate: '2024-07-26',
+        mileage: 134358,
         mechanic: 'Mike Johnson',
-        cost: 650,
-        description: 'Replaced front brake pads and discs',
-        partsUsed: ['Front brake pads', 'Front brake discs', 'Brake fluid'],
-        nextServiceDate: '2024-11-10',
-        nextServiceMileage: 43000,
-        status: 'completed'
-      },
-      {
-        id: 'sh-3',
-        vehicleId: 'v3',
-        vehicleNumber: 'BUS003',
-        serviceType: 'Preventive Maintenance',
-        serviceDate: '2024-08-25',
-        mileage: 52000,
-        mechanic: 'Sarah Wilson',
-        cost: 450,
-        description: 'Routine maintenance check and minor adjustments',
-        partsUsed: ['Oil filter', 'Air filter'],
-        nextServiceDate: '2024-11-25',
-        nextServiceMileage: 57000,
-        status: 'completed'
+        cost: 243.77,
+        description: 'Transmission fluid service',
+        partsUsed: ['Transmission Fluid', 'Filter'],
+        nextServiceDate: '2024-10-26',
+        nextServiceMileage: 139358,
+        status: 'completed',
+        totalCost: 243.77
       }
     ],
-    
     workOrders: [
       {
         id: 'wo-1',
         vehicleId: 'v1',
         vehicleNumber: 'BUS001',
+        vehicleName: '2016 Ford F-150',
         workOrderNumber: 'WO-2024-001',
-        title: 'Engine Performance Issue',
-        description: 'Engine running rough, needs diagnostic and repair',
-        priority: 'high',
-        status: 'in_progress',
-        workType: 'corrective',
-        estimatedHours: 8,
-        actualHours: 6,
-        estimatedCost: 1500,
-        actualCost: 1200,
-        scheduledDate: '2024-08-28',
-        startedDate: '2024-08-28',
+        title: 'Engine Oil & Filter Replacement',
+        description: 'Regular maintenance service',
+        priority: 'medium',
+        status: 'completed',
+        workType: 'preventive',
+        estimatedHours: 2,
+        actualHours: 1.5,
+        estimatedCost: 200.00,
+        actualCost: 360.94,
+        scheduledDate: '2024-08-10',
+        startedDate: '2024-08-10T08:00:00Z',
+        completedDate: '2024-08-10T09:30:00Z',
         assignedMechanic: 'John Smith',
-        location: 'Main Workshop',
-        partsRequired: ['Spark plugs', 'Ignition coils'],
-        notes: 'Engine diagnostic completed, replacing ignition components'
+        location: 'Main Garage',
+        partsRequired: ['Oil Filter', 'Engine Oil'],
+        notes: 'Service completed successfully',
+        totalCost: 360.94
       },
       {
         id: 'wo-2',
         vehicleId: 'v2',
-        vehicleNumber: 'BUS002',
+        vehicleNumber: 'NBG-001',
+        vehicleName: '2014 Chevrolet Express Cargo',
         workOrderNumber: 'WO-2024-002',
-        title: 'Air Conditioning Repair',
-        description: 'AC not cooling properly, needs refrigerant check and repair',
-        priority: 'medium',
-        status: 'open',
+        title: 'Tire Replacement',
+        description: 'Replace worn tires',
+        priority: 'high',
+        status: 'completed',
         workType: 'corrective',
-        estimatedHours: 4,
-        estimatedCost: 800,
-        scheduledDate: '2024-09-05',
+        estimatedHours: 3,
+        actualHours: 2.5,
+        estimatedCost: 500.00,
+        actualCost: 534.00,
+        scheduledDate: '2024-07-15',
+        startedDate: '2024-07-15T10:00:00Z',
+        completedDate: '2024-07-15T12:30:00Z',
         assignedMechanic: 'Mike Johnson',
-        location: 'Main Workshop',
-        partsRequired: ['Refrigerant', 'AC filter'],
-        notes: 'Customer reported AC not working effectively'
-      },
-      {
-        id: 'wo-3',
-        vehicleId: 'v3',
-        vehicleNumber: 'BUS003',
-        workOrderNumber: 'WO-2024-003',
-        title: 'Scheduled Inspection',
-        description: 'Monthly safety inspection and maintenance check',
-        priority: 'low',
-        status: 'scheduled',
-        workType: 'preventive',
-        estimatedHours: 2,
-        estimatedCost: 200,
-        scheduledDate: '2024-09-10',
-        assignedMechanic: 'Sarah Wilson',
-        location: 'Main Workshop',
-        partsRequired: [],
-        notes: 'Routine monthly inspection'
+        location: 'Main Garage',
+        partsRequired: ['Tires', 'Wheel Balance'],
+        notes: 'All four tires replaced',
+        totalCost: 534.00
       }
     ],
-    
     inspections: [
       {
         id: 'insp-1',
         vehicleId: 'v1',
         vehicleNumber: 'BUS001',
+        vehicleName: '2016 Ford F-150',
         inspectionType: 'annual',
-        inspectionDate: '2024-07-20',
-        inspector: 'David Brown',
+        inspectionDate: '2024-08-10',
+        inspector: 'John Smith',
         status: 'pass',
         score: 95,
-        defects: [
-          {
-            id: 'def-1',
-            description: 'Minor wear on brake pads',
-            severity: 'minor',
-            rectified: true,
-            rectificationDate: '2024-07-21'
-          }
-        ],
-        notes: 'Vehicle passed annual inspection with minor brake pad replacement',
-        nextInspectionDate: '2025-07-20'
+        defects: [],
+        notes: 'Vehicle passed annual inspection',
+        nextInspectionDate: '2025-08-10',
+        totalCost: 150.00
       },
       {
         id: 'insp-2',
         vehicleId: 'v2',
-        vehicleNumber: 'BUS002',
-        inspectionType: 'monthly',
+        vehicleNumber: 'NBG-001',
+        vehicleName: '2014 Chevrolet Express Cargo',
+        inspectionType: 'pre_trip',
         inspectionDate: '2024-08-15',
-        inspector: 'Sarah Wilson',
+        inspector: 'Mike Johnson',
         status: 'conditional_pass',
         score: 85,
         defects: [
           {
-            id: 'def-2',
-            description: 'Engine warning light on',
-            severity: 'major',
-            rectified: false
-          },
-          {
-            id: 'def-3',
-            description: 'Wiper blade needs replacement',
+            id: 'def-1',
+            description: 'Minor brake wear',
             severity: 'minor',
-            rectified: true,
-            rectificationDate: '2024-08-16'
+            rectified: false
           }
         ],
-        notes: 'Engine issue needs investigation, wiper blade replaced',
-        nextInspectionDate: '2024-09-15'
-      },
-      {
-        id: 'insp-3',
-        vehicleId: 'v3',
-        vehicleNumber: 'BUS003',
-        inspectionType: 'daily',
-        inspectionDate: '2024-08-28',
-        inspector: 'Mike Johnson',
-        status: 'pass',
-        score: 100,
-        defects: [],
-        notes: 'All systems functioning correctly',
-        nextInspectionDate: '2024-08-29'
+        notes: 'Minor issues found, safe to operate',
+        nextInspectionDate: '2024-08-16',
+        totalCost: 0
       }
-    ],
-    
-    stats: {
-      totalVehicles: 15,
-      vehiclesInMaintenance: 3,
-      scheduledMaintenance: 8,
-      overdueMaintenance: 2,
-      completedThisMonth: 12,
-      totalCostThisMonth: 8500,
-      averageRepairTime: 6.5,
-      maintenanceEfficiency: 88
-    }
+    ]
   };
 
   const getStatusColor = (status: string) => {
@@ -362,549 +301,321 @@ const MaintenanceTab: React.FC = () => {
       case 'completed':
       case 'pass':
       case 'scheduled':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800';
       case 'in_progress':
-      case 'conditional_pass':
       case 'assigned':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'conditional_pass':
+        return 'bg-yellow-100 text-yellow-800';
       case 'overdue':
       case 'fail':
-      case 'urgent':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'open':
-      case 'on_hold':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 text-red-800';
       case 'high':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-orange-100 text-orange-800';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-100 text-yellow-800';
       case 'low':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'major':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'minor':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  const renderVehicleCell = (item: any) => (
+    <div className="flex items-center space-x-3">
+      <Checkbox />
+      <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+        <Car className="w-4 h-4 text-gray-600" />
+      </div>
+      <div className="flex items-center space-x-2">
+        <span className="font-medium">{item.vehicleNumber}</span>
+        <span className="text-gray-500">[{item.vehicleName}]</span>
+        {item.isLocked && <Lock className="w-3 h-3 text-gray-400" />}
+        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+      </div>
+    </div>
+  );
+
+  const renderTable = (data: any[], columns: any[]) => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-80"
+            />
+          </div>
+          <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Vehicle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Vehicles</SelectItem>
+              <SelectItem value="bus001">BUS001</SelectItem>
+              <SelectItem value="nbg001">NBG-001</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm">
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+          <Select defaultValue="save-view">
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="save-view">Save View</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">Maintenance Records</CardTitle>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <span>1 - {data.length} of {data.length}</span>
+            <Button variant="outline" size="sm" disabled>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" disabled>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableHead key={column.key}>{column.label}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((item) => (
+                <TableRow key={item.id}>
+                  {columns.map((column) => (
+                    <TableCell key={column.key}>
+                      {column.render ? column.render(item) : item[column.key]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const scheduleColumns = [
+    { key: 'vehicle', label: 'Vehicle', render: renderVehicleCell },
+    { key: 'scheduledDate', label: 'Scheduled Date', render: (item: any) => format(new Date(item.scheduledDate), 'MM/dd/yyyy h:mm a') },
+    { key: 'watchers', label: 'Watchers', render: () => '-' },
+    { key: 'priority', label: 'Priority', render: (item: any) => (
+      <Badge className={getPriorityColor(item.priority)}>
+        {item.priority.charAt(0).toUpperCase() + item.priority.slice(1)}
+      </Badge>
+    )},
+    { key: 'maintenanceType', label: 'Maintenance Type', render: (item: any) => item.maintenanceType.charAt(0).toUpperCase() + item.maintenanceType.slice(1) },
+    { key: 'description', label: 'Description', render: (item: any) => item.description },
+    { key: 'status', label: 'Status', render: (item: any) => (
+      <Badge className={getStatusColor(item.status)}>
+        {item.status.replace('_', ' ')}
+      </Badge>
+    )},
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+  ];
+
+  const serviceColumns = [
+    { key: 'vehicle', label: 'Vehicle', render: renderVehicleCell },
+    { key: 'serviceDate', label: 'Service Date', render: (item: any) => format(new Date(item.serviceDate), 'MM/dd/yyyy h:mm a') },
+    { key: 'watchers', label: 'Watchers', render: () => '-' },
+    { key: 'priority', label: 'Priority', render: () => '-' },
+    { key: 'mileage', label: 'Meter', render: (item: any) => `${item.mileage.toLocaleString()} mi` },
+    { key: 'serviceType', label: 'Service Tasks', render: (item: any) => item.serviceType },
+    { key: 'issues', label: 'Issues', render: () => '-' },
+    { key: 'mechanic', label: 'Vendor', render: (item: any) => item.mechanic },
+    { key: 'totalCost', label: 'Total', render: (item: any) => `$${item.totalCost.toFixed(2)}` }
+  ];
+
+  const workOrderColumns = [
+    { key: 'vehicle', label: 'Vehicle', render: renderVehicleCell },
+    { key: 'scheduledDate', label: 'Scheduled Date', render: (item: any) => format(new Date(item.scheduledDate), 'MM/dd/yyyy h:mm a') },
+    { key: 'watchers', label: 'Watchers', render: () => '-' },
+    { key: 'priority', label: 'Priority', render: (item: any) => (
+      <Badge className={getPriorityColor(item.priority)}>
+        {item.priority.charAt(0).toUpperCase() + item.priority.slice(1)}
+      </Badge>
+    )},
+    { key: 'workOrderNumber', label: 'Work Order', render: (item: any) => item.workOrderNumber },
+    { key: 'title', label: 'Title', render: (item: any) => item.title },
+    { key: 'status', label: 'Status', render: (item: any) => (
+      <Badge className={getStatusColor(item.status)}>
+        {item.status.replace('_', ' ')}
+      </Badge>
+    )},
+    { key: 'totalCost', label: 'Total', render: (item: any) => `$${item.totalCost.toFixed(2)}` }
+  ];
+
+  const inspectionColumns = [
+    { key: 'vehicle', label: 'Vehicle', render: renderVehicleCell },
+    { key: 'inspectionDate', label: 'Inspection Date', render: (item: any) => format(new Date(item.inspectionDate), 'MM/dd/yyyy h:mm a') },
+    { key: 'watchers', label: 'Watchers', render: () => '-' },
+    { key: 'priority', label: 'Priority', render: () => '-' },
+    { key: 'inspectionType', label: 'Inspection Type', render: (item: any) => item.inspectionType.replace('_', ' ').charAt(0).toUpperCase() + item.inspectionType.replace('_', ' ').slice(1) },
+    { key: 'inspector', label: 'Inspector', render: (item: any) => item.inspector },
+    { key: 'status', label: 'Status', render: (item: any) => (
+      <Badge className={getStatusColor(item.status)}>
+        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+      </Badge>
+    )},
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Maintenance Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">In Maintenance</p>
-                <p className="text-2xl font-bold text-yellow-600">{maintenanceData.stats.vehiclesInMaintenance}</p>
-              </div>
-              <Wrench className="w-8 h-8 text-yellow-600" />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {maintenanceData.stats.vehiclesInMaintenance} of {maintenanceData.stats.totalVehicles} vehicles
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Scheduled</p>
-                <p className="text-2xl font-bold text-blue-600">{maintenanceData.stats.scheduledMaintenance}</p>
-              </div>
-              <Calendar className="w-8 h-8 text-blue-600" />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {maintenanceData.stats.overdueMaintenance} overdue
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Monthly Cost</p>
-                <p className="text-2xl font-bold text-green-600">£{maintenanceData.stats.totalCostThisMonth.toLocaleString()}</p>
-              </div>
-              <DollarSign className="w-8 h-8 text-green-600" />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {maintenanceData.stats.completedThisMonth} jobs completed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Efficiency</p>
-                <p className="text-2xl font-bold text-purple-600">{maintenanceData.stats.maintenanceEfficiency}%</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-purple-600" />
-            </div>
-            <Progress value={maintenanceData.stats.maintenanceEfficiency} className="mt-2" />
-          </CardContent>
-        </Card>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h2 className="text-2xl font-bold">Maintenance</h2>
+          <Button variant="link" className="text-blue-600">Learn</Button>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm">
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4" />
+          </Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Service Entry
+          </Button>
+        </div>
       </div>
 
-      {/* Maintenance Tabs */}
-      <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="schedules" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Schedules
-          </TabsTrigger>
-          <TabsTrigger value="workorders" className="flex items-center gap-2">
-            <Wrench className="w-4 h-4" />
-            Work Orders
-          </TabsTrigger>
-          <TabsTrigger value="inspections" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Inspections
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            History
-          </TabsTrigger>
-        </TabsList>
+      {/* Navigation Tabs */}
+      <div className="flex items-center space-x-4 border-b">
+        <Button variant="ghost" className={activeSubTab === 'overview' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('overview')}>
+          All
+        </Button>
+        <Button variant="ghost" className={activeSubTab === 'schedules' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('schedules')}>
+          Schedules
+        </Button>
+        <Button variant="ghost" className={activeSubTab === 'workorders' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('workorders')}>
+          Work Orders
+        </Button>
+        <Button variant="ghost" className={activeSubTab === 'inspections' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('inspections')}>
+          Inspections
+        </Button>
+        <Button variant="ghost" className={activeSubTab === 'history' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('history')}>
+          History
+        </Button>
+        <Button variant="ghost">
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
+        <Button variant="outline" size="sm">
+          + Add Tab
+        </Button>
+      </div>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Upcoming Maintenance */}
+      {/* Content based on active sub-tab */}
+      {activeSubTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  Upcoming Maintenance
-                </CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">In Maintenance</CardTitle>
+                <Wrench className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {maintenanceData.maintenanceSchedules
-                    .filter(ms => ms.status === 'scheduled')
-                    .slice(0, 3)
-                    .map((schedule) => (
-                    <div key={schedule.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{schedule.vehicleNumber}</p>
-                        <p className="text-sm text-gray-600">{schedule.description}</p>
-                        <p className="text-xs text-gray-500">
-                          {format(new Date(schedule.scheduledDate), 'MMM dd, yyyy')} • {schedule.estimatedDuration}h
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <Badge className={getPriorityColor(schedule.priority)}>
-                          {schedule.priority}
-                        </Badge>
-                        <p className="text-sm font-medium mt-1">£{schedule.estimatedCost}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <div className="text-2xl font-bold">1</div>
+                <p className="text-xs text-muted-foreground">Vehicles in service</p>
               </CardContent>
             </Card>
-
-            {/* Active Work Orders */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wrench className="w-5 h-5" />
-                  Active Work Orders
-                </CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Scheduled</CardTitle>
+                <Calendar className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {maintenanceData.workOrders
-                    .filter(wo => ['open', 'assigned', 'in_progress'].includes(wo.status))
-                    .slice(0, 3)
-                    .map((workOrder) => (
-                    <div key={workOrder.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{workOrder.workOrderNumber}</p>
-                        <p className="text-sm text-gray-600">{workOrder.title}</p>
-                        <p className="text-xs text-gray-500">
-                          {workOrder.vehicleNumber} • {workOrder.assignedMechanic}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <Badge className={getStatusColor(workOrder.status)}>
-                          {workOrder.status.replace('_', ' ')}
-                        </Badge>
-                        <p className="text-sm font-medium mt-1">£{workOrder.estimatedCost}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <div className="text-2xl font-bold text-blue-600">2</div>
+                <p className="text-xs text-muted-foreground">Upcoming maintenance</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Monthly Cost</CardTitle>
+                <DollarSign className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">$1,138.71</div>
+                <p className="text-xs text-muted-foreground">Total maintenance cost</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Efficiency</CardTitle>
+                <TrendingUp className="h-4 w-4 text-purple-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">92%</div>
+                <p className="text-xs text-muted-foreground">On-time completion</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Recent Inspections */}
+          {/* Recent Service History */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Recent Inspections
-              </CardTitle>
+              <CardTitle>Recent Service History</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Inspector</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Defects</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {maintenanceData.inspections.slice(0, 5).map((inspection) => (
-                    <TableRow key={inspection.id}>
-                      <TableCell className="font-medium">{inspection.vehicleNumber}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {inspection.inspectionType.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{format(new Date(inspection.inspectionDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>{inspection.inspector}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{inspection.score}%</span>
-                          <Progress value={inspection.score} className="w-16" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(inspection.status)}>
-                          {inspection.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className={inspection.defects.length > 0 ? 'text-red-600' : 'text-green-600'}>
-                          {inspection.defects.length} {inspection.defects.length === 1 ? 'defect' : 'defects'}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {renderTable(maintenanceData.serviceHistory, serviceColumns)}
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* Maintenance Schedules Tab */}
-        <TabsContent value="schedules" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Maintenance Schedules</h3>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Schedule
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Scheduled Date</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Mechanic</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {maintenanceData.maintenanceSchedules.map((schedule) => (
-                    <TableRow key={schedule.id}>
-                      <TableCell className="font-medium">{schedule.vehicleNumber}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {schedule.maintenanceType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">{schedule.description}</TableCell>
-                      <TableCell>{format(new Date(schedule.scheduledDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>{schedule.estimatedDuration}h</TableCell>
-                      <TableCell>£{schedule.estimatedCost}</TableCell>
-                      <TableCell>
-                        <Badge className={getPriorityColor(schedule.priority)}>
-                          {schedule.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(schedule.status)}>
-                          {schedule.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{schedule.assignedMechanic || '-'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Work Orders Tab */}
-        <TabsContent value="workorders" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Work Orders</h3>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Work Order
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Work Order</TableHead>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Assigned</TableHead>
-                    <TableHead>Hours</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {maintenanceData.workOrders.map((workOrder) => (
-                    <TableRow key={workOrder.id}>
-                      <TableCell className="font-medium">{workOrder.workOrderNumber}</TableCell>
-                      <TableCell>{workOrder.vehicleNumber}</TableCell>
-                      <TableCell className="max-w-xs truncate">{workOrder.title}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {workOrder.workType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getPriorityColor(workOrder.priority)}>
-                          {workOrder.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(workOrder.status)}>
-                          {workOrder.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{workOrder.assignedMechanic || '-'}</TableCell>
-                      <TableCell>
-                        {workOrder.actualHours ? `${workOrder.actualHours}/${workOrder.estimatedHours}h` : `${workOrder.estimatedHours}h`}
-                      </TableCell>
-                      <TableCell>
-                        {workOrder.actualCost ? `£${workOrder.actualCost}` : `£${workOrder.estimatedCost}`}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Inspections Tab */}
-        <TabsContent value="inspections" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Vehicle Inspections</h3>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Inspection
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Inspector</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Defects</TableHead>
-                    <TableHead>Next Inspection</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {maintenanceData.inspections.map((inspection) => (
-                    <TableRow key={inspection.id}>
-                      <TableCell className="font-medium">{inspection.vehicleNumber}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {inspection.inspectionType.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{format(new Date(inspection.inspectionDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>{inspection.inspector}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{inspection.score}%</span>
-                          <Progress value={inspection.score} className="w-16" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(inspection.status)}>
-                          {inspection.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {inspection.defects.map((defect) => (
-                            <Badge key={defect.id} className={getSeverityColor(defect.severity)} variant="outline">
-                              {defect.severity}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>{format(new Date(inspection.nextInspectionDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Service History Tab */}
-        <TabsContent value="history" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Service History</h3>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Service Record
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Service Type</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Mileage</TableHead>
-                    <TableHead>Mechanic</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead>Next Service</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {maintenanceData.serviceHistory.map((service) => (
-                    <TableRow key={service.id}>
-                      <TableCell className="font-medium">{service.vehicleNumber}</TableCell>
-                      <TableCell>{service.serviceType}</TableCell>
-                      <TableCell>{format(new Date(service.serviceDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>{service.mileage.toLocaleString()} mi</TableCell>
-                      <TableCell>{service.mechanic}</TableCell>
-                      <TableCell>£{service.cost}</TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>{format(new Date(service.nextServiceDate), 'MMM dd, yyyy')}</div>
-                          <div className="text-gray-500">{service.nextServiceMileage.toLocaleString()} mi</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(service.status)}>
-                          {service.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {activeSubTab === 'schedules' && renderTable(maintenanceData.maintenanceSchedules, scheduleColumns)}
+      {activeSubTab === 'workorders' && renderTable(maintenanceData.workOrders, workOrderColumns)}
+      {activeSubTab === 'inspections' && renderTable(maintenanceData.inspections, inspectionColumns)}
+      {activeSubTab === 'history' && renderTable(maintenanceData.serviceHistory, serviceColumns)}
     </div>
   );
 };

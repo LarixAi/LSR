@@ -2,18 +2,17 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Shield, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  FileText, 
-  TrendingUp, 
-  Calendar,
-  Users,
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Shield,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  FileText,
+  TrendingUp,
   Car,
   Wrench,
   Award,
@@ -21,76 +20,92 @@ import {
   Database,
   Eye,
   Download,
-  Plus
+  Plus,
+  Search,
+  Filter,
+  Settings,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Lock
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ComplianceData {
-  // ORV (Off Road Vehicle) Compliance
   orvDeclarations: {
     id: string;
     vehicleId: string;
     vehicleNumber: string;
+    vehicleName: string;
+    vehicleImage?: string;
     declarationType: 'planned' | 'unplanned';
     startDate: string;
     endDate: string;
     reason: string;
     status: 'active' | 'expired' | 'returned';
     documents: string[];
+    watchers?: string[];
+    priority?: string;
+    totalCost?: number;
+    isLocked?: boolean;
   }[];
-  
-  // BOR (Back On Road) Compliance
   borReturns: {
     id: string;
     vehicleId: string;
     vehicleNumber: string;
+    vehicleName: string;
+    vehicleImage?: string;
     returnDate: string;
     inspectionRequired: boolean;
     inspectionCompleted: boolean;
     roadworthinessCheck: boolean;
     status: 'pending' | 'completed' | 'failed';
+    watchers?: string[];
+    priority?: string;
+    totalCost?: number;
+    isLocked?: boolean;
   }[];
-  
-  // Document Compliance
   documentCompliance: {
     id: string;
     vehicleId: string;
     vehicleNumber: string;
+    vehicleName: string;
+    vehicleImage?: string;
     documentType: string;
     documentName: string;
     expiryDate: string;
     status: 'valid' | 'expiring_soon' | 'expired';
     daysUntilExpiry: number;
+    watchers?: string[];
+    priority?: string;
+    totalCost?: number;
+    isLocked?: boolean;
   }[];
-  
-  // Regulatory Compliance
   regulatoryCompliance: {
     id: string;
     vehicleId: string;
     vehicleNumber: string;
+    vehicleName: string;
+    vehicleImage?: string;
     regulation: string;
     requirement: string;
     lastCheck: string;
     nextCheck: string;
     status: 'compliant' | 'non_compliant' | 'pending';
     notes: string;
+    watchers?: string[];
+    priority?: string;
+    totalCost?: number;
+    isLocked?: boolean;
   }[];
-  
-  // Compliance Statistics
-  stats: {
-    totalVehicles: number;
-    compliantVehicles: number;
-    nonCompliantVehicles: number;
-    orvVehicles: number;
-    borPending: number;
-    documentsExpiringSoon: number;
-    documentsExpired: number;
-    overallComplianceRate: number;
-  };
 }
 
 const ComplianceTab: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [vehicleFilter, setVehicleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
 
   // Mock compliance data
   const complianceData: ComplianceData = {
@@ -99,601 +114,411 @@ const ComplianceTab: React.FC = () => {
         id: 'orv-1',
         vehicleId: 'v1',
         vehicleNumber: 'BUS001',
+        vehicleName: '2016 Ford F-150',
         declarationType: 'planned',
-        startDate: '2024-08-01',
-        endDate: '2024-08-15',
-        reason: 'Annual maintenance and inspection',
+        startDate: '2024-08-15',
+        endDate: '2024-09-15',
+        reason: 'Scheduled maintenance',
         status: 'active',
-        documents: ['Maintenance Schedule', 'Inspection Report']
+        documents: ['Maintenance Schedule', 'Safety Certificate'],
+        totalCost: 1250.00,
+        isLocked: false
       },
       {
         id: 'orv-2',
         vehicleId: 'v2',
-        vehicleNumber: 'BUS002',
+        vehicleNumber: 'NBG-001',
+        vehicleName: '2014 Chevrolet Express Cargo',
         declarationType: 'unplanned',
-        startDate: '2024-08-10',
-        endDate: '2024-08-20',
-        reason: 'Engine fault - awaiting parts',
+        startDate: '2024-08-20',
+        endDate: '2024-08-25',
+        reason: 'Emergency repair',
         status: 'active',
-        documents: ['Defect Report', 'Repair Authorization']
+        documents: ['Repair Authorization', 'Parts Invoice'],
+        totalCost: 850.00,
+        isLocked: true
       }
     ],
-    
     borReturns: [
       {
         id: 'bor-1',
         vehicleId: 'v1',
         vehicleNumber: 'BUS001',
-        returnDate: '2024-08-16',
+        vehicleName: '2016 Ford F-150',
+        returnDate: '2024-09-15',
         inspectionRequired: true,
         inspectionCompleted: true,
         roadworthinessCheck: true,
-        status: 'completed'
-      },
-      {
-        id: 'bor-2',
-        vehicleId: 'v2',
-        vehicleNumber: 'BUS002',
-        returnDate: '2024-08-21',
-        inspectionRequired: true,
-        inspectionCompleted: false,
-        roadworthinessCheck: false,
-        status: 'pending'
+        status: 'completed',
+        totalCost: 150.00
       }
     ],
-    
     documentCompliance: [
       {
         id: 'doc-1',
         vehicleId: 'v1',
         vehicleNumber: 'BUS001',
-        documentType: 'MOT Certificate',
-        documentName: 'MOT Test Certificate',
-        expiryDate: '2024-12-15',
+        vehicleName: '2016 Ford F-150',
+        documentType: 'Registration',
+        documentName: 'Vehicle Registration Certificate',
+        expiryDate: '2025-01-15',
         status: 'valid',
-        daysUntilExpiry: 108
+        daysUntilExpiry: 120,
+        totalCost: 0
       },
       {
         id: 'doc-2',
         vehicleId: 'v2',
-        vehicleNumber: 'BUS002',
+        vehicleNumber: 'NBG-001',
+        vehicleName: '2014 Chevrolet Express Cargo',
         documentType: 'Insurance',
-        documentName: 'Motor Vehicle Insurance',
-        expiryDate: '2024-09-30',
+        documentName: 'Commercial Vehicle Insurance',
+        expiryDate: '2024-12-01',
         status: 'expiring_soon',
-        daysUntilExpiry: 32
-      },
-      {
-        id: 'doc-3',
-        vehicleId: 'v3',
-        vehicleNumber: 'BUS003',
-        documentType: 'PSV License',
-        documentName: 'Public Service Vehicle License',
-        expiryDate: '2024-08-15',
-        status: 'expired',
-        daysUntilExpiry: -5
+        daysUntilExpiry: 30,
+        totalCost: 0
       }
     ],
-    
     regulatoryCompliance: [
       {
         id: 'reg-1',
         vehicleId: 'v1',
         vehicleNumber: 'BUS001',
-        regulation: 'DVSA Walkaround Check',
-        requirement: 'Daily pre-use inspection',
-        lastCheck: '2024-08-28',
-        nextCheck: '2024-08-29',
+        vehicleName: '2016 Ford F-150',
+        regulation: 'PSV Regulations',
+        requirement: 'Annual Safety Inspection',
+        lastCheck: '2024-01-15',
+        nextCheck: '2025-01-15',
         status: 'compliant',
-        notes: 'All checks completed satisfactorily'
-      },
-      {
-        id: 'reg-2',
-        vehicleId: 'v2',
-        vehicleNumber: 'BUS002',
-        regulation: 'Tachograph Calibration',
-        requirement: '2-year calibration check',
-        lastCheck: '2024-06-15',
-        nextCheck: '2026-06-15',
-        status: 'compliant',
-        notes: 'Calibration certificate valid'
-      },
-      {
-        id: 'reg-3',
-        vehicleId: 'v3',
-        vehicleNumber: 'BUS003',
-        regulation: 'Annual Test',
-        requirement: 'Annual roadworthiness test',
-        lastCheck: '2024-03-20',
-        nextCheck: '2025-03-20',
-        status: 'compliant',
-        notes: 'Passed with no advisories'
+        notes: 'All requirements met',
+        totalCost: 200.00
       }
-    ],
-    
-    stats: {
-      totalVehicles: 15,
-      compliantVehicles: 12,
-      nonCompliantVehicles: 3,
-      orvVehicles: 2,
-      borPending: 1,
-      documentsExpiringSoon: 3,
-      documentsExpired: 1,
-      overallComplianceRate: 80
-    }
+    ]
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-      case 'completed':
-      case 'compliant':
       case 'valid':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
-      case 'expiring_soon':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'compliant':
+      case 'completed':
+        return 'bg-green-100 text-green-800';
       case 'expired':
       case 'non_compliant':
       case 'failed':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 text-red-800';
+      case 'expiring_soon':
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-      case 'completed':
-      case 'compliant':
       case 'valid':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'pending':
-      case 'expiring_soon':
-        return <Clock className="w-4 h-4 text-yellow-600" />;
+      case 'compliant':
+      case 'completed':
+        return <CheckCircle className="w-4 h-4" />;
       case 'expired':
       case 'non_compliant':
       case 'failed':
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
+        return <AlertTriangle className="w-4 h-4" />;
+      case 'expiring_soon':
+      case 'pending':
+        return <Clock className="w-4 h-4" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-400" />;
+        return <Database className="w-4 h-4" />;
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Compliance Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Overall Compliance</p>
-                <p className="text-2xl font-bold">{complianceData.stats.overallComplianceRate}%</p>
-              </div>
-              <Shield className="w-8 h-8 text-blue-600" />
-            </div>
-            <Progress value={complianceData.stats.overallComplianceRate} className="mt-2" />
-          </CardContent>
-        </Card>
+  const renderVehicleCell = (item: any) => (
+    <div className="flex items-center space-x-3">
+      <Checkbox />
+      <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+        <Car className="w-4 h-4 text-gray-600" />
+      </div>
+      <div className="flex items-center space-x-2">
+        <span className="font-medium">{item.vehicleNumber}</span>
+        <span className="text-gray-500">[{item.vehicleName}]</span>
+        {item.isLocked && <Lock className="w-3 h-3 text-gray-400" />}
+        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+      </div>
+    </div>
+  );
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Compliant Vehicles</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {complianceData.stats.compliantVehicles}/{complianceData.stats.totalVehicles}
-                </p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">ORV Vehicles</p>
-                <p className="text-2xl font-bold text-yellow-600">{complianceData.stats.orvVehicles}</p>
-              </div>
-              <Wrench className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Documents Expiring</p>
-                <p className="text-2xl font-bold text-red-600">{complianceData.stats.documentsExpiringSoon}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
+  const renderTable = (data: any[], columns: any[]) => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-80"
+            />
+          </div>
+          <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Vehicle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Vehicles</SelectItem>
+              <SelectItem value="bus001">BUS001</SelectItem>
+              <SelectItem value="nbg001">NBG-001</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm">
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+          <Select defaultValue="save-view">
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="save-view">Save View</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Compliance Tabs */}
-      <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="orv" className="flex items-center gap-2">
-            <Car className="w-4 h-4" />
-            ORV Declarations
-          </TabsTrigger>
-          <TabsTrigger value="bor" className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4" />
-            BOR Returns
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Documents
-          </TabsTrigger>
-          <TabsTrigger value="regulatory" className="flex items-center gap-2">
-            <Scale className="w-4 h-4" />
-            Regulatory
-          </TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">Compliance Records</CardTitle>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <span>1 - {data.length} of {data.length}</span>
+            <Button variant="outline" size="sm" disabled>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" disabled>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableHead key={column.key}>{column.label}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((item) => (
+                <TableRow key={item.id}>
+                  {columns.map((column) => (
+                    <TableCell key={column.key}>
+                      {column.render ? column.render(item) : item[column.key]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent ORV Declarations */}
+  const orvColumns = [
+    { key: 'vehicle', label: 'Vehicle', render: renderVehicleCell },
+    { key: 'startDate', label: 'Declaration Start Date', render: (item: any) => format(new Date(item.startDate), 'MM/dd/yyyy h:mm a') },
+    { key: 'watchers', label: 'Watchers', render: () => '-' },
+    { key: 'priority', label: 'Priority', render: () => '-' },
+    { key: 'declarationType', label: 'Declaration Type', render: (item: any) => item.declarationType.charAt(0).toUpperCase() + item.declarationType.slice(1) },
+    { key: 'reason', label: 'Reason', render: (item: any) => item.reason },
+    { key: 'status', label: 'Status', render: (item: any) => (
+      <Badge className={getStatusColor(item.status)}>
+        {getStatusIcon(item.status)}
+        <span className="ml-1">{item.status}</span>
+      </Badge>
+    )},
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+  ];
+
+  const borColumns = [
+    { key: 'vehicle', label: 'Vehicle', render: renderVehicleCell },
+    { key: 'returnDate', label: 'Return Date', render: (item: any) => format(new Date(item.returnDate), 'MM/dd/yyyy h:mm a') },
+    { key: 'watchers', label: 'Watchers', render: () => '-' },
+    { key: 'priority', label: 'Priority', render: () => '-' },
+    { key: 'inspectionRequired', label: 'Inspection Required', render: (item: any) => item.inspectionRequired ? 'Yes' : 'No' },
+    { key: 'inspectionCompleted', label: 'Inspection Completed', render: (item: any) => item.inspectionCompleted ? 'Yes' : 'No' },
+    { key: 'status', label: 'Status', render: (item: any) => (
+      <Badge className={getStatusColor(item.status)}>
+        {getStatusIcon(item.status)}
+        <span className="ml-1">{item.status}</span>
+      </Badge>
+    )},
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+  ];
+
+  const documentColumns = [
+    { key: 'vehicle', label: 'Vehicle', render: renderVehicleCell },
+    { key: 'expiryDate', label: 'Expiry Date', render: (item: any) => format(new Date(item.expiryDate), 'MM/dd/yyyy') },
+    { key: 'watchers', label: 'Watchers', render: () => '-' },
+    { key: 'priority', label: 'Priority', render: () => '-' },
+    { key: 'documentType', label: 'Document Type', render: (item: any) => item.documentType },
+    { key: 'documentName', label: 'Document Name', render: (item: any) => item.documentName },
+    { key: 'status', label: 'Status', render: (item: any) => (
+      <Badge className={getStatusColor(item.status)}>
+        {getStatusIcon(item.status)}
+        <span className="ml-1">{item.status}</span>
+      </Badge>
+    )},
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+  ];
+
+  const regulatoryColumns = [
+    { key: 'vehicle', label: 'Vehicle', render: renderVehicleCell },
+    { key: 'nextCheck', label: 'Next Check Date', render: (item: any) => format(new Date(item.nextCheck), 'MM/dd/yyyy') },
+    { key: 'watchers', label: 'Watchers', render: () => '-' },
+    { key: 'priority', label: 'Priority', render: () => '-' },
+    { key: 'regulation', label: 'Regulation', render: (item: any) => item.regulation },
+    { key: 'requirement', label: 'Requirement', render: (item: any) => item.requirement },
+    { key: 'status', label: 'Status', render: (item: any) => (
+      <Badge className={getStatusColor(item.status)}>
+        {getStatusIcon(item.status)}
+        <span className="ml-1">{item.status}</span>
+      </Badge>
+    )},
+    { key: 'totalCost', label: 'Total', render: (item: any) => item.totalCost ? `$${item.totalCost.toFixed(2)}` : '-' }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h2 className="text-2xl font-bold">Compliance</h2>
+          <Button variant="link" className="text-blue-600">Learn</Button>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm">
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4" />
+          </Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Compliance Entry
+          </Button>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="flex items-center space-x-4 border-b">
+        <Button variant="ghost" className={activeSubTab === 'overview' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('overview')}>
+          All
+        </Button>
+        <Button variant="ghost" className={activeSubTab === 'orv' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('orv')}>
+          ORV Declarations
+        </Button>
+        <Button variant="ghost" className={activeSubTab === 'bor' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('bor')}>
+          BOR Returns
+        </Button>
+        <Button variant="ghost" className={activeSubTab === 'documents' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('documents')}>
+          Documents
+        </Button>
+        <Button variant="ghost" className={activeSubTab === 'regulatory' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('regulatory')}>
+          Regulatory
+        </Button>
+        <Button variant="ghost">
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
+        <Button variant="outline" size="sm">
+          + Add Tab
+        </Button>
+      </div>
+
+      {/* Content based on active sub-tab */}
+      {activeSubTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Car className="w-5 h-5" />
-                  Recent ORV Declarations
-                </CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Vehicles</CardTitle>
+                <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {complianceData.orvDeclarations.slice(0, 3).map((orv) => (
-                    <div key={orv.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{orv.vehicleNumber}</p>
-                        <p className="text-sm text-gray-600">{orv.reason}</p>
-                        <p className="text-xs text-gray-500">
-                          {format(new Date(orv.startDate), 'MMM dd')} - {format(new Date(orv.endDate), 'MMM dd, yyyy')}
-                        </p>
-                      </div>
-                      <Badge className={getStatusColor(orv.status)}>
-                        {orv.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
+                <div className="text-2xl font-bold">6</div>
+                <p className="text-xs text-muted-foreground">Fleet size</p>
               </CardContent>
             </Card>
-
-            {/* Pending BOR Returns */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5" />
-                  Pending BOR Returns
-                </CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Compliant</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {complianceData.borReturns.filter(bor => bor.status === 'pending').map((bor) => (
-                    <div key={bor.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{bor.vehicleNumber}</p>
-                        <p className="text-sm text-gray-600">Return: {format(new Date(bor.returnDate), 'MMM dd, yyyy')}</p>
-                        <p className="text-xs text-gray-500">
-                          {bor.inspectionRequired ? 'Inspection Required' : 'No Inspection Required'}
-                        </p>
-                      </div>
-                      <Badge className={getStatusColor(bor.status)}>
-                        {bor.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
+                <div className="text-2xl font-bold text-green-600">4</div>
+                <p className="text-xs text-muted-foreground">67% of fleet</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">ORV Vehicles</CardTitle>
+                <Car className="h-4 w-4 text-yellow-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">2</div>
+                <p className="text-xs text-muted-foreground">Off-road declarations</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
+                <Clock className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">1</div>
+                <p className="text-xs text-muted-foreground">Documents expiring</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Expiring Documents Alert */}
+          {/* Recent ORV Declarations */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                Documents Requiring Attention
-              </CardTitle>
+              <CardTitle>Recent ORV Declarations</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Document</TableHead>
-                    <TableHead>Expiry Date</TableHead>
-                    <TableHead>Days Left</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {complianceData.documentCompliance
-                    .filter(doc => doc.status !== 'valid')
-                    .map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell className="font-medium">{doc.vehicleNumber}</TableCell>
-                      <TableCell>{doc.documentName}</TableCell>
-                      <TableCell>{format(new Date(doc.expiryDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>
-                        <span className={doc.daysUntilExpiry < 0 ? 'text-red-600' : 'text-yellow-600'}>
-                          {doc.daysUntilExpiry < 0 ? `${Math.abs(doc.daysUntilExpiry)} days overdue` : `${doc.daysUntilExpiry} days`}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(doc.status)}>
-                          {doc.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {renderTable(complianceData.orvDeclarations, orvColumns)}
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* ORV Declarations Tab */}
-        <TabsContent value="orv" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Off Road Vehicle Declarations</h3>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New ORV Declaration
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {complianceData.orvDeclarations.map((orv) => (
-                    <TableRow key={orv.id}>
-                      <TableCell className="font-medium">{orv.vehicleNumber}</TableCell>
-                      <TableCell>
-                        <Badge variant={orv.declarationType === 'planned' ? 'default' : 'secondary'}>
-                          {orv.declarationType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{format(new Date(orv.startDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>{format(new Date(orv.endDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell className="max-w-xs truncate">{orv.reason}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(orv.status)}>
-                          {orv.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* BOR Returns Tab */}
-        <TabsContent value="bor" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Back On Road Returns</h3>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New BOR Return
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Return Date</TableHead>
-                    <TableHead>Inspection Required</TableHead>
-                    <TableHead>Inspection Completed</TableHead>
-                    <TableHead>Roadworthiness</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {complianceData.borReturns.map((bor) => (
-                    <TableRow key={bor.id}>
-                      <TableCell className="font-medium">{bor.vehicleNumber}</TableCell>
-                      <TableCell>{format(new Date(bor.returnDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>
-                        <Badge variant={bor.inspectionRequired ? 'default' : 'secondary'}>
-                          {bor.inspectionRequired ? 'Yes' : 'No'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={bor.inspectionCompleted ? 'default' : 'secondary'}>
-                          {bor.inspectionCompleted ? 'Yes' : 'No'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={bor.roadworthinessCheck ? 'default' : 'secondary'}>
-                          {bor.roadworthinessCheck ? 'Passed' : 'Pending'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(bor.status)}>
-                          {bor.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Documents Tab */}
-        <TabsContent value="documents" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Document Compliance</h3>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Upload Document
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Document Type</TableHead>
-                    <TableHead>Document Name</TableHead>
-                    <TableHead>Expiry Date</TableHead>
-                    <TableHead>Days Left</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {complianceData.documentCompliance.map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell className="font-medium">{doc.vehicleNumber}</TableCell>
-                      <TableCell>{doc.documentType}</TableCell>
-                      <TableCell>{doc.documentName}</TableCell>
-                      <TableCell>{format(new Date(doc.expiryDate), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>
-                        <span className={doc.daysUntilExpiry < 0 ? 'text-red-600' : doc.daysUntilExpiry < 30 ? 'text-yellow-600' : 'text-green-600'}>
-                          {doc.daysUntilExpiry < 0 ? `${Math.abs(doc.daysUntilExpiry)} days overdue` : `${doc.daysUntilExpiry} days`}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(doc.status)}>
-                          {doc.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Regulatory Compliance Tab */}
-        <TabsContent value="regulatory" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Regulatory Compliance</h3>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Compliance Check
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Regulation</TableHead>
-                    <TableHead>Requirement</TableHead>
-                    <TableHead>Last Check</TableHead>
-                    <TableHead>Next Check</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {complianceData.regulatoryCompliance.map((reg) => (
-                    <TableRow key={reg.id}>
-                      <TableCell className="font-medium">{reg.vehicleNumber}</TableCell>
-                      <TableCell>{reg.regulation}</TableCell>
-                      <TableCell className="max-w-xs truncate">{reg.requirement}</TableCell>
-                      <TableCell>{format(new Date(reg.lastCheck), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>{format(new Date(reg.nextCheck), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(reg.status)}>
-                          {reg.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {activeSubTab === 'orv' && renderTable(complianceData.orvDeclarations, orvColumns)}
+      {activeSubTab === 'bor' && renderTable(complianceData.borReturns, borColumns)}
+      {activeSubTab === 'documents' && renderTable(complianceData.documentCompliance, documentColumns)}
+      {activeSubTab === 'regulatory' && renderTable(complianceData.regulatoryCompliance, regulatoryColumns)}
     </div>
   );
 };
