@@ -39,6 +39,7 @@ interface InspectionItem {
   id: string;
   name: string;
   status: 'pass' | 'fail' | 'note';
+  category?: string;
   note?: string;
   issueId?: string;
   value?: string;
@@ -95,7 +96,7 @@ const WalkAroundCheckDetail: React.FC = () => {
       vehicleYear: '2018',
       vehicleMake: 'Toyota',
       vehicleModel: 'Prius',
-      inspectionForm: 'Driver Vehicle Inspection Report (Simple)',
+      inspectionForm: 'Daily Pre-Trip Inspection',
       startedAt: '2025-08-21T15:20:00Z',
       submittedAt: '2025-08-21T15:37:00Z',
       duration: '17m',
@@ -116,24 +117,81 @@ const WalkAroundCheckDetail: React.FC = () => {
       fuelLevel: 'Full',
       oilLife: 50,
       inspectionItems: [
-        { id: '1', name: 'Interior Cleanliness', status: 'note', note: 'Take a photo of the interior' },
-        { id: '2', name: 'Engine', status: 'pass' },
-        { id: '3', name: 'Transmission', status: 'pass' },
-        { id: '4', name: 'Clutch', status: 'pass' },
-        { id: '5', name: 'Steering Mechanism', status: 'pass' },
-        { id: '6', name: 'Horn', status: 'pass' },
-        { id: '7', name: 'Rear Vision Mirrors', status: 'pass' },
-        { id: '8', name: 'Lighting Devices and Reflectors', status: 'pass' },
-        { id: '9', name: 'Parking Brake', status: 'pass' },
-        { id: '10', name: 'Service Brakes', status: 'pass' },
-        { id: '11', name: 'Air Lines/Light Lines', status: 'pass' },
-        { id: '12', name: 'Coupling Devices', status: 'pass' },
-        { id: '13', name: 'Tires', status: 'pass' },
-        { id: '14', name: 'Wheels and Rims', status: 'pass' },
-        { id: '15', name: 'Emergency Equipment', status: 'pass' },
-        { id: '16', name: 'Windshield and Wipers/Washers', status: 'fail', issueId: '6' },
-        { id: '17', name: 'Oil Life Left', status: 'pass', value: '50' },
-        { id: '18', name: 'Fuel Level', status: 'pass', value: 'Full' }
+        // Front of Vehicle (Questions 1-8)
+        { id: '1', name: 'Fuel, oil, or fluid leaks under vehicle', status: 'pass', category: 'exterior' },
+        { id: '2', name: 'Windscreen clean and free from cracks/damage', status: 'pass', category: 'exterior' },
+        { id: '3', name: 'Windscreen wipers and washers working', status: 'fail', category: 'exterior', issueId: '6', note: 'Wipers need replacement' },
+        { id: '4', name: 'Headlights (main/dip) working and lenses clean', status: 'pass', category: 'lights' },
+        { id: '5', name: 'Front indicators including side repeaters working', status: 'pass', category: 'lights' },
+        { id: '6', name: 'Horn working clearly', status: 'pass', category: 'general' },
+        { id: '7', name: 'Mirrors fitted, secure, adjusted, and not cracked', status: 'pass', category: 'exterior' },
+        { id: '8', name: 'Front registration plate present, clean, and secure', status: 'pass', category: 'exterior' },
+        
+        // Nearside/Passenger Side (Questions 9-13)
+        { id: '9', name: 'Tyres in good condition with adequate tread depth', status: 'pass', category: 'tires' },
+        { id: '10', name: 'Wheel nuts secure with no cracks or missing nuts', status: 'pass', category: 'tires' },
+        { id: '11', name: 'Mudguards and spray suppression devices fitted', status: 'pass', category: 'exterior' },
+        { id: '12', name: 'Bodywork free from damage, sharp edges, or corrosion', status: 'pass', category: 'exterior' },
+        { id: '13', name: 'All reflectors on nearside clean, secure, and positioned', status: 'pass', category: 'lights' },
+        
+        // Rear of Vehicle (Questions 14-20)
+        { id: '14', name: 'All rear lights (brake, tail, indicators) working', status: 'pass', category: 'lights' },
+        { id: '15', name: 'Number plate light working and illuminating plate', status: 'pass', category: 'lights' },
+        { id: '16', name: 'Rear registration plate clean, secure, and visible', status: 'pass', category: 'exterior' },
+        { id: '17', name: 'Rear reflectors clean, secure, and positioned', status: 'pass', category: 'lights' },
+        { id: '18', name: 'Tail lift operates smoothly and locks securely', status: 'pass', category: 'general' },
+        { id: '19', name: 'Under-run protection bars securely attached', status: 'pass', category: 'exterior' },
+        { id: '20', name: 'Rear doors/tailgate operate correctly', status: 'pass', category: 'general' },
+        
+        // Offside/Driver\'s Side (Questions 21-24)
+        { id: '21', name: 'Driver\'s side tyres in good condition', status: 'pass', category: 'tires' },
+        { id: '22', name: 'Exhaust system secure and not leaking', status: 'pass', category: 'engine' },
+        { id: '23', name: 'Side marker lamps working correctly', status: 'pass', category: 'lights' },
+        { id: '24', name: 'Fuel filler cap secure and not leaking', status: 'pass', category: 'fuel' },
+        
+        // Inside Cab (Questions 25-33)
+        { id: '25', name: 'Driver\'s seat and seat belts secure and functioning', status: 'pass', category: 'interior' },
+        { id: '26', name: 'Steering wheel secure with no excessive play', status: 'pass', category: 'interior' },
+        { id: '27', name: 'Brakes working with firm pedal feel', status: 'pass', category: 'brakes' },
+        { id: '28', name: 'All dashboard warning lights functioning', status: 'pass', category: 'interior' },
+        { id: '29', name: 'Tachograph working and properly calibrated', status: 'pass', category: 'interior' },
+        { id: '30', name: 'Odometer functioning and speed limiter working', status: 'pass', category: 'interior', value: '20690' },
+        { id: '31', name: 'Handbrake/parking brake holds vehicle securely', status: 'pass', category: 'brakes' },
+        { id: '32', name: 'Heating and ventilation systems working', status: 'pass', category: 'interior' },
+        { id: '33', name: 'Saloon lighting and flooring safe and secure', status: 'pass', category: 'interior' },
+        
+        // Safety Equipment (Questions 34-42)
+        { id: '34', name: 'Fire extinguisher present, secure, and in date', status: 'pass', category: 'safety' },
+        { id: '35', name: 'First aid kit present, stocked, and in date', status: 'pass', category: 'safety' },
+        { id: '36', name: 'All passenger doors open/close properly', status: 'pass', category: 'safety' },
+        { id: '37', name: 'Emergency hammers present and accessible', status: 'pass', category: 'safety' },
+        { id: '38', name: 'Wheelchair ramp/lift operates smoothly', status: 'pass', category: 'safety' },
+        { id: '39', name: 'All passenger seat belts working correctly', status: 'pass', category: 'safety' },
+        { id: '40', name: 'Accessibility signage fitted and visible', status: 'pass', category: 'safety' },
+        { id: '41', name: 'Camera systems working with clear displays', status: 'pass', category: 'general' },
+        { id: '42', name: 'Fresnel lens properly positioned and visible', status: 'pass', category: 'general' },
+        
+        // Load & Trailer (Questions 43-47)
+        { id: '43', name: 'Load properly secured with restraints', status: 'pass', category: 'general' },
+        { id: '44', name: 'Load height within legal limits', status: 'pass', category: 'general' },
+        { id: '45', name: 'Trailer brake lines secure and not leaking', status: 'pass', category: 'brakes' },
+        { id: '46', name: 'Trailer coupling secure with electrical connections', status: 'pass', category: 'general' },
+        { id: '47', name: 'Trailer landing legs up and secure', status: 'pass', category: 'general' },
+        
+        // General Equipment (Questions 48-52)
+        { id: '48', name: 'AdBlue level adequate and system functioning', status: 'pass', category: 'fuel' },
+        { id: '49', name: 'Warning triangles or warning devices accessible', status: 'pass', category: 'safety' },
+        { id: '50', name: 'Emergency contact numbers carried and accessible', status: 'pass', category: 'documentation' },
+        { id: '51', name: 'Fire suppression system operating correctly', status: 'pass', category: 'safety' },
+        { id: '52', name: 'Cab clean and free from loose hazardous items', status: 'pass', category: 'general' },
+        
+        // Final Check (Questions 53-54)
+        { id: '53', name: 'All defects properly documented and reported', status: 'pass', category: 'documentation' },
+        { id: '54', name: 'Defects reported to transport manager immediately', status: 'pass', category: 'documentation' },
+        
+        // Documentation & Driver (Questions 55-56)
+        { id: '55', name: 'Current mileage reading', status: 'pass', category: 'documentation', value: '20690' },
+        { id: '56', name: 'Driver fit to drive and not under influence', status: 'pass', category: 'driver' }
       ],
       vehicleCondition: 'excellent',
       driverSignature: 'ok',
@@ -172,28 +230,50 @@ const WalkAroundCheckDetail: React.FC = () => {
     }
   };
 
-  const getItemIcon = (itemName: string) => {
-    const iconMap: { [key: string]: React.ReactNode } = {
-      'Engine': <Settings className="w-4 h-4" />,
-      'Transmission': <Settings className="w-4 h-4" />,
-      'Clutch': <Settings className="w-4 h-4" />,
-      'Steering Mechanism': <Settings className="w-4 h-4" />,
-      'Horn': <Volume2 className="w-4 h-4" />,
-      'Rear Vision Mirrors': <Eye className="w-4 h-4" />,
-      'Lighting Devices and Reflectors': <Lightbulb className="w-4 h-4" />,
-      'Parking Brake': <Circle className="w-4 h-4" />,
-      'Service Brakes': <Circle className="w-4 h-4" />,
-      'Air Lines/Light Lines': <Settings className="w-4 h-4" />,
-      'Coupling Devices': <Settings className="w-4 h-4" />,
-      'Tires': <Circle className="w-4 h-4" />,
-      'Wheels and Rims': <Circle className="w-4 h-4" />,
-      'Emergency Equipment': <Zap className="w-4 h-4" />,
-      'Windshield and Wipers/Washers': <Activity className="w-4 h-4" />,
-      'Oil Life Left': <Droplets className="w-4 h-4" />,
-      'Fuel Level': <Fuel className="w-4 h-4" />,
-      'Interior Cleanliness': <Shield className="w-4 h-4" />
+  const getItemIcon = (item: InspectionItem) => {
+    // Use category-based icons for better organization
+    const categoryIconMap: { [key: string]: React.ReactNode } = {
+      'exterior': <Car className="w-4 h-4" />,
+      'interior': <Settings className="w-4 h-4" />,
+      'engine': <Gauge className="w-4 h-4" />,
+      'tires': <Circle className="w-4 h-4" />,
+      'lights': <Lightbulb className="w-4 h-4" />,
+      'brakes': <Shield className="w-4 h-4" />,
+      'fuel': <Fuel className="w-4 h-4" />,
+      'safety': <AlertTriangle className="w-4 h-4" />,
+      'documentation': <FileText className="w-4 h-4" />,
+      'driver': <User className="w-4 h-4" />,
+      'general': <Settings className="w-4 h-4" />
     };
-    return iconMap[itemName] || <Settings className="w-4 h-4" />;
+    
+    // Return category-based icon if available, otherwise fallback to name-based
+    if (item.category && categoryIconMap[item.category]) {
+      return categoryIconMap[item.category];
+    }
+    
+    // Fallback to name-based icons for specific items
+    const nameIconMap: { [key: string]: React.ReactNode } = {
+      'Horn': <Volume2 className="w-4 h-4" />,
+      'Mirrors': <Eye className="w-4 h-4" />,
+      'Windscreen': <Activity className="w-4 h-4" />,
+      'Tyres': <Circle className="w-4 h-4" />,
+      'Tachograph': <Clock className="w-4 h-4" />,
+      'Odometer': <Gauge className="w-4 h-4" />,
+      'Fire extinguisher': <Zap className="w-4 h-4" />,
+      'First aid kit': <Activity className="w-4 h-4" />,
+      'Emergency': <AlertTriangle className="w-4 h-4" />,
+      'Registration plate': <FileText className="w-4 h-4" />,
+      'Mileage': <Gauge className="w-4 h-4" />
+    };
+    
+    // Check if any name keywords match
+    for (const [keyword, icon] of Object.entries(nameIconMap)) {
+      if (item.name.toLowerCase().includes(keyword.toLowerCase())) {
+        return icon;
+      }
+    }
+    
+    return <Settings className="w-4 h-4" />;
   };
 
   if (loading) {
@@ -416,7 +496,7 @@ const WalkAroundCheckDetail: React.FC = () => {
                   {check.inspectionItems.map((item) => (
                     <div key={item.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
                       <div className="flex items-center gap-3 flex-1">
-                        {getItemIcon(item.name)}
+                        {getItemIcon(item)}
                         <span className="text-sm">{item.name}</span>
                         {item.value && (
                           <span className="text-xs text-gray-500">({item.value})</span>
