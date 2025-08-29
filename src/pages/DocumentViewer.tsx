@@ -33,7 +33,7 @@ export default function DocumentViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock document data for demonstration
+  // Mock document data for demonstration - matching VehicleDetail.tsx
   const mockDocuments = [
     {
       id: 'doc-1',
@@ -184,13 +184,18 @@ export default function DocumentViewer() {
   useEffect(() => {
     setLoading(true);
     
+    console.log('DocumentViewer: Looking for document with ID:', documentId);
+    console.log('DocumentViewer: Available document IDs:', mockDocuments.map(doc => doc.id));
+    
     // Find the document by ID from mock data
     const foundDocument = mockDocuments.find(doc => doc.id === documentId);
     
     if (foundDocument) {
+      console.log('DocumentViewer: Found document:', foundDocument.document_name);
       setDocument(foundDocument);
       setError(null);
     } else {
+      console.log('DocumentViewer: Document not found for ID:', documentId);
       setError('Document not found');
     }
     setLoading(false);
