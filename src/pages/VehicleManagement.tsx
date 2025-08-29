@@ -20,6 +20,9 @@ export default function VehicleManagement() {
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
   
+  // Debug logging
+  console.log('VehicleManagement: activeTab =', activeTab);
+  
   // Use new React Query hooks
   const { data: vehicles = [], isLoading: loading, error } = useVehicles();
   const vehicleStats = useVehicleStats();
