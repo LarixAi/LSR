@@ -241,13 +241,14 @@ export default function DocumentViewer() {
 
   const handleDownload = () => {
     // Simulate download
-    console.log('Downloading document:', document?.document_name);
-    // In a real app, this would trigger a file download
+    alert(`Downloading document: ${document?.document_name}\n\nThis would download the actual document from your storage system.`);
+    // In a real app, this would trigger a file download from Supabase Storage
   };
 
   const handleView = () => {
-    // Simulate opening document in new tab
-    window.open(document?.file_url, '_blank');
+    // Show document preview in a modal or alert for now
+    // In a real app, this would open the actual document from Supabase Storage
+    alert(`Opening document: ${document?.document_name}\n\nThis would open the actual document from your storage system.`);
   };
 
   if (loading) {
@@ -320,11 +321,23 @@ export default function DocumentViewer() {
             </CardHeader>
             <CardContent>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Document Preview</h3>
+                {getFileIcon(document.file_type)}
+                <h3 className="text-lg font-medium text-gray-900 mb-2 mt-4">{document.document_name}</h3>
                 <p className="text-gray-600 mb-4">
-                  Click "View" to open the document in a new tab or "Download" to save it locally.
+                  {document.description}
                 </p>
+                <div className="bg-gray-50 rounded-lg p-4 mb-4 text-left">
+                  <h4 className="font-medium text-gray-900 mb-2">Document Summary:</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Type: {document.document_type}</li>
+                    <li>• Status: {document.status}</li>
+                    <li>• File Size: {document.file_size}</li>
+                    <li>• Uploaded: {format(new Date(document.uploaded_at), 'MMM dd, yyyy')}</li>
+                    {document.expiry_date && (
+                      <li>• Expires: {format(new Date(document.expiry_date), 'MMM dd, yyyy')}</li>
+                    )}
+                  </ul>
+                </div>
                 <div className="flex justify-center gap-3">
                   <Button onClick={handleView}>
                     <ExternalLink className="w-4 h-4 mr-2" />
