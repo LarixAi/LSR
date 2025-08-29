@@ -163,22 +163,8 @@ CREATE TABLE IF NOT EXISTS public.inspections (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create work orders table
-CREATE TABLE IF NOT EXISTS public.work_orders (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    vehicle_id UUID REFERENCES public.vehicles(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    status TEXT CHECK (status IN ('Open', 'In Progress', 'Completed', 'Cancelled')) DEFAULT 'Open',
-    priority TEXT CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')) DEFAULT 'Medium',
-    assigned_to TEXT,
-    created_date DATE NOT NULL,
-    due_date DATE,
-    completed_date DATE,
-    cost DECIMAL(10,2) DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Note: work_orders table already exists from previous migrations
+-- This table is defined in supabase/migrations/20250822000007_create_work_orders_table.sql
 
 -- Create maintenance schedule table
 CREATE TABLE IF NOT EXISTS public.maintenance_schedule (
@@ -222,8 +208,7 @@ CREATE INDEX IF NOT EXISTS idx_service_records_vehicle_id ON public.service_reco
 CREATE INDEX IF NOT EXISTS idx_service_records_date ON public.service_records(service_date);
 CREATE INDEX IF NOT EXISTS idx_inspections_vehicle_id ON public.inspections(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_inspections_date ON public.inspections(inspection_date);
-CREATE INDEX IF NOT EXISTS idx_work_orders_vehicle_id ON public.work_orders(vehicle_id);
-CREATE INDEX IF NOT EXISTS idx_work_orders_status ON public.work_orders(status);
+-- Note: work_orders indexes already exist from previous migrations
 CREATE INDEX IF NOT EXISTS idx_maintenance_schedule_vehicle_id ON public.maintenance_schedule(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_maintenance_schedule_next_due ON public.maintenance_schedule(next_due);
 CREATE INDEX IF NOT EXISTS idx_vehicle_documents_vehicle_id ON public.vehicle_documents(vehicle_id);
@@ -236,7 +221,7 @@ ALTER TABLE public.vehicle_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.walk_around_checks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.service_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inspections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.work_orders ENABLE ROW LEVEL SECURITY;
+-- Note: work_orders RLS already enabled from previous migrations
 ALTER TABLE public.maintenance_schedule ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vehicle_documents ENABLE ROW LEVEL SECURITY;
 
@@ -510,50 +495,7 @@ CREATE POLICY "Users can delete inspections for their organization vehicles" ON 
         )
     );
 
--- RLS Policies for work_orders
-CREATE POLICY "Users can view work orders for their organization vehicles" ON public.work_orders
-    FOR SELECT USING (
-        vehicle_id IN (
-            SELECT id FROM public.vehicles 
-            WHERE organization_id = (
-                SELECT organization_id FROM public.profiles 
-                WHERE id = auth.uid()
-            )
-        )
-    );
-
-CREATE POLICY "Users can insert work orders for their organization vehicles" ON public.work_orders
-    FOR INSERT WITH CHECK (
-        vehicle_id IN (
-            SELECT id FROM public.vehicles 
-            WHERE organization_id = (
-                SELECT organization_id FROM public.profiles 
-                WHERE id = auth.uid()
-            )
-        )
-    );
-
-CREATE POLICY "Users can update work orders for their organization vehicles" ON public.work_orders
-    FOR UPDATE USING (
-        vehicle_id IN (
-            SELECT id FROM public.vehicles 
-            WHERE organization_id = (
-                SELECT organization_id FROM public.profiles 
-                WHERE id = auth.uid()
-            )
-        )
-    );
-
-CREATE POLICY "Users can delete work orders for their organization vehicles" ON public.work_orders
-    FOR DELETE USING (
-        vehicle_id IN (
-            SELECT id FROM public.vehicles 
-            WHERE organization_id = (
-                SELECT organization_id FROM public.profiles 
-                WHERE id = auth.uid()
-            )
-        )
-    );
+-- Note: work_orders RLS policies already exist from previous migrations
 
 -- RLS Policies for maintenance_schedule
 CREATE POLICY "Users can view maintenance schedule for their organization vehicles" ON public.maintenance_schedule
