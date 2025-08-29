@@ -35,6 +35,7 @@ import {
   Truck,
   DollarSign
 } from 'lucide-react';
+import FinancialTab from '@/components/vehicles/FinancialTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import PageLayout from '@/components/layout/PageLayout';
@@ -288,7 +289,8 @@ export default function VehicleDetail() {
     { value: "maintenance", label: "Maintenance" },
     { value: "walkaround", label: "Walk Around Check" },
     { value: "costs", label: "Daily Costs" },
-    { value: "documents", label: "Documents" }
+    { value: "documents", label: "Documents" },
+    { value: "financial", label: "Financial" }
   ];
 
   // Filter options
@@ -887,6 +889,10 @@ export default function VehicleDetail() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="financial" className="space-y-6">
+          <FinancialTab />
         </TabsContent>
       </PageLayout>
     </div>
