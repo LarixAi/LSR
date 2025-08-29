@@ -58,6 +58,7 @@ const NotificationCenterPage = lazy(() => import("./pages/NotificationCenter"));
 const VehicleDetail = lazy(() => import("./pages/VehicleDetail"));
 const AssignDriver = lazy(() => import("./pages/AssignDriver"));
 const EditVehicle = lazy(() => import("./pages/EditVehicle"));
+const DocumentViewer = lazy(() => import("./pages/DocumentViewer"));
 const VehicleServicePage = lazy(() => import("./pages/VehicleServicePage"));
 const FuelManagement = lazy(() => import("./pages/FuelManagement"));
 const Mechanics = lazy(() => import("./pages/Mechanics"));
@@ -565,6 +566,11 @@ const App = () => {
                         <Route path="/vehicles/:vehicleId/edit" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <EditVehicle />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/vehicles/:vehicleId/documents/:documentId" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <DocumentViewer />
                           </ProtectedRoute>
                         } />
                         <Route path="/vehicle-service" element={
