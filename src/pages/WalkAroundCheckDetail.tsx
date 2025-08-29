@@ -34,6 +34,8 @@ import {
   Activity
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useWalkAroundCheck } from '@/hooks/useVehicleManagement';
+import { useVehicleCheckQuestions } from '@/hooks/useVehicleCheckQuestions';
 
 interface InspectionItem {
   id: string;
@@ -82,127 +84,59 @@ interface WalkAroundCheck {
 const WalkAroundCheckDetail: React.FC = () => {
   const { checkId } = useParams<{ checkId: string }>();
   const navigate = useNavigate();
-  const [check, setCheck] = useState<WalkAroundCheck | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Mock data - replace with actual API call
-    const mockCheck: WalkAroundCheck = {
-      id: checkId || '1',
-      vehicleId: 'v1',
-      vehicleNumber: '1100',
-      vehicleName: '2018 Toyota Prius',
-      vehicleYear: '2018',
-      vehicleMake: 'Toyota',
-      vehicleModel: 'Prius',
-      inspectionForm: 'Daily Pre-Trip Inspection',
-      startedAt: '2025-08-21T15:20:00Z',
-      submittedAt: '2025-08-21T15:37:00Z',
-      duration: '17m',
-      submissionSource: 'Fleetio Go',
-      submittedBy: {
-        id: 'driver-1',
-        name: 'kenny laing',
-        initials: 'KL',
-        avatar: undefined
-      },
-      location: {
-        address: 'Chicago, IL',
-        latitude: 41.8781,
-        longitude: -87.6298,
-        warning: '3 of the inspection items were completed more than 100 meters away from the center of the inspection location.'
-      },
-      odometerReading: 20690,
-      fuelLevel: 'Full',
-      oilLife: 50,
-      inspectionItems: [
-        // Front of Vehicle (Questions 1-8)
-        { id: '1', name: 'Fuel, oil, or fluid leaks under vehicle', status: 'pass', category: 'exterior' },
-        { id: '2', name: 'Windscreen clean and free from cracks/damage', status: 'pass', category: 'exterior' },
-        { id: '3', name: 'Windscreen wipers and washers working', status: 'fail', category: 'exterior', issueId: '6', note: 'Wipers need replacement' },
-        { id: '4', name: 'Headlights (main/dip) working and lenses clean', status: 'pass', category: 'lights' },
-        { id: '5', name: 'Front indicators including side repeaters working', status: 'pass', category: 'lights' },
-        { id: '6', name: 'Horn working clearly', status: 'pass', category: 'general' },
-        { id: '7', name: 'Mirrors fitted, secure, adjusted, and not cracked', status: 'pass', category: 'exterior' },
-        { id: '8', name: 'Front registration plate present, clean, and secure', status: 'pass', category: 'exterior' },
-        
-        // Nearside/Passenger Side (Questions 9-13)
-        { id: '9', name: 'Tyres in good condition with adequate tread depth', status: 'pass', category: 'tires' },
-        { id: '10', name: 'Wheel nuts secure with no cracks or missing nuts', status: 'pass', category: 'tires' },
-        { id: '11', name: 'Mudguards and spray suppression devices fitted', status: 'pass', category: 'exterior' },
-        { id: '12', name: 'Bodywork free from damage, sharp edges, or corrosion', status: 'pass', category: 'exterior' },
-        { id: '13', name: 'All reflectors on nearside clean, secure, and positioned', status: 'pass', category: 'lights' },
-        
-        // Rear of Vehicle (Questions 14-20)
-        { id: '14', name: 'All rear lights (brake, tail, indicators) working', status: 'pass', category: 'lights' },
-        { id: '15', name: 'Number plate light working and illuminating plate', status: 'pass', category: 'lights' },
-        { id: '16', name: 'Rear registration plate clean, secure, and visible', status: 'pass', category: 'exterior' },
-        { id: '17', name: 'Rear reflectors clean, secure, and positioned', status: 'pass', category: 'lights' },
-        { id: '18', name: 'Tail lift operates smoothly and locks securely', status: 'pass', category: 'general' },
-        { id: '19', name: 'Under-run protection bars securely attached', status: 'pass', category: 'exterior' },
-        { id: '20', name: 'Rear doors/tailgate operate correctly', status: 'pass', category: 'general' },
-        
-        // Offside/Driver\'s Side (Questions 21-24)
-        { id: '21', name: 'Driver\'s side tyres in good condition', status: 'pass', category: 'tires' },
-        { id: '22', name: 'Exhaust system secure and not leaking', status: 'pass', category: 'engine' },
-        { id: '23', name: 'Side marker lamps working correctly', status: 'pass', category: 'lights' },
-        { id: '24', name: 'Fuel filler cap secure and not leaking', status: 'pass', category: 'fuel' },
-        
-        // Inside Cab (Questions 25-33)
-        { id: '25', name: 'Driver\'s seat and seat belts secure and functioning', status: 'pass', category: 'interior' },
-        { id: '26', name: 'Steering wheel secure with no excessive play', status: 'pass', category: 'interior' },
-        { id: '27', name: 'Brakes working with firm pedal feel', status: 'pass', category: 'brakes' },
-        { id: '28', name: 'All dashboard warning lights functioning', status: 'pass', category: 'interior' },
-        { id: '29', name: 'Tachograph working and properly calibrated', status: 'pass', category: 'interior' },
-        { id: '30', name: 'Odometer functioning and speed limiter working', status: 'pass', category: 'interior', value: '20690' },
-        { id: '31', name: 'Handbrake/parking brake holds vehicle securely', status: 'pass', category: 'brakes' },
-        { id: '32', name: 'Heating and ventilation systems working', status: 'pass', category: 'interior' },
-        { id: '33', name: 'Saloon lighting and flooring safe and secure', status: 'pass', category: 'interior' },
-        
-        // Safety Equipment (Questions 34-42)
-        { id: '34', name: 'Fire extinguisher present, secure, and in date', status: 'pass', category: 'safety' },
-        { id: '35', name: 'First aid kit present, stocked, and in date', status: 'pass', category: 'safety' },
-        { id: '36', name: 'All passenger doors open/close properly', status: 'pass', category: 'safety' },
-        { id: '37', name: 'Emergency hammers present and accessible', status: 'pass', category: 'safety' },
-        { id: '38', name: 'Wheelchair ramp/lift operates smoothly', status: 'pass', category: 'safety' },
-        { id: '39', name: 'All passenger seat belts working correctly', status: 'pass', category: 'safety' },
-        { id: '40', name: 'Accessibility signage fitted and visible', status: 'pass', category: 'safety' },
-        { id: '41', name: 'Camera systems working with clear displays', status: 'pass', category: 'general' },
-        { id: '42', name: 'Fresnel lens properly positioned and visible', status: 'pass', category: 'general' },
-        
-        // Load & Trailer (Questions 43-47)
-        { id: '43', name: 'Load properly secured with restraints', status: 'pass', category: 'general' },
-        { id: '44', name: 'Load height within legal limits', status: 'pass', category: 'general' },
-        { id: '45', name: 'Trailer brake lines secure and not leaking', status: 'pass', category: 'brakes' },
-        { id: '46', name: 'Trailer coupling secure with electrical connections', status: 'pass', category: 'general' },
-        { id: '47', name: 'Trailer landing legs up and secure', status: 'pass', category: 'general' },
-        
-        // General Equipment (Questions 48-52)
-        { id: '48', name: 'AdBlue level adequate and system functioning', status: 'pass', category: 'fuel' },
-        { id: '49', name: 'Warning triangles or warning devices accessible', status: 'pass', category: 'safety' },
-        { id: '50', name: 'Emergency contact numbers carried and accessible', status: 'pass', category: 'documentation' },
-        { id: '51', name: 'Fire suppression system operating correctly', status: 'pass', category: 'safety' },
-        { id: '52', name: 'Cab clean and free from loose hazardous items', status: 'pass', category: 'general' },
-        
-        // Final Check (Questions 53-54)
-        { id: '53', name: 'All defects properly documented and reported', status: 'pass', category: 'documentation' },
-        { id: '54', name: 'Defects reported to transport manager immediately', status: 'pass', category: 'documentation' },
-        
-        // Documentation & Driver (Questions 55-56)
-        { id: '55', name: 'Current mileage reading', status: 'pass', category: 'documentation', value: '20690' },
-        { id: '56', name: 'Driver fit to drive and not under influence', status: 'pass', category: 'driver' }
-      ],
-      vehicleCondition: 'excellent',
-      driverSignature: 'ok',
-      notes: 'This must be checked if there are no defects.'
-    };
+  // Fetch the actual walk-around check data
+  const { data: walkAroundCheck, isLoading: checkLoading, error: checkError } = useWalkAroundCheck(checkId || '');
+  
+  // Fetch the questions for this specific check (using the question_set_id from the check)
+  const { data: questions, isLoading: questionsLoading } = useVehicleCheckQuestions(
+    walkAroundCheck?.question_set_id
+  );
 
-    setTimeout(() => {
-      setCheck(mockCheck);
-      setLoading(false);
-    }, 500);
-  }, [checkId]);
+  const loading = checkLoading || questionsLoading;
+  const error = checkError ? checkError.message : null;
+
+  // Transform the real data into the format expected by the component
+  const check = walkAroundCheck ? {
+    id: walkAroundCheck.id,
+    vehicleId: walkAroundCheck.vehicle_id,
+    vehicleNumber: walkAroundCheck.vehicle_number || 'N/A',
+    vehicleName: `${walkAroundCheck.vehicle_year || ''} ${walkAroundCheck.vehicle_make || ''} ${walkAroundCheck.vehicle_model || ''}`.trim(),
+    vehicleYear: walkAroundCheck.vehicle_year || '',
+    vehicleMake: walkAroundCheck.vehicle_make || '',
+    vehicleModel: walkAroundCheck.vehicle_model || '',
+    inspectionForm: walkAroundCheck.inspection_form || 'Daily Pre-Trip Inspection',
+    startedAt: walkAroundCheck.started_at || walkAroundCheck.created_at,
+    submittedAt: walkAroundCheck.submitted_at || walkAroundCheck.updated_at,
+    duration: walkAroundCheck.duration || 'N/A',
+    submissionSource: walkAroundCheck.submission_source || 'Mobile App',
+    submittedBy: {
+      id: walkAroundCheck.profiles?.id || '',
+      name: `${walkAroundCheck.profiles?.first_name || ''} ${walkAroundCheck.profiles?.last_name || ''}`.trim(),
+      initials: `${walkAroundCheck.profiles?.first_name?.[0] || ''}${walkAroundCheck.profiles?.last_name?.[0] || ''}`,
+      avatar: walkAroundCheck.profiles?.avatar_url
+    },
+    location: {
+      address: walkAroundCheck.location || 'N/A',
+      latitude: walkAroundCheck.latitude || 0,
+      longitude: walkAroundCheck.longitude || 0,
+      warning: walkAroundCheck.location_warning
+    },
+    odometerReading: walkAroundCheck.mileage || 0,
+    fuelLevel: walkAroundCheck.fuel_level || 'N/A',
+    oilLife: walkAroundCheck.oil_life || 0,
+    inspectionItems: questions ? questions.map((q, index) => ({
+      id: q.id,
+      name: q.question,
+      status: 'pass' as const, // This would come from the actual check results
+      category: q.category,
+      note: q.guidance,
+      value: q.question_type === 'number' ? walkAroundCheck.mileage?.toString() : undefined
+    })) : [],
+    vehicleCondition: walkAroundCheck.vehicle_condition || 'good',
+    driverSignature: walkAroundCheck.driver_signature || '',
+    notes: walkAroundCheck.notes || ''
+  } : null;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
