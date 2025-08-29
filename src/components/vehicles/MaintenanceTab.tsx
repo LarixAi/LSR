@@ -465,7 +465,7 @@ const MaintenanceTab: React.FC = () => {
     { key: 'serviceDate', label: 'Service Date', render: (item: any) => format(new Date(item.serviceDate), 'MM/dd/yyyy h:mm a') },
     { key: 'watchers', label: 'Watchers', render: () => '-' },
     { key: 'priority', label: 'Priority', render: () => '-' },
-    { key: 'mileage', label: 'Meter', render: (item: any) => `${item.mileage.toLocaleString()} mi` },
+    { key: 'mileage', label: 'Miles', render: (item: any) => `${item.mileage.toLocaleString()} mi` },
     { key: 'serviceType', label: 'Service Tasks', render: (item: any) => item.serviceType },
     { key: 'issues', label: 'Issues', render: () => '-' },
     { key: 'mechanic', label: 'Vendor', render: (item: any) => item.mechanic },
