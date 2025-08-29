@@ -415,7 +415,6 @@ const ComplianceTab: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h2 className="text-2xl font-bold">Compliance</h2>
-          <Button variant="link" className="text-blue-600">Learn</Button>
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm">
@@ -447,12 +446,6 @@ const ComplianceTab: React.FC = () => {
         </Button>
         <Button variant="ghost" className={activeSubTab === 'regulatory' ? 'border-b-2 border-blue-600' : ''} onClick={() => setActiveSubTab('regulatory')}>
           Regulatory
-        </Button>
-        <Button variant="ghost">
-          <MoreHorizontal className="w-4 h-4" />
-        </Button>
-        <Button variant="outline" size="sm">
-          + Add Tab
         </Button>
       </div>
 
