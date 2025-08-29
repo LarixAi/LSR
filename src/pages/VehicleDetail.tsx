@@ -185,8 +185,159 @@ export default function VehicleDetail() {
     }
   ];
 
+  // Mock walk-around checks for demonstration
+  const mockWalkAroundChecks: WalkAroundCheck[] = [
+    {
+      id: 'check-1',
+      vehicle_id: vehicleId || '',
+      driver_id: 'driver-1',
+      driver_name: 'kenny laing',
+      check_date: '2025-08-21',
+      check_time: '15:37',
+      overall_status: 'pass',
+      location: 'Chicago, IL',
+      weather_conditions: 'Clear',
+      mileage: 20690,
+      notes: 'All systems functioning properly. Minor wear on front tires noted. Windshield wipers need replacement.',
+      defects_found: 1,
+      photos_taken: 3,
+      created_at: '2025-08-21T15:37:00Z',
+      profiles: {
+        first_name: 'kenny',
+        last_name: 'laing'
+      },
+      check_items: [
+        {
+          category: 'Exterior',
+          items: [
+            { name: 'Body Condition', status: 'pass' },
+            { name: 'Windows & Mirrors', status: 'pass' },
+            { name: 'Lights & Indicators', status: 'pass' },
+            { name: 'Tires & Wheels', status: 'warning', notes: 'Front tires showing wear' }
+          ]
+        },
+        {
+          category: 'Interior',
+          items: [
+            { name: 'Dashboard & Controls', status: 'pass' },
+            { name: 'Seats & Safety Belts', status: 'pass' },
+            { name: 'Emergency Equipment', status: 'pass' }
+          ]
+        },
+        {
+          category: 'Engine & Mechanical',
+          items: [
+            { name: 'Engine Oil Level', status: 'pass' },
+            { name: 'Coolant Level', status: 'pass' },
+            { name: 'Brake Fluid', status: 'pass' },
+            { name: 'Windscreen Washer', status: 'fail', notes: 'Wipers need replacement' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'check-2',
+      vehicle_id: vehicleId || '',
+      driver_id: 'driver-2',
+      driver_name: 'John Smith',
+      check_date: '2025-08-20',
+      check_time: '08:30',
+      overall_status: 'pass',
+      location: 'London Depot',
+      weather_conditions: 'Clear',
+      mileage: 20450,
+      notes: 'Vehicle in excellent condition. All systems operational.',
+      defects_found: 0,
+      photos_taken: 2,
+      created_at: '2025-08-20T08:30:00Z',
+      profiles: {
+        first_name: 'John',
+        last_name: 'Smith'
+      },
+      check_items: [
+        {
+          category: 'Exterior',
+          items: [
+            { name: 'Body Condition', status: 'pass' },
+            { name: 'Windows & Mirrors', status: 'pass' },
+            { name: 'Lights & Indicators', status: 'pass' },
+            { name: 'Tires & Wheels', status: 'pass' }
+          ]
+        },
+        {
+          category: 'Interior',
+          items: [
+            { name: 'Dashboard & Controls', status: 'pass' },
+            { name: 'Seats & Safety Belts', status: 'pass' },
+            { name: 'Emergency Equipment', status: 'pass' }
+          ]
+        },
+        {
+          category: 'Engine & Mechanical',
+          items: [
+            { name: 'Engine Oil Level', status: 'pass' },
+            { name: 'Coolant Level', status: 'pass' },
+            { name: 'Brake Fluid', status: 'pass' },
+            { name: 'Windscreen Washer', status: 'pass' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'check-3',
+      vehicle_id: vehicleId || '',
+      driver_id: 'driver-3',
+      driver_name: 'Sarah Johnson',
+      check_date: '2025-08-19',
+      check_time: '14:15',
+      overall_status: 'warning',
+      location: 'Manchester Hub',
+      weather_conditions: 'Rain',
+      mileage: 20180,
+      notes: 'Vehicle generally in good condition. Minor issues with brake lights.',
+      defects_found: 2,
+      photos_taken: 4,
+      created_at: '2025-08-19T14:15:00Z',
+      profiles: {
+        first_name: 'Sarah',
+        last_name: 'Johnson'
+      },
+      check_items: [
+        {
+          category: 'Exterior',
+          items: [
+            { name: 'Body Condition', status: 'pass' },
+            { name: 'Windows & Mirrors', status: 'pass' },
+            { name: 'Lights & Indicators', status: 'warning', notes: 'Brake lights dim' },
+            { name: 'Tires & Wheels', status: 'pass' }
+          ]
+        },
+        {
+          category: 'Interior',
+          items: [
+            { name: 'Dashboard & Controls', status: 'pass' },
+            { name: 'Seats & Safety Belts', status: 'pass' },
+            { name: 'Emergency Equipment', status: 'pass' }
+          ]
+        },
+        {
+          category: 'Engine & Mechanical',
+          items: [
+            { name: 'Engine Oil Level', status: 'pass' },
+            { name: 'Coolant Level', status: 'pass' },
+            { name: 'Brake Fluid', status: 'warning', notes: 'Slightly low' },
+            { name: 'Windscreen Washer', status: 'pass' }
+          ]
+        }
+      ]
+    }
+  ];
+
   // Use mock documents for demonstration (replace with real data when backend is ready)
   const displayDocuments = mockDocuments;
+  
+  // Use mock walk-around checks for demonstration (replace with real data when backend is ready)
+  const displayWalkAroundChecks = mockWalkAroundChecks;
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -710,7 +861,7 @@ export default function VehicleDetail() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {walkAroundChecks.length === 0 ? (
+              {displayWalkAroundChecks.length === 0 ? (
                 <div className="text-center py-8">
                   <Car className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-2 text-sm font-semibold text-gray-900">No walk-around checks</h3>
@@ -720,7 +871,7 @@ export default function VehicleDetail() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {walkAroundChecks.map((check) => (
+                  {displayWalkAroundChecks.map((check) => (
                     <div 
                       key={check.id} 
                       className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
