@@ -56,6 +56,7 @@ const DefectReports = lazy(() => import("./pages/DefectReports"));
 const PartsSupplies = lazy(() => import("./pages/PartsSuppliesRefactored")); // Use refactored version
 const NotificationCenterPage = lazy(() => import("./pages/NotificationCenter"));
 const VehicleDetail = lazy(() => import("./pages/VehicleDetail"));
+const WalkAroundCheckDetail = lazy(() => import("./pages/WalkAroundCheckDetail"));
 const AssignDriver = lazy(() => import("./pages/AssignDriver"));
 const EditVehicle = lazy(() => import("./pages/EditVehicle"));
 const DocumentViewer = lazy(() => import("./pages/DocumentViewer"));
@@ -571,6 +572,11 @@ const App = () => {
                         <Route path="/vehicles/:vehicleId/documents/:documentId" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <DocumentViewer />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/walk-around-checks/:checkId" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <WalkAroundCheckDetail />
                           </ProtectedRoute>
                         } />
                         <Route path="/vehicle-service" element={

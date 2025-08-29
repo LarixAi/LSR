@@ -512,7 +512,7 @@ export default function DriverDetail() {
               </div>
               <div className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                <span>Classifications: {driver.role === 'driver' ? 'Driver' : 'Employee'}</span>
+                <span>Location: {driver.location || 'Not specified'}</span>
               </div>
             </div>
           </div>

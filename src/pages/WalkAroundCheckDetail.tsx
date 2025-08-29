@@ -4,146 +4,196 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { 
   ArrowLeft, 
   Car, 
   Calendar, 
+  Clock, 
   MapPin, 
   AlertTriangle, 
   CheckCircle, 
-  Clock, 
+  XCircle,
   User,
-  Thermometer,
-  Gauge,
-  Camera,
   FileText,
-  Edit
+  Smartphone,
+  AlertCircle,
+  Map,
+  Satellite,
+  Gauge,
+  Fuel,
+  Droplets,
+  Wrench,
+  Shield,
+  Eye,
+  Lightbulb,
+  Volume2,
+  Settings,
+  Circle,
+  Zap,
+  Activity
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+
+interface InspectionItem {
+  id: string;
+  name: string;
+  status: 'pass' | 'fail' | 'note';
+  note?: string;
+  issueId?: string;
+  value?: string;
+}
 
 interface WalkAroundCheck {
   id: string;
-  vehicle_id: string;
-  driver_id: string;
-  driver_name: string;
-  check_date: string;
-  check_time: string;
-  overall_status: 'pass' | 'fail' | 'warning';
-  location: string;
-  weather_conditions: string;
-  mileage: number;
+  vehicleId: string;
+  vehicleNumber: string;
+  vehicleName: string;
+  vehicleYear: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  inspectionForm: string;
+  startedAt: string;
+  submittedAt: string;
+  duration: string;
+  submissionSource: string;
+  submittedBy: {
+    id: string;
+    name: string;
+    initials: string;
+    avatar?: string;
+  };
+  location: {
+    address: string;
+    latitude: number;
+    longitude: number;
+    warning?: string;
+  };
+  odometerReading: number;
+  fuelLevel: string;
+  oilLife: number;
+  inspectionItems: InspectionItem[];
+  vehicleCondition: 'excellent' | 'good' | 'fair' | 'poor';
+  driverSignature: string;
   notes: string;
-  defects_found: number;
-  photos_taken: number;
-  created_at: string;
-  check_items: {
-    category: string;
-    items: {
-      name: string;
-      status: 'pass' | 'fail' | 'warning';
-      notes?: string;
-    }[];
-  }[];
 }
 
-export default function WalkAroundCheckDetail() {
+const WalkAroundCheckDetail: React.FC = () => {
   const { checkId } = useParams<{ checkId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [check, setCheck] = useState<WalkAroundCheck | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (checkId) {
-      fetchWalkAroundCheck();
-    }
-  }, [checkId]);
+    // Mock data - replace with actual API call
+    const mockCheck: WalkAroundCheck = {
+      id: checkId || '1',
+      vehicleId: 'v1',
+      vehicleNumber: '1100',
+      vehicleName: '2018 Toyota Prius',
+      vehicleYear: '2018',
+      vehicleMake: 'Toyota',
+      vehicleModel: 'Prius',
+      inspectionForm: 'Driver Vehicle Inspection Report (Simple)',
+      startedAt: '2025-08-21T15:20:00Z',
+      submittedAt: '2025-08-21T15:37:00Z',
+      duration: '17m',
+      submissionSource: 'Fleetio Go',
+      submittedBy: {
+        id: 'driver-1',
+        name: 'kenny laing',
+        initials: 'KL',
+        avatar: undefined
+      },
+      location: {
+        address: 'Chicago, IL',
+        latitude: 41.8781,
+        longitude: -87.6298,
+        warning: '3 of the inspection items were completed more than 100 meters away from the center of the inspection location.'
+      },
+      odometerReading: 20690,
+      fuelLevel: 'Full',
+      oilLife: 50,
+      inspectionItems: [
+        { id: '1', name: 'Interior Cleanliness', status: 'note', note: 'Take a photo of the interior' },
+        { id: '2', name: 'Engine', status: 'pass' },
+        { id: '3', name: 'Transmission', status: 'pass' },
+        { id: '4', name: 'Clutch', status: 'pass' },
+        { id: '5', name: 'Steering Mechanism', status: 'pass' },
+        { id: '6', name: 'Horn', status: 'pass' },
+        { id: '7', name: 'Rear Vision Mirrors', status: 'pass' },
+        { id: '8', name: 'Lighting Devices and Reflectors', status: 'pass' },
+        { id: '9', name: 'Parking Brake', status: 'pass' },
+        { id: '10', name: 'Service Brakes', status: 'pass' },
+        { id: '11', name: 'Air Lines/Light Lines', status: 'pass' },
+        { id: '12', name: 'Coupling Devices', status: 'pass' },
+        { id: '13', name: 'Tires', status: 'pass' },
+        { id: '14', name: 'Wheels and Rims', status: 'pass' },
+        { id: '15', name: 'Emergency Equipment', status: 'pass' },
+        { id: '16', name: 'Windshield and Wipers/Washers', status: 'fail', issueId: '6' },
+        { id: '17', name: 'Oil Life Left', status: 'pass', value: '50' },
+        { id: '18', name: 'Fuel Level', status: 'pass', value: 'Full' }
+      ],
+      vehicleCondition: 'excellent',
+      driverSignature: 'ok',
+      notes: 'This must be checked if there are no defects.'
+    };
 
-  const fetchWalkAroundCheck = async () => {
-    try {
-      setLoading(true);
-      // For now, using mock data - replace with actual Supabase query
-      const mockCheck: WalkAroundCheck = {
-        id: checkId || '1',
-        vehicle_id: 'vehicle-1',
-        driver_id: 'driver-1',
-        driver_name: 'John Smith',
-        check_date: '2024-01-28',
-        check_time: '08:30',
-        overall_status: 'pass',
-        location: 'London Depot',
-        weather_conditions: 'Clear',
-        mileage: 45230,
-        notes: 'All systems functioning properly. Minor wear on front tires noted.',
-        defects_found: 0,
-        photos_taken: 3,
-        created_at: '2024-01-28T08:30:00Z',
-        check_items: [
-          {
-            category: 'Exterior',
-            items: [
-              { name: 'Body Condition', status: 'pass' },
-              { name: 'Windows & Mirrors', status: 'pass' },
-              { name: 'Lights & Indicators', status: 'pass' },
-              { name: 'Tires & Wheels', status: 'warning', notes: 'Front tires showing wear' }
-            ]
-          },
-          {
-            category: 'Interior',
-            items: [
-              { name: 'Dashboard & Controls', status: 'pass' },
-              { name: 'Seats & Safety Belts', status: 'pass' },
-              { name: 'Emergency Equipment', status: 'pass' }
-            ]
-          },
-          {
-            category: 'Engine & Mechanical',
-            items: [
-              { name: 'Engine Oil Level', status: 'pass' },
-              { name: 'Coolant Level', status: 'pass' },
-              { name: 'Brake Fluid', status: 'pass' },
-              { name: 'Windscreen Washer', status: 'pass' }
-            ]
-          }
-        ]
-      };
-      
+    setTimeout(() => {
       setCheck(mockCheck);
-    } catch (err) {
-      setError('Failed to load walk-around check details');
-      console.error('Error fetching walk-around check:', err);
-    } finally {
       setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pass':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'fail':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'warning':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+    }, 500);
+  }, [checkId]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pass':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'fail':
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
-      case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'note':
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-400" />;
+        return null;
     }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pass':
+        return 'Pass';
+      case 'fail':
+        return 'Fail';
+      case 'note':
+        return 'Note';
+      default:
+        return status;
+    }
+  };
+
+  const getItemIcon = (itemName: string) => {
+    const iconMap: { [key: string]: React.ReactNode } = {
+      'Engine': <Settings className="w-4 h-4" />,
+      'Transmission': <Settings className="w-4 h-4" />,
+      'Clutch': <Settings className="w-4 h-4" />,
+      'Steering Mechanism': <Settings className="w-4 h-4" />,
+      'Horn': <Volume2 className="w-4 h-4" />,
+      'Rear Vision Mirrors': <Eye className="w-4 h-4" />,
+      'Lighting Devices and Reflectors': <Lightbulb className="w-4 h-4" />,
+      'Parking Brake': <Circle className="w-4 h-4" />,
+      'Service Brakes': <Circle className="w-4 h-4" />,
+      'Air Lines/Light Lines': <Settings className="w-4 h-4" />,
+      'Coupling Devices': <Settings className="w-4 h-4" />,
+      'Tires': <Circle className="w-4 h-4" />,
+      'Wheels and Rims': <Circle className="w-4 h-4" />,
+      'Emergency Equipment': <Zap className="w-4 h-4" />,
+      'Windshield and Wipers/Washers': <Activity className="w-4 h-4" />,
+      'Oil Life Left': <Droplets className="w-4 h-4" />,
+      'Fuel Level': <Fuel className="w-4 h-4" />,
+      'Interior Cleanliness': <Shield className="w-4 h-4" />
+    };
+    return iconMap[itemName] || <Settings className="w-4 h-4" />;
   };
 
   if (loading) {
@@ -151,7 +201,7 @@ export default function WalkAroundCheckDetail() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading walk-around check...</p>
+          <p className="mt-2 text-gray-600">Loading inspection details...</p>
         </div>
       </div>
     );
@@ -161,12 +211,12 @@ export default function WalkAroundCheckDetail() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
-          <h2 className="mt-4 text-lg font-semibold text-gray-900">Error</h2>
-          <p className="mt-2 text-gray-600">{error || 'Walk-around check not found'}</p>
-          <Button onClick={() => navigate(-1)} className="mt-4">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Inspection</h2>
+          <p className="text-gray-600 mb-4">{error || 'Inspection not found'}</p>
+          <Button onClick={() => navigate('/vehicles')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Go Back
+            Back to Vehicles
           </Button>
         </div>
       </div>
@@ -174,193 +224,254 @@ export default function WalkAroundCheckDetail() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <Button
-          variant="outline"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Vehicle
-        </Button>
-        <div className="flex items-center gap-2">
-          {getStatusIcon(check.overall_status)}
-          <Badge className={getStatusColor(check.overall_status)}>
-            {check.overall_status.toUpperCase()}
-          </Badge>
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate('/vehicles')} className="p-0">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Inspection Details</h1>
+              <p className="text-sm text-gray-600">Walk-around check submitted by {check.submittedBy.name}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">#{check.id}</Badge>
+            <Button variant="outline" size="sm">
+              <FileText className="w-4 h-4 mr-2" />
+              Export Report
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="space-y-6">
-        {/* Check Header */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Car className="w-5 h-5" />
-              Walk Around Check Details
-            </CardTitle>
-            <CardDescription>
-              Performed on {format(new Date(check.check_date), 'EEEE, MMMM dd, yyyy')} at {check.check_time}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Driver Information */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Driver Information
-                </h3>
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
-                    <AvatarFallback>{check.driver_name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
+      <div className="p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Panel - Inspection Details and Map */}
+          <div className="space-y-6">
+            {/* Inspection Details Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Inspection Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Vehicle Info */}
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Car className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900">
+                      {check.vehicleNumber} [{check.vehicleYear} {check.vehicleMake} {check.vehicleModel}]
+                    </div>
+                    <div className="text-sm text-gray-600">{check.inspectionForm}</div>
+                  </div>
+                  <Badge variant="secondary">Sample</Badge>
+                </div>
+
+                {/* Timestamps */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock className="w-4 h-4" />
+                      <span>Started</span>
+                    </div>
+                    <div className="font-medium">
+                      {format(new Date(check.startedAt), 'EEE, MMM d, yyyy h:mma')}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="w-4 h-4" />
+                      <span>Submitted</span>
+                    </div>
+                    <div className="font-medium">
+                      {format(new Date(check.submittedAt), 'EEE, MMM d, yyyy h:mma')}
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Duration and Source */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="font-medium">{check.driver_name}</p>
-                    <p className="text-sm text-gray-600">Driver ID: {check.driver_id}</p>
+                    <div className="text-sm text-gray-600">Duration</div>
+                    <div className="font-medium">{check.duration}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600">Submission Source</div>
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="w-4 h-4" />
+                      <span className="font-medium">{check.submissionSource}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Check Information */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Check Information
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Location:</span>
-                    <span className="font-medium flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {check.location}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Weather:</span>
-                    <span className="font-medium flex items-center gap-1">
-                      <Thermometer className="w-3 h-3" />
-                      {check.weather_conditions}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Mileage:</span>
-                    <span className="font-medium flex items-center gap-1">
-                      <Gauge className="w-3 h-3" />
-                      {check.mileage.toLocaleString()} mi
-                    </span>
+                <Separator />
+
+                {/* Submitted By */}
+                <div>
+                  <div className="text-sm text-gray-600 mb-2">Submitted By</div>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={check.submittedBy.avatar} />
+                      <AvatarFallback className="text-xs">
+                        {check.submittedBy.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{check.submittedBy.name}</span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Summary Statistics */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Check Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">{check.defects_found}</div>
-                <div className="text-sm text-gray-600">Defects Found</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{check.photos_taken}</div>
-                <div className="text-sm text-gray-600">Photos Taken</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold capitalize">{check.overall_status}</div>
-                <div className="text-sm text-gray-600">Overall Status</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                {/* Warning Message */}
+                {check.location.warning && (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-yellow-800">{check.location.warning}</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Check Items */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Check Details</CardTitle>
-            <CardDescription>
-              Detailed breakdown of all checked items
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {check.check_items.map((category, categoryIndex) => (
-                <div key={categoryIndex} className="border rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-4">{category.category}</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {category.items.map((item, itemIndex) => (
-                      <div key={itemIndex} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium">{item.name}</span>
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant="outline" 
-                            className={getStatusColor(item.status)}
-                          >
-                            {item.status.toUpperCase()}
-                          </Badge>
-                          {item.notes && (
-                            <span className="text-xs text-gray-600 bg-white px-2 py-1 rounded">
-                              {item.notes}
-                            </span>
-                          )}
-                        </div>
+            {/* Map Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Map className="w-5 h-5" />
+                  Map
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {/* Map Tabs */}
+                  <div className="flex border-b border-gray-200">
+                    <button className="px-4 py-2 border-b-2 border-blue-500 text-blue-600 font-medium">
+                      Map
+                    </button>
+                    <button className="px-4 py-2 text-gray-600 hover:text-gray-900">
+                      Satellite
+                    </button>
+                  </div>
+
+                  {/* Map Placeholder */}
+                  <div className="h-64 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <Map className="w-12 h-12 mx-auto mb-2" />
+                      <p>Interactive Map</p>
+                      <p className="text-sm">Location: {check.location.address}</p>
+                      <p className="text-xs">Lat: {check.location.latitude}, Lng: {check.location.longitude}</p>
+                    </div>
+                  </div>
+
+                  {/* Map Markers Info */}
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span>Inspection Location</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <span>Item Locations</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Panel - Inspection Items */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Inspection Items
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Odometer and Fuel */}
+                <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Gauge className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">Odometer:</span>
+                    <span className="font-medium">{check.odometerReading.toLocaleString()} mi</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Fuel className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">Fuel Level:</span>
+                    <span className="font-medium">{check.fuelLevel}</span>
+                  </div>
+                </div>
+
+                {/* Inspection Items List */}
+                <div className="space-y-2">
+                  {check.inspectionItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center gap-3 flex-1">
+                        {getItemIcon(item.name)}
+                        <span className="text-sm">{item.name}</span>
+                        {item.value && (
+                          <span className="text-xs text-gray-500">({item.value})</span>
+                        )}
                       </div>
-                    ))}
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(item.status)}
+                        <span className={`text-sm font-medium ${
+                          item.status === 'pass' ? 'text-green-600' : 
+                          item.status === 'fail' ? 'text-red-600' : 'text-yellow-600'
+                        }`}>
+                          {getStatusText(item.status)}
+                        </span>
+                        {item.issueId && (
+                          <Button variant="link" size="sm" className="p-0 h-auto text-blue-600 underline">
+                            Issue #{item.issueId}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Sign-Off Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Vehicle Condition OK</span>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm font-medium text-green-600 capitalize">{check.vehicleCondition}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600">
+                    {check.notes}
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <div className="text-sm text-gray-600 mb-2">Reviewing Driver's Signature</div>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="font-mono text-lg">{check.driverSignature}</div>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Driver Notes */}
-        {check.notes && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Driver Notes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-blue-900">{check.notes}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Edit className="w-4 h-4" />
-                Edit Check
-              </Button>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Camera className="w-4 h-4" />
-                View Photos
-              </Button>
-              <Button variant="outline" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Export Report
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default WalkAroundCheckDetail;

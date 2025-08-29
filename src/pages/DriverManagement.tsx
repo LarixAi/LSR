@@ -356,7 +356,7 @@ export default function DriverManagement() {
                   <TableHead>User Type</TableHead>
                   <TableHead>User Role</TableHead>
                   <TableHead>Login Count</TableHead>
-                  <TableHead>Classifications</TableHead>
+                  <TableHead>Location</TableHead>
                   <TableHead>Group</TableHead>
                   <TableHead>Assigned Vehicles</TableHead>
                   <TableHead className="w-12"></TableHead>
