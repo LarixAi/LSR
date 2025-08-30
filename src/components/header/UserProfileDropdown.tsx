@@ -110,12 +110,7 @@ const UserProfileDropdown = () => {
                 Subscriptions
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/admin/support-tickets" className="flex items-center">
-                <Ticket className="w-4 h-4 mr-2" />
-                Support Tickets
-              </Link>
-            </DropdownMenuItem>
+
           </>
         )}
         <DropdownMenuSeparator />

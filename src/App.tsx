@@ -9,7 +9,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { SecurityProvider } from "./contexts/SecurityContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
-import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import ErrorBoundary from "./components/ErrorBoundary";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PasswordChangeWrapper from "./components/auth/PasswordChangeWrapper";
@@ -41,11 +41,12 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const SupportTicket = lazy(() => import("./pages/SupportTicket"));
 const HelpSupport = lazy(() => import("./pages/HelpSupport"));
-const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
+
 const StaffDirectory = lazy(() => import("./pages/StaffDirectory"));
 const ComplianceReportsPage = lazy(() => import("./pages/ComplianceReportsPage"));
 const VehicleInspections = lazy(() => import("./pages/VehicleInspections"));
 const CustomerAuth = lazy(() => import("./pages/CustomerAuth"));
+const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const DriverMobile = lazy(() => import("./pages/DriverMobile"));
 const RealTimeTracking = lazy(() => import("./pages/RealTimeTracking"));
@@ -63,6 +64,8 @@ const DocumentViewer = lazy(() => import("./pages/DocumentViewer"));
 const VehicleServicePage = lazy(() => import("./pages/VehicleServicePage"));
 const FuelManagement = lazy(() => import("./pages/FuelManagement"));
 const Mechanics = lazy(() => import("./pages/Mechanics"));
+const FleetOverview = lazy(() => import("./pages/FleetOverview"));
+
 
 // New pages - Mechanic specific
 const MechanicDashboard = lazy(() => import("./pages/MechanicDashboard"));
@@ -116,7 +119,7 @@ const InvoiceManagement = lazy(() => import("./pages/InvoiceManagement"));
 const QuotationManagement = lazy(() => import("./pages/QuotationManagement"));
 const EmailManagement = lazy(() => import("./pages/EmailManagement"));
 
-const SmartInspections = lazy(() => import("./pages/SmartInspections"));
+const VehicleCheckQuestions = lazy(() => import("./pages/VehicleCheckQuestions"));
 
 const DriverAppDownload = lazy(() => import("./pages/DriverAppDownload"));
 const ComplianceDashboard = lazy(() => import("./pages/ComplianceDashboard"));
@@ -132,7 +135,6 @@ const Schedule = lazy(() => import("./pages/AdminSchedule")); // Use AdminSchedu
 const SchoolRoutes = lazy(() => import("./pages/SchoolRoutesEnhanced")); // Use enhanced version
 const InventoryManagement = lazy(() => import("./pages/InventoryManagement"));
 const Inspections = lazy(() => import("./pages/Inspections"));
-const VehicleCheckQuestions = lazy(() => import("./pages/VehicleCheckQuestions"));
 const Licenses = lazy(() => import("./pages/Licenses"));
 const Incidents = lazy(() => import("./pages/Incidents"));
 const FleetReports = lazy(() => import("./pages/FleetReports"));
@@ -180,36 +182,18 @@ const App = () => {
                   <SecurityProvider>
                     <Suspense fallback={<PageLoader />}>
                     <Routes>
-                  {/* Vehicle Check Questions - MUST BE FIRST to avoid conflicts */}
-                  <Route path="/admin/smart-inspections" element={
-                    <OrganizationProvider>
-                      <AppLayout>
-                        <ProtectedRoute allowedRoles={['admin', 'council']}>
-                          <SmartInspections />
-                        </ProtectedRoute>
-                      </AppLayout>
-                    </OrganizationProvider>
-                  } />
-                  
-                  {/* Alternative route for Vehicle Check Questions */}
+                  {/* Vehicle Check Questions - Main Route */}
                   <Route path="/vehicle-check-questions" element={
                     <OrganizationProvider>
                       <AppLayout>
                         <ProtectedRoute allowedRoles={['admin', 'council']}>
-                          <SmartInspections />
+                          <VehicleCheckQuestions />
                         </ProtectedRoute>
                       </AppLayout>
                     </OrganizationProvider>
                   } />
                   
-                  {/* Simple test route for SmartInspections */}
-                  <Route path="/test-smart-simple" element={
-                    <div className="p-8">
-                      <h1 className="text-2xl font-bold mb-4">🧪 Simple SmartInspections Test</h1>
-                      <p className="mb-4">Testing SmartInspections component directly without any wrappers...</p>
-                      <SmartInspections />
-                    </div>
-                  } />
+
                   
                   {/* Auth routes - full screen without AppLayout */}
                   <Route path="/auth/callback" element={<AuthCallback />} />
@@ -218,37 +202,7 @@ const App = () => {
                   <Route path="/customer-auth" element={<CustomerAuth />} />
                   <Route path="/book-demo" element={<BookDemoPage />} />
                   
-                  {/* Test route for Vehicle Check Questions */}
-                  <Route path="/test-smart" element={
-                    <div className="p-8">
-                      <h1 className="text-2xl font-bold mb-4">🚗 Vehicle Check Questions Test</h1>
-                      <p className="mb-4">This is a test route to verify Vehicle Check Questions routing.</p>
-                      <div className="space-y-2">
-                        <p><strong>Current URL:</strong> {window.location.href}</p>
-                        <p><strong>Pathname:</strong> {window.location.pathname}</p>
-                      </div>
-                      <div className="mt-4 space-x-2">
-                        <a href="/admin/smart-inspections" className="text-blue-600 hover:underline">Go to Vehicle Check Questions (Original)</a>
-                        <a href="/vehicle-check-questions" className="text-blue-600 hover:underline">Go to Vehicle Check Questions (New)</a>
-                        <a href="/inspections" className="text-blue-600 hover:underline">Go to Regular Inspections</a>
-                      </div>
-                    </div>
-                  } />
-                  
-                  {/* Debug route to test Vehicle Check Questions component */}
-                  <Route path="/debug-smart" element={
-                    <OrganizationProvider>
-                      <AppLayout>
-                        <ProtectedRoute allowedRoles={['admin', 'council']}>
-                          <div className="p-8">
-                            <h1 className="text-2xl font-bold mb-4">🔍 Vehicle Check Questions Debug</h1>
-                            <p className="mb-4">Testing Vehicle Check Questions component directly...</p>
-                            <SmartInspections />
-                          </div>
-                        </ProtectedRoute>
-                      </AppLayout>
-                    </OrganizationProvider>
-                  } />
+
                   
                   {/* Parent-specific routes with admin layout */}
                   <Route path="/parent/*" element={
@@ -549,6 +503,13 @@ const App = () => {
                             <VehicleManagementSettings />
                           </ProtectedRoute>
                         } />
+
+                        {/* Fleet Overview */}
+                        <Route path="/fleet-management" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <FleetOverview />
+                          </ProtectedRoute>
+                        } />
                         <Route path="/vehicle-details/:id" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
                             <VehicleDetail />
@@ -588,7 +549,7 @@ const App = () => {
                         {/* Inspections - Place these routes early to avoid conflicts */}
                         <Route path="/inspections" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver']}>
-                            <VehicleInspections />
+                            <Inspections />
                           </ProtectedRoute>
                         } />
                         
@@ -703,6 +664,8 @@ const App = () => {
                           </ProtectedRoute>
                         } />
 
+
+
                         {/* Subscriptions */}
                         <Route path="/subscriptions" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
@@ -730,12 +693,7 @@ const App = () => {
                           </ProtectedRoute>
                         } />
 
-                        {/* Admin Support Tickets */}
-                        <Route path="/admin/support-tickets" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <AdminSupportTickets />
-                          </ProtectedRoute>
-                        } />
+
 
                         {/* Staff Directory */}
                         <Route path="/staff-directory" element={
@@ -759,7 +717,7 @@ const App = () => {
                         } />
 
                         {/* Customer Auth */}
-                        <Route path="/customer-dashboard" element={<div>Customer Dashboard - Under Construction</div>} />
+                        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
                         <Route path="/driver-mobile" element={
                           <ProtectedRoute allowedRoles={['driver', 'admin', 'council']}>
                             <DriverMobile />

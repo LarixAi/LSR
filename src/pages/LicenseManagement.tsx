@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,7 @@ import { Label } from '@/components/ui/label';
 
 const LicenseManagement = () => {
   const { user, profile, loading } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [licenseTypeFilter, setLicenseTypeFilter] = useState<string>('all');
@@ -123,8 +124,8 @@ const LicenseManagement = () => {
   };
 
   const handleViewLicense = (license: DriverLicense) => {
-    setSelectedLicense(license);
-    setIsViewDialogOpen(true);
+    // Navigate to driver profile page with documents tab focus
+    navigate(`/drivers/${license.driver_id}?tab=documents&licenseId=${license.id}`);
   };
 
   return (

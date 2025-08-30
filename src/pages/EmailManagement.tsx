@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,10 +17,21 @@ import {
   XCircle,
   Plus,
   Search,
-  Loader2
+  Loader2,
+  Settings,
+  Download,
+  Activity
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import StandardPageLayout, { 
+  MetricCard,
+  NavigationTab, 
+  ActionButton, 
+  FilterOption,
+  TableColumn 
+} from '@/components/layout/StandardPageLayout';
+import { toast } from 'sonner';
 
 interface EmailTemplate {
   id: string;
@@ -84,6 +95,118 @@ export const EmailManagement: React.FC = () => {
 
   const { toast } = useToast();
 
+  // StandardPageLayout Configuration
+  const pageTitle = "Email Management";
+  const pageDescription = "Manage email templates, compose messages, and track email delivery status";
+
+  const primaryAction: ActionButton = {
+    label: "Compose Email",
+    onClick: () => setShowCompose(true),
+    icon: <Send className="w-4 h-4" />
+  };
+
+  const secondaryActions: ActionButton[] = [
+    {
+      label: "New Template",
+      onClick: () => setShowNewTemplate(true),
+      icon: <Plus className="w-4 h-4" />,
+      variant: "outline"
+    },
+    {
+      label: "Export Logs",
+      onClick: () => console.log("Export clicked"),
+      icon: <Download className="w-4 h-4" />,
+      variant: "outline"
+    },
+    {
+      label: "Settings",
+      onClick: () => console.log("Settings clicked"),
+      icon: <Settings className="w-4 h-4" />,
+      variant: "outline"
+    }
+  ];
+
+  // Metrics cards for the dashboard
+  const metricsCards: MetricCard[] = [
+    {
+      title: "Total Templates",
+      value: templates.length.toString(),
+      subtitle: "Email templates",
+      icon: <FileText className="w-5 h-5" />,
+      bgColor: "bg-blue-100",
+      color: "text-blue-600"
+    },
+    {
+      title: "Emails Sent",
+      value: emailLogs.filter(log => log.status === 'sent' || log.status === 'delivered').length.toString(),
+      subtitle: "Successfully delivered",
+      icon: <CheckCircle className="w-5 h-5" />,
+      bgColor: "bg-green-100",
+      color: "text-green-600"
+    },
+    {
+      title: "Pending",
+      value: emailLogs.filter(log => log.status === 'pending').length.toString(),
+      subtitle: "Awaiting delivery",
+      icon: <Clock className="w-5 h-5" />,
+      bgColor: "bg-yellow-100",
+      color: "text-yellow-600"
+    },
+    {
+      title: "Failed",
+      value: emailLogs.filter(log => log.status === 'failed' || log.status === 'bounced').length.toString(),
+      subtitle: "Delivery issues",
+      icon: <XCircle className="w-5 h-5" />,
+      bgColor: "bg-red-100",
+      color: "text-red-600"
+    }
+  ];
+
+  const navigationTabs: NavigationTab[] = [
+    { value: "overview", label: "Overview" },
+    { value: "templates", label: "Email Templates", badge: templates.length },
+    { value: "compose", label: "Compose" },
+    { value: "logs", label: "Email Logs", badge: emailLogs.length },
+    { value: "recipients", label: "Recipients", badge: recipients.length }
+  ];
+
+  const searchConfig = {
+    placeholder: "Search templates, emails, or recipients...",
+    value: searchTerm,
+    onChange: setSearchTerm,
+    showSearch: true
+  };
+
+  const filters: FilterOption[] = [
+    {
+      label: "Status",
+      value: "",
+      options: [
+        { value: "all", label: "All Status" },
+        { value: "sent", label: "Sent" },
+        { value: "pending", label: "Pending" },
+        { value: "failed", label: "Failed" }
+      ],
+      placeholder: "Filter by status"
+    },
+    {
+      label: "Category",
+      value: "",
+      options: [
+        { value: "all", label: "All Categories" },
+        { value: "general", label: "General" },
+        { value: "notifications", label: "Notifications" },
+        { value: "alerts", label: "Alerts" }
+      ],
+      placeholder: "Filter by category"
+    }
+  ];
+
+  const handleFilterChange = (filterKey: string, value: string) => {
+    // Handle filter changes
+    console.log('Filter changed:', filterKey, value);
+  };
+
   useEffect(() => {
     loadCurrentUser();
     loadData();
@@ -104,116 +227,72 @@ export const EmailManagement: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Mock email templates (tables don't exist yet)
-      setTemplates([]);
+      // Load templates
+      const { data: templatesData } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('organization_id', currentUser?.organization_id);
 
-      // Mock email logs (tables don't exist yet)
-      setEmailLogs([]);
+      // Load email logs
+      const { data: logsData } = await supabase
+        .from('email_logs')
+        .select('*')
+        .eq('organization_id', currentUser?.organization_id);
 
-      // Load potential recipients (profiles with emails)
+      // Load recipients
       const { data: recipientsData } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, role')
-        .not('email', 'is', null);
-      
-      if (recipientsData) setRecipients(recipientsData as Profile[]);
+        .select('*')
+        .eq('organization_id', currentUser?.organization_id);
 
+      setTemplates(templatesData || []);
+      setEmailLogs(logsData || []);
+      setRecipients(recipientsData || []);
     } catch (error) {
-      console.error('Error loading email data:', error);
+      console.error('Error loading data:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const createTemplate = async () => {
-    if (!currentUser) return;
-
-    try {
-      // Mock template creation (table doesn't exist yet)
-      console.log('Template would be created:', newTemplate);
-
+    if (!newTemplate.name || !newTemplate.subject || !newTemplate.content) {
       toast({
-        title: "Success",
-        description: "Email template created successfully!",
-      });
-
-      setNewTemplate({ name: '', subject: '', content: '', category: 'general' });
-      setShowNewTemplate(false);
-      loadData();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const sendEmail = async () => {
-    if (!composeForm.subject || !composeForm.content || composeForm.recipients.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields and select recipients",
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsLoading(true);
     try {
-      // Ensure user is authenticated and pass access token to the Edge Function
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) {
-        throw new Error('You must be signed in to send emails.');
-      }
-
-      // Send email via edge function with Authorization header
-      const { data, error } = await supabase.functions.invoke('send-general-email', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: {
-          recipients: composeForm.recipients,
-          subject: composeForm.subject,
-          content: composeForm.content,
-        },
-      });
+      const { data, error } = await supabase
+        .from('email_templates')
+        .insert([{
+          ...newTemplate,
+          organization_id: currentUser?.organization_id,
+          created_by: currentUser?.id
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
 
+      setTemplates(prev => [...prev, data]);
+      setShowNewTemplate(false);
+      setNewTemplate({ name: '', subject: '', content: '', category: 'general' });
+      
       toast({
         title: "Success",
-        description: `Email sent to ${composeForm.recipients.length} recipient(s)!`,
+        description: "Email template created successfully!",
       });
-
-      setComposeForm({
-        recipients: [],
-        recipientType: 'custom',
-        subject: '',
-        content: '',
-        templateId: ''
-      });
-      setShowCompose(false);
-      loadData();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to send email",
+        description: error.message || "Failed to create template.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const applyTemplate = (template: EmailTemplate) => {
-    setComposeForm(prev => ({
-      ...prev,
-      subject: template.subject,
-      content: template.content,
-      templateId: template.id
-    }));
   };
 
   const getRecipientsForType = (type: string) => {
@@ -231,384 +310,216 @@ export const EmailManagement: React.FC = () => {
     }
   };
 
-  const filteredLogs = emailLogs.filter(log =>
-    log.recipient_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.subject.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = emailLogs.filter(log => {
+    const matchesSearch = log.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.recipient_email.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  if (!currentUser) return;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Email Management</h1>
-          <p className="text-gray-600">Send emails and manage templates</p>
-        </div>
-        <div className="flex space-x-2">
-          <Dialog open={showNewTemplate} onOpenChange={setShowNewTemplate}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <FileText className="w-4 h-4 mr-2" />
-                New Template
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create Email Template</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+    <StandardPageLayout
+      title={pageTitle}
+      description={pageDescription}
+      primaryAction={primaryAction}
+      secondaryActions={secondaryActions}
+      metricsCards={metricsCards}
+      showMetricsDashboard={true}
+      navigationTabs={navigationTabs}
+      activeTab="overview"
+      onTabChange={() => {}}
+      searchConfig={searchConfig}
+      filters={filters}
+      onFilterChange={handleFilterChange}
+    >
+      {/* Overview Tab */}
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Email Overview</CardTitle>
+            <CardDescription>Quick overview of your email management system</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-8 h-8 text-blue-600" />
                   <div>
-                    <label className="text-sm font-medium">Template Name</label>
-                    <Input
-                      placeholder="Welcome Email"
-                      value={newTemplate.name}
-                      onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
-                    />
+                    <h3 className="font-semibold">Templates</h3>
+                    <p className="text-sm text-gray-600">{templates.length} email templates</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Category</label>
-                    <Select value={newTemplate.category} onValueChange={(value) => setNewTemplate(prev => ({ ...prev, category: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general">General</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="notifications">Notifications</SelectItem>
-                        <SelectItem value="invoices">Invoices</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Subject</label>
-                  <Input
-                    placeholder="Email subject"
-                    value={newTemplate.subject}
-                    onChange={(e) => setNewTemplate(prev => ({ ...prev, subject: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Content</label>
-                  <Textarea
-                    placeholder="Email content..."
-                    value={newTemplate.content}
-                    onChange={(e) => setNewTemplate(prev => ({ ...prev, content: e.target.value }))}
-                    rows={8}
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setShowNewTemplate(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={createTemplate}>
-                    Create Template
-                  </Button>
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Mail className="w-8 h-8 text-green-600" />
+                  <div>
+                    <h3 className="font-semibold">Emails Sent</h3>
+                    <p className="text-sm text-gray-600">{emailLogs.filter(log => log.status === 'sent' || log.status === 'delivered').length} successful</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Users className="w-8 h-8 text-purple-600" />
+                  <div>
+                    <h3 className="font-semibold">Recipients</h3>
+                    <p className="text-sm text-gray-600">{recipients.length} total recipients</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Dialog open={showCompose} onOpenChange={setShowCompose}>
-            <DialogTrigger asChild>
-              <Button>
-                <Mail className="w-4 h-4 mr-2" />
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Common email management tasks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              <Button onClick={() => setShowNewTemplate(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Template
+              </Button>
+              <Button onClick={() => setShowCompose(true)} variant="outline">
+                <Send className="w-4 h-4 mr-2" />
                 Compose Email
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Compose Email</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Recipient Type</label>
-                    <Select 
-                      value={composeForm.recipientType} 
-                      onValueChange={(value) => {
-                        setComposeForm(prev => ({ 
-                          ...prev, 
-                          recipientType: value,
-                          recipients: value === 'custom' ? [] : getRecipientsForType(value).map(r => r.email)
-                        }));
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="custom">Custom Recipients</SelectItem>
-                        <SelectItem value="drivers">All Drivers</SelectItem>
-                        <SelectItem value="parents">All Parents</SelectItem>
-                        <SelectItem value="staff">All Staff</SelectItem>
-                        <SelectItem value="all">Everyone</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Template (Optional)</label>
-                    <Select value={composeForm.templateId} onValueChange={(value) => {
-                      const template = templates.find(t => t.id === value);
-                      if (template) applyTemplate(template);
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose template" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map(template => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {composeForm.recipientType === 'custom' && (
-                  <div>
-                    <label className="text-sm font-medium">Recipients</label>
-                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-2 border rounded">
-                      {recipients.map(recipient => (
-                        <label key={recipient.id} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={composeForm.recipients.includes(recipient.email)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setComposeForm(prev => ({
-                                  ...prev,
-                                  recipients: [...prev.recipients, recipient.email]
-                                }));
-                              } else {
-                                setComposeForm(prev => ({
-                                  ...prev,
-                                  recipients: prev.recipients.filter(email => email !== recipient.email)
-                                }));
-                              }
-                            }}
-                          />
-                          <span className="text-sm">
-                            {recipient.first_name} {recipient.last_name} ({recipient.email})
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-sm font-medium">Subject</label>
-                  <Input
-                    placeholder="Email subject"
-                    value={composeForm.subject}
-                    onChange={(e) => setComposeForm(prev => ({ ...prev, subject: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Content</label>
-                  <Textarea
-                    placeholder="Email content..."
-                    value={composeForm.content}
-                    onChange={(e) => setComposeForm(prev => ({ ...prev, content: e.target.value }))}
-                    rows={10}
-                  />
-                </div>
-
-                <div className="flex justify-between">
-                  <div className="text-sm text-gray-600">
-                    Recipients: {composeForm.recipients.length}
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" onClick={() => setShowCompose(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={sendEmail} disabled={isLoading}>
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Send Email
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Mail className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Sent</p>
-                <p className="text-2xl font-bold">{emailLogs.filter(log => log.status === 'sent').length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <FileText className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Templates</p>
-                <p className="text-2xl font-bold">{templates.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Recipients</p>
-                <p className="text-2xl font-bold">{recipients.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <XCircle className="h-8 w-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Failed</p>
-                <p className="text-2xl font-bold">{emailLogs.filter(log => log.status === 'failed').length}</p>
-              </div>
+              <Button variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Logs
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content */}
-      <Tabs defaultValue="history" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="history">Email History</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="history" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Email History</CardTitle>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search emails..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+      {/* Dialogs */}
+      <Dialog open={showNewTemplate} onOpenChange={setShowNewTemplate}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Email Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Template Name</label>
+                <Input
+                  placeholder="Welcome Email"
+                  value={newTemplate.name}
+                  onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+                />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {filteredLogs.map((log) => (
-                  <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        {log.status === 'sent' ? (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        ) : log.status === 'failed' ? (
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        ) : (
-                          <Clock className="h-5 w-5 text-yellow-500" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium">{log.subject}</p>
-                        <p className="text-sm text-gray-600">
-                          To: {log.recipient_email} {log.recipient_name && `(${log.recipient_name})`}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(log.sent_at).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}>
-                      {log.status}
-                    </Badge>
-                  </div>
-                ))}
-
-                {filteredLogs.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    No email history found
-                  </div>
-                )}
+              <div>
+                <label className="text-sm font-medium">Category</label>
+                <Select value={newTemplate.category} onValueChange={(value) => setNewTemplate(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                    <SelectItem value="notifications">Notifications</SelectItem>
+                    <SelectItem value="invoices">Invoices</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Subject</label>
+              <Input
+                placeholder="Email subject"
+                value={newTemplate.subject}
+                onChange={(e) => setNewTemplate(prev => ({ ...prev, subject: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Content</label>
+              <Textarea
+                placeholder="Email content..."
+                value={newTemplate.content}
+                onChange={(e) => setNewTemplate(prev => ({ ...prev, content: e.target.value }))}
+                rows={8}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowNewTemplate(false)}>
+                Cancel
+              </Button>
+              <Button onClick={createTemplate}>
+                Create Template
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        <TabsContent value="templates" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Templates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {templates.map((template) => (
-                  <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-medium">{template.name}</h3>
-                          <Badge variant="outline">{template.category}</Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 line-clamp-2">{template.subject}</p>
-                        <p className="text-xs text-gray-500 line-clamp-3">{template.content}</p>
-                        <div className="flex justify-between items-center pt-2">
-                          <span className="text-xs text-gray-400">
-                            {new Date(template.created_at).toLocaleDateString()}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              applyTemplate(template);
-                              setShowCompose(true);
-                            }}
-                          >
-                            Use Template
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-
-                {templates.length === 0 && (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    No templates found. Create your first template!
-                  </div>
-                )}
+      <Dialog open={showCompose} onOpenChange={setShowCompose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Compose Email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Recipient Type</label>
+                <Select 
+                  value={composeForm.recipientType} 
+                  onValueChange={(value) => {
+                    setComposeForm(prev => ({ 
+                      ...prev, 
+                      recipientType: value,
+                      recipients: value === 'custom' ? [] : getRecipientsForType(value).map(r => r.email)
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Custom Recipients</SelectItem>
+                    <SelectItem value="drivers">All Drivers</SelectItem>
+                    <SelectItem value="parents">All Parents</SelectItem>
+                    <SelectItem value="staff">All Staff</SelectItem>
+                    <SelectItem value="all">Everyone</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+              <div>
+                <label className="text-sm font-medium">Subject</label>
+                <Input
+                  placeholder="Email subject"
+                  value={composeForm.subject}
+                  onChange={(e) => setComposeForm(prev => ({ ...prev, subject: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Content</label>
+              <Textarea
+                placeholder="Email content..."
+                value={composeForm.content}
+                onChange={(e) => setComposeForm(prev => ({ ...prev, content: e.target.value }))}
+                rows={8}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowCompose(false)}>
+                Cancel
+              </Button>
+              <Button>
+                <Send className="w-4 h-4 mr-2" />
+                Send Email
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </StandardPageLayout>
   );
 };
 

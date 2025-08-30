@@ -4,7 +4,6 @@ import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Package, 
   AlertTriangle,
@@ -12,42 +11,24 @@ import {
   Clock,
   DollarSign,
   TrendingUp,
-  TrendingDown,
   BarChart3,
-  Settings,
-  Users,
-  FileText
+  FileText,
+  Plus
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import PageLayout from '@/components/layout/PageLayout';
 // import AdminApprovalPanel from '@/components/inventory/AdminApprovalPanel';
 
-const AdminInventoryDashboard = () => {
+const InventoryManagement = () => {
+  // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL - NO CONDITIONAL HOOKS
   const { user, profile, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-          <p className="text-lg">Loading admin dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Only admins and council can access
-  if (!['admin', 'council'].includes(profile.role)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewFilter, setViewFilter] = useState('all');
 
   // Fetch inventory statistics
-  const { data: inventoryStats } = useQuery({
+  const { data: inventoryStats, isLoading: inventoryLoading } = useQuery({
     queryKey: ['inventory-stats'],
     queryFn: async () => {
       const { data: parts, error: partsError } = await supabase
@@ -75,7 +56,7 @@ const AdminInventoryDashboard = () => {
   });
 
   // Fetch approval requests count
-  const { data: approvalStats } = useQuery({
+  const { data: approvalStats, isLoading: approvalLoading } = useQuery({
     queryKey: ['approval-stats'],
     queryFn: async () => {
       const { data: requests, error } = await supabase
@@ -96,317 +77,280 @@ const AdminInventoryDashboard = () => {
     }
   });
 
+  // CONDITIONAL RENDERING AFTER ALL HOOKS ARE CALLED
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+          <p className="text-lg">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Only admins and council can access
+  if (!['admin', 'council'].includes(profile.role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  // Check if user has organization access
+  if (!profile.organization_id) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Organization Required</h2>
+          <p className="text-gray-600">You must be assigned to an organization to view inventory.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check for query errors
+  if (inventoryStats === null || approvalStats === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Error Loading Data</h2>
+          <p className="text-gray-600">There was an error loading inventory data. Please try again.</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-4"
+            variant="outline"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine if we should show empty state
+  const hasInventoryData = inventoryStats && inventoryStats.totalParts > 0;
+  const hasApprovalData = approvalStats && (approvalStats.pending > 0 || approvalStats.approved > 0 || approvalStats.rejected > 0);
+  const shouldShowEmptyState = !inventoryLoading && !approvalLoading && !hasInventoryData && !hasApprovalData;
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Inventory Management</h1>
-          <p className="text-gray-600">Admin dashboard for inventory control and approvals</p>
+    <PageLayout
+      title="Inventory Management"
+      description="Manage parts inventory, track stock levels, and handle approval requests"
+      actionButton={{
+        label: "Add Part",
+        onClick: () => console.log("Add part clicked"),
+        icon: <Plus className="w-4 h-4 mr-2" />
+      }}
+      summaryCards={[
+        {
+          title: "Total Parts",
+          value: inventoryStats?.totalParts || 0,
+          icon: <Package className="h-4 w-4" />,
+          color: "text-blue-600"
+        },
+        {
+          title: "Low Stock",
+          value: inventoryStats?.lowStock || 0,
+          icon: <AlertTriangle className="h-4 w-4" />,
+          color: "text-yellow-600"
+        },
+        {
+          title: "Out of Stock",
+          value: inventoryStats?.outOfStock || 0,
+          icon: <Clock className="h-4 w-4" />,
+          color: "text-red-600"
+        },
+        {
+          title: "Total Value",
+          value: `$${(inventoryStats?.totalValue || 0).toLocaleString()}`,
+          icon: <DollarSign className="h-4 w-4" />,
+          color: "text-green-600"
+        },
+        {
+          title: "Pending Approvals",
+          value: approvalStats?.pending || 0,
+          icon: <FileText className="h-4 w-4" />,
+          color: "text-orange-600"
+        },
+        {
+          title: "Approved Requests",
+          value: approvalStats?.approved || 0,
+          icon: <CheckCircle className="h-4 w-4" />,
+          color: "text-green-600"
+        }
+      ]}
+      searchPlaceholder="Search parts..."
+      searchValue={searchTerm}
+      onSearchChange={setSearchTerm}
+      filters={[
+        {
+          label: "Status",
+          value: viewFilter,
+          options: [
+            { value: "all", label: "All Parts" },
+            { value: "in_stock", label: "In Stock" },
+            { value: "low_stock", label: "Low Stock" },
+            { value: "out_of_stock", label: "Out of Stock" }
+          ],
+          onChange: setViewFilter
+        }
+      ]}
+      tabs={[
+        { value: "overview", label: "Overview" },
+        { value: "parts", label: "Parts List" },
+        { value: "approvals", label: "Approval Requests" },
+        { value: "analytics", label: "Analytics" }
+      ]}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      isLoading={inventoryLoading || approvalLoading}
+      emptyState={shouldShowEmptyState ? {
+        icon: <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />,
+        title: "No Inventory Data",
+        description: "No parts or approval requests found. Add your first part to get started.",
+        action: {
+          label: "Add Part",
+          onClick: () => console.log("Add part clicked")
+        }
+      } : null}
+    >
+      {/* Overview Tab */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Inventory Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="text-center p-4 border rounded-lg">
+                  <Package className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                  <h3 className="text-lg font-semibold">{inventoryStats?.totalParts || 0}</h3>
+                  <p className="text-sm text-gray-600">Total Parts</p>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
+                  <h3 className="text-lg font-semibold">{inventoryStats?.lowStock || 0}</h3>
+                  <p className="text-sm text-gray-600">Low Stock Items</p>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <Clock className="w-8 h-8 mx-auto mb-2 text-red-600" />
+                  <h3 className="text-lg font-semibold">{inventoryStats?.outOfStock || 0}</h3>
+                  <p className="text-sm text-gray-600">Out of Stock</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Inventory Value
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <h2 className="text-3xl font-bold text-green-600">
+                  ${(inventoryStats?.totalValue || 0).toLocaleString()}
+                </h2>
+                <p className="text-gray-600">Total Inventory Value</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline">{profile.role}</Badge>
-          <span className="text-sm text-gray-500">
-            {profile.full_name}
-          </span>
-        </div>
-      </div>
+      )}
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Parts List Tab */}
+      {activeTab === "parts" && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Parts</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Parts Inventory
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{inventoryStats?.totalParts || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Parts in inventory
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{inventoryStats?.lowStock || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Need reordering
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{inventoryStats?.outOfStock || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Urgent orders needed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              £{(inventoryStats?.totalValue || 0).toFixed(2)}
+            <div className="text-center py-12">
+              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Parts Management</h3>
+              <p className="text-gray-600 mb-6">
+                View and manage your parts inventory, track stock levels, and update quantities.
+              </p>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Part
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Inventory value
-            </p>
           </CardContent>
         </Card>
-      </div>
+      )}
 
-      {/* Approval Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Approval Requests Tab */}
+      {activeTab === "approvals" && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Approval Requests
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{approvalStats?.pending || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting review
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{approvalStats?.approved || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{approvalStats?.rejected || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="approvals" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Approvals
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            Inventory
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Button 
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center gap-2"
-                  onClick={() => setActiveTab('approvals')}
-                >
-                  <FileText className="w-6 h-6" />
-                  <span>Review Approvals</span>
-                  {approvalStats?.pending > 0 && (
-                    <Badge className="bg-red-500 text-white">
-                      {approvalStats.pending}
-                    </Badge>
-                  )}
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center gap-2"
-                  onClick={() => setActiveTab('inventory')}
-                >
-                  <Package className="w-6 h-6" />
-                  <span>Manage Inventory</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center gap-2"
-                >
-                  <Users className="w-6 h-6" />
-                  <span>User Management</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {(() => {
-                  // Check if there's any real activity data
-                  const hasRealActivity = inventoryStats?.totalParts > 0 || approvalStats?.pending > 0 || approvalStats?.approved > 0;
-                  
-                  if (!hasRealActivity) {
-                    return (
-                      <div className="text-center py-8 text-gray-500">
-                        <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p className="text-sm">No recent activity</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Activity will appear here as you manage inventory
-                        </p>
-                      </div>
-                    );
-                  }
-                  
-                  // Show real activity based on actual data
-                  const activities = [];
-                  
-                  // Add activity for parts if they exist
-                  if (inventoryStats?.totalParts > 0) {
-                    activities.push({
-                      type: 'success',
-                      title: 'Inventory Available',
-                      description: `${inventoryStats.totalParts} parts in stock`,
-                      time: 'Current'
-                    });
-                  }
-                  
-                  // Add activity for pending approvals
-                  if (approvalStats?.pending > 0) {
-                    activities.push({
-                      type: 'warning',
-                      title: 'Pending Approvals',
-                      description: `${approvalStats.pending} requests awaiting review`,
-                      time: 'Current'
-                    });
-                  }
-                  
-                  // Add activity for approved requests
-                  if (approvalStats?.approved > 0) {
-                    activities.push({
-                      type: 'success',
-                      title: 'Approved Requests',
-                      description: `${approvalStats.approved} requests approved this month`,
-                      time: 'This month'
-                    });
-                  }
-                  
-                  return activities.map((activity, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div className={`w-2 h-2 rounded-full ${
-                        activity.type === 'success' ? 'bg-green-500' : 
-                        activity.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{activity.title}</p>
-                        <p className="text-xs text-gray-500">{activity.description} - {activity.time}</p>
-                      </div>
-                    </div>
-                  ));
-                })()}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="approvals" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Approval Requests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Approval panel will be implemented here. This will show pending requests that need admin approval.
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Approval Management</h3>
+              <p className="text-gray-600 mb-6">
+                Review and approve parts requests from your team members.
               </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="inventory" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Inventory Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Full inventory management interface will be implemented here.
-                This will include part management, stock movements, and reporting.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Organization Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">Approval Thresholds</h4>
-                  <p className="text-sm text-gray-600">
-                    Configure automatic approval thresholds for different types of requests.
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium mb-2">Notification Settings</h4>
-                  <p className="text-sm text-gray-600">
-                    Manage email and in-app notifications for inventory alerts.
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium mb-2">User Permissions</h4>
-                  <p className="text-sm text-gray-600">
-                    Configure what different user roles can do in the inventory system.
-                  </p>
-                </div>
+              <div className="flex gap-4 justify-center">
+                <Badge variant="outline" className="text-orange-600">
+                  {approvalStats?.pending || 0} Pending
+                </Badge>
+                <Badge variant="outline" className="text-green-600">
+                  {approvalStats?.approved || 0} Approved
+                </Badge>
+                <Badge variant="outline" className="text-red-600">
+                  {approvalStats?.rejected || 0} Rejected
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Analytics Tab */}
+      {activeTab === "analytics" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Inventory Analytics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12">
+              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Dashboard</h3>
+              <p className="text-gray-600 mb-6">
+                View detailed analytics about your inventory performance and trends.
+              </p>
+              <Button variant="outline">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                View Detailed Reports
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </PageLayout>
   );
 };
 
-export default AdminInventoryDashboard;
+export default InventoryManagement;

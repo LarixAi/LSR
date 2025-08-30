@@ -49,14 +49,15 @@ ALTER TABLE ai_agent_configs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view active agent configs" ON ai_agent_configs
     FOR SELECT USING (is_active = true);
 
-CREATE POLICY "Admins can manage agent configs" ON ai_agent_configs
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM profiles 
-            WHERE profiles.id = auth.uid() 
-            AND profiles.role IN ('admin', 'super_admin')
-        )
-    );
+-- Temporarily comment out this policy until profiles table exists
+-- CREATE POLICY "Admins can manage agent configs" ON ai_agent_configs
+--     FOR ALL USING (
+--         EXISTS (
+--             SELECT 1 FROM profiles 
+--             WHERE profiles.id = auth.uid() 
+--             AND profiles.role IN ('admin', 'super_admin')
+--         )
+--     );
 
 -- Create AI usage tracking table
 CREATE TABLE IF NOT EXISTS ai_usage_tracking (
@@ -72,7 +73,7 @@ CREATE TABLE IF NOT EXISTS ai_usage_tracking (
 
 -- Create indexes for usage tracking
 CREATE INDEX IF NOT EXISTS idx_ai_usage_user_id ON ai_usage_tracking(user_id);
-CREATE INDEX IF NOT EXISTS idx_ai_usage_timestamp ON ai_usage_tracking(timestamp);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_timestamp ON ai_usage_tracking(user_id);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_model ON ai_usage_tracking(model);
 
 -- Enable RLS for usage tracking

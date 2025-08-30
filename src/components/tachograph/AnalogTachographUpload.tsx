@@ -487,7 +487,7 @@ const AnalogTachographUpload: React.FC = () => {
                     <SelectValue placeholder="Select driver" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No driver assigned</SelectItem>
+                    <SelectItem value="none">No driver assigned</SelectItem>
                     {drivers.map((driver) => (
                       <SelectItem key={driver.id} value={driver.id}>
                         {driver.first_name} {driver.last_name} ({driver.employee_id})
@@ -504,7 +504,7 @@ const AnalogTachographUpload: React.FC = () => {
                     <SelectValue placeholder="Select vehicle" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No vehicle assigned</SelectItem>
+                    <SelectItem value="none">No vehicle assigned</SelectItem>
                     {vehicles.map((vehicle) => (
                       <SelectItem key={vehicle.id} value={vehicle.id}>
                         {vehicle.registration_number} ({vehicle.make} {vehicle.model})

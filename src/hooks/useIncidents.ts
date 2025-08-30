@@ -24,6 +24,7 @@ export interface Incident {
   reported_by: string;
   attachments?: any[];
   additional_data?: any;
+  resolution_notes?: string;
   created_at: string;
   updated_at: string;
   // Joined data

@@ -246,3 +246,4 @@ $$ LANGUAGE plpgsql;
 -- SELECT cron.schedule('check-expiring-documents', '0 9 * * *', 'SELECT check_expiring_documents();');
 
 
+

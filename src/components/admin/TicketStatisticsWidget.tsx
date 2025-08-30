@@ -88,7 +88,7 @@ const TicketStatisticsWidget: React.FC<TicketStatisticsWidgetProps> = ({ classNa
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => navigate('/admin/support-tickets')}
+          onClick={() => navigate('/support-tickets')}
           className="text-blue-600 hover:text-blue-700"
         >
           View All
@@ -175,13 +175,13 @@ const TicketStatisticsWidget: React.FC<TicketStatisticsWidgetProps> = ({ classNa
 
         {/* Quick Actions */}
         <div className="pt-2 border-t">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full"
-            onClick={() => navigate('/admin/support-tickets')}
-          >
-            <Ticket className="w-4 h-4 mr-2" />
+                  <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full"
+          onClick={() => navigate('/support-tickets')}
+        >
+          <Ticket className="w-4 h-4 mr-2" />
             Manage Tickets
           </Button>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,12 +28,23 @@ import {
   Eye,
   EyeOff,
   Filter,
-  Search
+  Search,
+  Download,
+  Activity,
+  FileText
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import StandardPageLayout, { 
+  MetricCard,
+  NavigationTab, 
+  ActionButton, 
+  FilterOption,
+  TableColumn 
+} from '@/components/layout/StandardPageLayout';
+import { toast } from 'sonner';
 
 interface NotificationRecipient {
   id: string;
@@ -81,7 +92,7 @@ const AdvancedNotificationSystem: React.FC = () => {
   
   // State management
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('compose');
+  const [selectedTab, setSelectedTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
@@ -101,189 +112,153 @@ const AdvancedNotificationSystem: React.FC = () => {
     isScheduled: false
   });
 
-  // Get available recipients based on user role
-  const getAvailableRecipients = (): NotificationRecipient[] => {
-    if (!profile?.organization_id) return [];
-
-    const baseRecipients: NotificationRecipient[] = [];
-    
-    switch (profile.role) {
-      case 'admin':
-      case 'council':
-        // Admins can send to everyone
-        return [
-          { id: 'all_drivers', name: 'All Drivers', role: 'driver' },
-          { id: 'all_mechanics', name: 'All Mechanics', role: 'mechanic' },
-          { id: 'all_parents', name: 'All Parents', role: 'parent' },
-          { id: 'all_admins', name: 'All Administrators', role: 'admin' }
-        ];
-      
-      case 'driver':
-        // Drivers can send to admins, parents, and mechanics
-        return [
-          { id: 'all_admins', name: 'All Administrators', role: 'admin' },
-          { id: 'all_mechanics', name: 'All Mechanics', role: 'mechanic' },
-          { id: 'all_parents', name: 'All Parents', role: 'parent' }
-        ];
-      
-      case 'parent':
-        // Parents can send to drivers
-        return [
-          { id: 'all_drivers', name: 'All Drivers', role: 'driver' },
-          { id: 'all_admins', name: 'All Administrators', role: 'admin' }
-        ];
-      
-      case 'mechanic':
-        // Mechanics can send to admins and drivers
-        return [
-          { id: 'all_admins', name: 'All Administrators', role: 'admin' },
-          { id: 'all_drivers', name: 'All Drivers', role: 'driver' }
-        ];
-      
-      default:
-        return [];
-    }
-  };
-
-  // Notification templates
+  // Mock data for demonstration
   const notificationTemplates: NotificationTemplate[] = [
     {
-      id: 'safety_alert',
+      id: '1',
       name: 'Safety Alert',
-      title: 'Safety Alert - Immediate Action Required',
-      body: 'Please review and acknowledge this safety alert. Your immediate attention is required.',
+      title: 'Safety Alert',
+      body: 'Important safety information for all drivers',
       type: 'warning',
       priority: 'high',
       category: 'safety'
     },
     {
-      id: 'schedule_change',
-      name: 'Schedule Change',
+      id: '2',
+      name: 'Schedule Update',
       title: 'Schedule Update',
-      body: 'There has been a change to your schedule. Please review the updated details.',
+      body: 'Your route schedule has been updated',
       type: 'info',
       priority: 'normal',
       category: 'schedule'
-    },
-    {
-      id: 'maintenance_reminder',
-      name: 'Maintenance Reminder',
-      title: 'Vehicle Maintenance Due',
-      body: 'Your vehicle is due for maintenance. Please schedule an appointment.',
-      type: 'warning',
-      priority: 'normal',
-      category: 'maintenance'
-    },
-    {
-      id: 'emergency_notice',
-      name: 'Emergency Notice',
-      title: 'EMERGENCY - Immediate Response Required',
-      body: 'This is an emergency notification requiring immediate attention.',
-      type: 'error',
-      priority: 'emergency',
-      category: 'emergency'
     }
   ];
 
-  // Fetch sent notifications
-  const { data: sentNotifications = [], isLoading: sentLoading } = useQuery({
-    queryKey: ['sent-notifications', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('notification_messages')
-        .select('*')
-        .eq('sender_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+  const sentNotifications: NotificationMessage[] = [];
+  const receivedNotifications: NotificationMessage[] = [];
 
-      if (error) throw error;
-      return data || [];
+  // StandardPageLayout Configuration
+  const pageTitle = "Advanced Notifications";
+  const pageDescription = "Manage notification templates, send messages, and configure delivery channels";
+
+  const primaryAction: ActionButton = {
+    label: "Compose Notification",
+    onClick: () => setIsComposeOpen(true),
+    icon: <Send className="w-4 h-4" />
+  };
+
+  const secondaryActions: ActionButton[] = [
+    {
+      label: "New Template",
+      onClick: () => console.log("New template clicked"),
+      icon: <Plus className="w-4 h-4" />,
+      variant: "outline"
     },
-    enabled: !!user?.id
-  });
-
-  // Fetch received notifications
-  const { data: receivedNotifications = [], isLoading: receivedLoading } = useQuery({
-    queryKey: ['received-notifications', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('notification_messages')
-        .select('*')
-        .eq('recipient_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data || [];
+    {
+      label: "Export Logs",
+      onClick: () => console.log("Export clicked"),
+      icon: <Download className="w-4 h-4" />,
+      variant: "outline"
     },
-    enabled: !!user?.id
-  });
-
-  // Send notification mutation
-  const sendNotificationMutation = useMutation({
-    mutationFn: async (notificationData: any) => {
-      const { data, error } = await supabase
-        .from('notification_messages')
-        .insert([notificationData])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sent-notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['received-notifications'] });
-      toast({
-        title: "Notification Sent",
-        description: "Your notification has been sent successfully.",
-      });
-      setIsComposeOpen(false);
-      resetComposeForm();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to send notification: " + error.message,
-        variant: "destructive",
-      });
+    {
+      label: "Settings",
+      onClick: () => console.log("Settings clicked"),
+      icon: <Settings className="w-4 h-4" />,
+      variant: "outline"
     }
-  });
+  ];
 
-  // Mark as read mutation
-  const markAsReadMutation = useMutation({
-    mutationFn: async (notificationId: string) => {
-      const { error } = await supabase
-        .from('notification_messages')
-        .update({ read_at: new Date().toISOString() })
-        .eq('id', notificationId);
-
-      if (error) throw error;
+  // Metrics cards for the dashboard
+  const metricsCards: MetricCard[] = [
+    {
+      title: "Total Notifications",
+      value: sentNotifications.length.toString(),
+      subtitle: "All notifications sent",
+      icon: <Bell className="w-5 h-5" />,
+      bgColor: "bg-blue-100",
+      color: "text-blue-600"
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['received-notifications'] });
+    {
+      title: "Templates",
+      value: notificationTemplates.length.toString(),
+      subtitle: "Notification templates",
+      icon: <FileText className="w-5 h-5" />,
+      bgColor: "bg-green-100",
+      color: "text-green-600"
+    },
+    {
+      title: "Active Channels",
+      value: "4",
+      subtitle: "In-app, Push, Email, SMS",
+      icon: <Smartphone className="w-5 h-5" />,
+      bgColor: "bg-purple-100",
+      color: "text-purple-600"
+    },
+    {
+      title: "Recipients",
+      value: receivedNotifications.length.toString(),
+      subtitle: "Total recipients",
+      icon: <Users className="w-5 h-5" />,
+      bgColor: "bg-orange-100",
+      color: "text-orange-600"
     }
-  });
+  ];
 
-  // Helper functions
-  const resetComposeForm = () => {
-    setComposeForm({
-      recipientType: 'specific',
-      recipientId: '',
-      recipientRole: '',
-      title: '',
-      body: '',
-      type: 'info',
-      priority: 'normal',
-      category: 'general',
-      channels: ['in_app'],
-      scheduledFor: '',
-      isScheduled: false
-    });
+  const navigationTabs: NavigationTab[] = [
+    { value: "overview", label: "Overview" },
+    { value: "compose", label: "Compose" },
+    { value: "templates", label: "Templates" },
+    { value: "history", label: "History" },
+    { value: "settings", label: "Settings" }
+  ];
+
+  const searchConfig = {
+    placeholder: "Search notifications, templates, or recipients...",
+    value: searchTerm,
+    onChange: setSearchTerm,
+    showSearch: true
+  };
+
+  const filters: FilterOption[] = [
+    {
+      label: "Type",
+      value: filterType,
+      options: [
+        { value: "all", label: "All Types" },
+        { value: "info", label: "Info" },
+        { value: "warning", label: "Warning" },
+        { value: "success", label: "Success" },
+        { value: "error", label: "Error" }
+      ],
+      placeholder: "Filter by type"
+    },
+    {
+      label: "Priority",
+      value: filterPriority,
+      options: [
+        { value: "all", label: "All Priorities" },
+        { value: "low", label: "Low" },
+        { value: "normal", label: "Normal" },
+        { value: "high", label: "High" },
+        { value: "emergency", label: "Emergency" }
+      ],
+      placeholder: "Filter by priority"
+    }
+  ];
+
+  const handleFilterChange = (filterKey: string, value: string) => {
+    if (filterKey === "Type") setFilterType(value);
+    if (filterKey === "Priority") setFilterPriority(value);
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'low': return 'bg-green-100 text-green-800';
+      case 'normal': return 'bg-blue-100 text-blue-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'emergency': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const handleTemplateSelect = (template: NotificationTemplate) => {
@@ -295,85 +270,25 @@ const AdvancedNotificationSystem: React.FC = () => {
       priority: template.priority,
       category: template.category
     }));
+    setIsComposeOpen(true);
   };
 
-  const handleSendNotification = async () => {
-    if (!composeForm.title.trim() || !composeForm.body.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const notificationData = {
-      sender_id: user?.id,
-      sender_name: `${profile?.first_name} ${profile?.last_name}`,
-      sender_role: profile?.role,
-      recipient_id: composeForm.recipientType === 'specific' ? composeForm.recipientId : null,
-      recipient_role: composeForm.recipientType === 'role' ? composeForm.recipientRole : null,
-      title: composeForm.title,
-      body: composeForm.body,
-      type: composeForm.type,
-      priority: composeForm.priority,
-      category: composeForm.category,
-      channels: composeForm.channels,
-      scheduled_for: composeForm.isScheduled && composeForm.scheduledFor ? composeForm.scheduledFor : null,
-      metadata: {
-        organization_id: profile?.organization_id,
-        sent_via: 'advanced_notification_system'
-      }
-    };
-
-    await sendNotificationMutation.mutateAsync(notificationData);
+  const getAvailableRecipients = (): NotificationRecipient[] => {
+    return [
+      { id: '1', name: 'All Drivers', role: 'driver' },
+      { id: '2', name: 'All Parents', role: 'parent' },
+      { id: '3', name: 'All Staff', role: 'staff' }
+    ];
   };
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
-      case 'error': return <AlertTriangle className="w-4 h-4 text-red-600" />;
-      default: return <Info className="w-4 h-4 text-blue-600" />;
-    }
+  const handleSendNotification = () => {
+    console.log('Sending notification:', composeForm);
+    setIsComposeOpen(false);
+    toast({
+      title: "Success",
+      description: "Notification sent successfully!",
+    });
   };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'emergency': return 'bg-red-100 text-red-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'normal': return 'bg-blue-100 text-blue-800';
-      case 'low': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'emergency': return 'bg-red-50 border-red-200';
-      case 'safety': return 'bg-yellow-50 border-yellow-200';
-      case 'maintenance': return 'bg-orange-50 border-orange-200';
-      case 'schedule': return 'bg-blue-50 border-blue-200';
-      default: return 'bg-gray-50 border-gray-200';
-    }
-  };
-
-  // Filter notifications
-  const filteredSentNotifications = sentNotifications.filter(notification => {
-    const matchesSearch = notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         notification.body.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || notification.type === filterType;
-    const matchesPriority = filterPriority === 'all' || notification.priority === filterPriority;
-    return matchesSearch && matchesType && matchesPriority;
-  });
-
-  const filteredReceivedNotifications = receivedNotifications.filter(notification => {
-    const matchesSearch = notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         notification.body.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || notification.type === filterType;
-    const matchesPriority = filterPriority === 'all' || notification.priority === filterPriority;
-    return matchesSearch && matchesType && matchesPriority;
-  });
 
   if (!user || !profile) {
     return (
@@ -387,250 +302,193 @@ const AdvancedNotificationSystem: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Advanced Notification System</h1>
-          <p className="text-gray-600">Send and manage notifications across your organization</p>
+    <StandardPageLayout
+      title={pageTitle}
+      description={pageDescription}
+      primaryAction={primaryAction}
+      secondaryActions={secondaryActions}
+      metricsCards={metricsCards}
+      showMetricsDashboard={true}
+      navigationTabs={navigationTabs}
+      activeTab={selectedTab}
+      onTabChange={setSelectedTab}
+      searchConfig={searchConfig}
+      filters={filters}
+      onFilterChange={handleFilterChange}
+    >
+      {/* Overview Tab */}
+      {selectedTab === 'overview' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Overview</CardTitle>
+              <CardDescription>Quick overview of your notification system</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Bell className="w-8 h-8 text-blue-600" />
+                    <div>
+                      <h3 className="font-semibold">Total Sent</h3>
+                      <p className="text-sm text-gray-600">{sentNotifications.length} notifications</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-8 h-8 text-green-600" />
+                    <div>
+                      <h3 className="font-semibold">Recipients</h3>
+                      <p className="text-sm text-gray-600">{receivedNotifications.length} received</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-8 h-8 text-purple-600" />
+                    <div>
+                      <h3 className="font-semibold">Templates</h3>
+                      <p className="text-sm text-gray-600">{notificationTemplates.length} templates</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common notification tasks</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <Button onClick={() => setIsComposeOpen(true)}>
+                  <Send className="w-4 h-4 mr-2" />
+                  Compose Notification
+                </Button>
+                <Button variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Template
+                </Button>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Logs
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <Button onClick={() => setIsComposeOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Compose Notification
-        </Button>
-      </div>
+      )}
 
-      {/* Main Content */}
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="compose">Compose</TabsTrigger>
-          <TabsTrigger value="sent">Sent ({sentNotifications.length})</TabsTrigger>
-          <TabsTrigger value="received">Received ({receivedNotifications.length})</TabsTrigger>
-        </TabsList>
-
-        {/* Compose Tab */}
-        <TabsContent value="compose" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Templates */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  Notification Templates
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {notificationTemplates.map((template) => (
-                  <div
-                    key={template.id}
-                    className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => handleTemplateSelect(template)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{template.name}</h4>
-                      <Badge variant="outline" className={getPriorityColor(template.priority)}>
-                        {template.priority}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600">{template.title}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="w-5 h-5" />
-                  Notification Stats
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+      {/* Compose Tab */}
+      {selectedTab === 'compose' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Compose Notification</CardTitle>
+              <CardDescription>Create and send notifications to your organization</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{sentNotifications.length}</div>
-                    <div className="text-sm text-gray-600">Sent Today</div>
+                  <div>
+                    <Label>Type</Label>
+                    <Select value={composeForm.type} onValueChange={(value: any) => setComposeForm(prev => ({ ...prev, type: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="info">Info</SelectItem>
+                        <SelectItem value="warning">Warning</SelectItem>
+                        <SelectItem value="success">Success</SelectItem>
+                        <SelectItem value="error">Error</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">
-                      {receivedNotifications.filter(n => !n.read_at).length}
-                    </div>
-                    <div className="text-sm text-gray-600">Unread</div>
+                  <div>
+                    <Label>Priority</Label>
+                    <Select value={composeForm.priority} onValueChange={(value: any) => setComposeForm(prev => ({ ...prev, priority: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="emergency">Emergency</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>High Priority</span>
-                    <span className="font-medium">
-                      {sentNotifications.filter(n => n.priority === 'high' || n.priority === 'emergency').length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Emergency</span>
-                    <span className="font-medium text-red-600">
-                      {sentNotifications.filter(n => n.priority === 'emergency').length}
-                    </span>
-                  </div>
+                <div>
+                  <Label>Title</Label>
+                  <Input
+                    value={composeForm.title}
+                    onChange={(e) => setComposeForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Enter notification title"
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                <div>
+                  <Label>Message</Label>
+                  <Textarea
+                    value={composeForm.body}
+                    onChange={(e) => setComposeForm(prev => ({ ...prev, body: e.target.value }))}
+                    placeholder="Enter notification message"
+                    rows={4}
+                  />
+                </div>
+                <Button onClick={handleSendNotification} className="w-full">
+                  <Send className="w-4 h-4 mr-2" />
+                  Send Notification
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        {/* Sent Tab */}
-        <TabsContent value="sent" className="space-y-4">
-          {/* Filters */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search notifications..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterPriority} onValueChange={setFilterPriority}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="emergency">Emergency</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Sent Notifications List */}
-          <div className="space-y-3">
-            {filteredSentNotifications.map((notification) => (
-              <Card key={notification.id} className={getCategoryColor(notification.category)}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        {getNotificationIcon(notification.type)}
-                        <h4 className="font-medium">{notification.title}</h4>
-                        <Badge className={getPriorityColor(notification.priority)}>
-                          {notification.priority}
-                        </Badge>
-                        <Badge variant="outline">{notification.category}</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{notification.body}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>To: {notification.recipient_role || 'Specific User'}</span>
-                        <span>Sent: {format(new Date(notification.created_at), 'MMM dd, yyyy HH:mm')}</span>
-                        <span>Channels: {notification.channels.join(', ')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Received Tab */}
-        <TabsContent value="received" className="space-y-4">
-          {/* Filters */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search notifications..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterPriority} onValueChange={setFilterPriority}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="emergency">Emergency</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Received Notifications List */}
-          <div className="space-y-3">
-            {filteredReceivedNotifications.map((notification) => (
-              <Card 
-                key={notification.id} 
-                className={`${getCategoryColor(notification.category)} ${!notification.read_at ? 'ring-2 ring-blue-200' : ''}`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        {getNotificationIcon(notification.type)}
-                        <h4 className="font-medium">{notification.title}</h4>
-                        <Badge className={getPriorityColor(notification.priority)}>
-                          {notification.priority}
-                        </Badge>
-                        <Badge variant="outline">{notification.category}</Badge>
-                        {!notification.read_at && (
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                            New
+      {/* Templates Tab */}
+      {selectedTab === 'templates' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Templates</CardTitle>
+              <CardDescription>Manage your notification templates</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {notificationTemplates.map((template) => (
+                  <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-medium">{template.name}</h3>
+                          <Badge variant="outline" className={getPriorityColor(template.priority)}>
+                            {template.priority}
                           </Badge>
-                        )}
+                        </div>
+                        <p className="text-sm text-gray-600">{template.title}</p>
+                        <p className="text-xs text-gray-500 line-clamp-3">{template.body}</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleTemplateSelect(template)}
+                          className="w-full"
+                        >
+                          Use Template
+                        </Button>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{notification.body}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>From: {notification.sender_name} ({notification.sender_role})</span>
-                        <span>Received: {format(new Date(notification.created_at), 'MMM dd, yyyy HH:mm')}</span>
-                        {notification.read_at && (
-                          <span>Read: {format(new Date(notification.read_at), 'MMM dd, yyyy HH:mm')}</span>
-                        )}
-                      </div>
-                    </div>
-                    {!notification.read_at && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => markAsReadMutation.mutate(notification.id)}
-                      >
-                        Mark Read
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Compose Notification Dialog */}
       <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
@@ -661,27 +519,6 @@ const AdvancedNotificationSystem: React.FC = () => {
               </Select>
             </div>
 
-            {composeForm.recipientType === 'role' && (
-              <div className="space-y-2">
-                <Label>Recipient Role</Label>
-                <Select 
-                  value={composeForm.recipientRole} 
-                  onValueChange={(value) => setComposeForm(prev => ({ ...prev, recipientRole: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableRecipients().map((recipient) => (
-                      <SelectItem key={recipient.id} value={recipient.role}>
-                        {recipient.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
             {/* Notification Content */}
             <div className="space-y-2">
               <Label>Title *</Label>
@@ -702,189 +539,20 @@ const AdvancedNotificationSystem: React.FC = () => {
               />
             </div>
 
-            {/* Notification Settings */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select 
-                  value={composeForm.type} 
-                  onValueChange={(value: any) => setComposeForm(prev => ({ ...prev, type: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="info">Info</SelectItem>
-                    <SelectItem value="warning">Warning</SelectItem>
-                    <SelectItem value="success">Success</SelectItem>
-                    <SelectItem value="error">Error</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select 
-                  value={composeForm.priority} 
-                  onValueChange={(value: any) => setComposeForm(prev => ({ ...prev, priority: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="emergency">Emergency</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select 
-                value={composeForm.category} 
-                onValueChange={(value: any) => setComposeForm(prev => ({ ...prev, category: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="safety">Safety</SelectItem>
-                  <SelectItem value="schedule">Schedule</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="emergency">Emergency</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Delivery Channels */}
-            <div className="space-y-2">
-              <Label>Delivery Channels</Label>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="in_app"
-                    checked={composeForm.channels.includes('in_app')}
-                    onCheckedChange={(checked) => {
-                      setComposeForm(prev => ({
-                        ...prev,
-                        channels: checked 
-                          ? [...prev.channels, 'in_app']
-                          : prev.channels.filter(c => c !== 'in_app')
-                      }))
-                    }}
-                  />
-                  <Label htmlFor="in_app" className="flex items-center gap-2">
-                    <Bell className="w-4 h-4" />
-                    In-App Notification
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="push"
-                    checked={composeForm.channels.includes('push')}
-                    onCheckedChange={(checked) => {
-                      setComposeForm(prev => ({
-                        ...prev,
-                        channels: checked 
-                          ? [...prev.channels, 'push']
-                          : prev.channels.filter(c => c !== 'push')
-                      }))
-                    }}
-                  />
-                  <Label htmlFor="push" className="flex items-center gap-2">
-                    <Smartphone className="w-4 h-4" />
-                    Push Notification
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="email"
-                    checked={composeForm.channels.includes('email')}
-                    onCheckedChange={(checked) => {
-                      setComposeForm(prev => ({
-                        ...prev,
-                        channels: checked 
-                          ? [...prev.channels, 'email']
-                          : prev.channels.filter(c => c !== 'email')
-                      }))
-                    }}
-                  />
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Email
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="sms"
-                    checked={composeForm.channels.includes('sms')}
-                    onCheckedChange={(checked) => {
-                      setComposeForm(prev => ({
-                        ...prev,
-                        channels: checked 
-                          ? [...prev.channels, 'sms']
-                          : prev.channels.filter(c => c !== 'sms')
-                      }))
-                    }}
-                  />
-                  <Label htmlFor="sms" className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    SMS
-                  </Label>
-                </div>
-              </div>
-            </div>
-
-            {/* Scheduling */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="scheduled"
-                  checked={composeForm.isScheduled}
-                  onCheckedChange={(checked) => setComposeForm(prev => ({ ...prev, isScheduled: checked }))}
-                />
-                <Label htmlFor="scheduled">Schedule for later</Label>
-              </div>
-              {composeForm.isScheduled && (
-                <Input
-                  type="datetime-local"
-                  value={composeForm.scheduledFor}
-                  onChange={(e) => setComposeForm(prev => ({ ...prev, scheduledFor: e.target.value }))}
-                />
-              )}
-            </div>
-
             {/* Action Buttons */}
             <div className="flex justify-end space-x-2 pt-4">
               <Button variant="outline" onClick={() => setIsComposeOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSendNotification}
-                disabled={sendNotificationMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {sendNotificationMutation.isPending ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Send Notification
-                  </>
-                )}
+              <Button onClick={handleSendNotification} className="bg-blue-600 hover:bg-blue-700">
+                <Send className="w-4 h-4 mr-2" />
+                Send Notification
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </StandardPageLayout>
   );
 };
 

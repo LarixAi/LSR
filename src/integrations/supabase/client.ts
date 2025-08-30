@@ -97,4 +97,7 @@ export const supabase = createClient<Database>(url, key, {
       eventsPerSecond: 10,
     },
   },
+  db: {
+    schema: 'public'
+  }
 });

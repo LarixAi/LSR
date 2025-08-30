@@ -5,6 +5,7 @@ import { AlertTriangle } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
@@ -27,6 +28,9 @@ class ErrorBoundary extends Component<Props, State> {
     if (import.meta.env.DEV) {
       console.error('Error caught by boundary:', error, errorInfo);
     }
+    
+    // Call the onError callback if provided
+    this.props.onError?.(error, errorInfo);
   }
 
   render() {

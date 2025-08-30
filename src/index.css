@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 9% 15%;
     
-    --primary: 142 72% 40%;
+    --primary: 180 72% 40%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 220 13% 96%;
@@ -25,42 +25,50 @@
     --muted: 220 13% 92%;
     --muted-foreground: 220 8% 40%;
     
-    --accent: 142 60% 95%;
-    --accent-foreground: 142 72% 35%;
+    --accent: 180 60% 95%;
+    --accent-foreground: 180 72% 35%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 142 72% 40%;
+    --ring: 180 72% 40%;
 
     /* Theme customization - sidebar colors */
-    --sidebar-bg: 142 40% 20%;
-    --sidebar-bg-hover: 142 35% 25%;
-    --sidebar-border: 142 30% 30%;
-    --sidebar-text: 0 0% 100%;
-    --sidebar-text-muted: 142 20% 70%;
+    --sidebar-background: 180 40% 20%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 180 72% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 180 35% 25%;
+    --sidebar-accent-foreground: 180 20% 70%;
+    --sidebar-border: 180 30% 30%;
+    --sidebar-ring: 180 72% 40%;
 
-    --chart-1: 142 72% 40%;
-    --chart-2: 142 60% 50%;
-    --chart-3: 142 45% 60%;
+    --chart-1: 180 72% 40%;
+    --chart-2: 180 60% 50%;
+    --chart-3: 180 45% 60%;
     --chart-4: 220 13% 70%;
     --chart-5: 220 9% 80%;
     --radius: 0.75rem;
     
-    /* Green palette */
-    --green-light: 142 60% 95%;
-    --green-dark: 142 72% 30%;
+    /* Teal palette */
+    --green-light: 180 60% 95%;
+    --green-dark: 180 72% 30%;
     
-    /* Green gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(142 72% 40%), hsl(142 60% 50%));
+    /* Teal gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(180 72% 40%), hsl(180 60% 50%));
     --gradient-secondary: linear-gradient(135deg, hsl(220 13% 96%), hsl(0 0% 100%));
-    --gradient-accent: linear-gradient(180deg, hsl(0 0% 100%), hsl(142 60% 97%));
+    --gradient-accent: linear-gradient(180deg, hsl(0 0% 100%), hsl(180 60% 97%));
     
     /* Glass effect colors */
     --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(22, 163, 74, 0.1);
+    --glass-border: rgba(0, 128, 128, 0.1);
+    
+    /* Font size variables for settings */
+    --font-size-small: 14px;
+    --font-size-medium: 16px;
+    --font-size-large: 18px;
   }
 
   .dark {
@@ -70,50 +78,130 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 142 72% 45%;
+    --primary: 180 72% 45%;
     --primary-foreground: 0 0% 100%;
     --secondary: 217 30% 14%;
     --secondary-foreground: 217 20% 80%;
     --muted: 217 30% 14%;
     --muted-foreground: 217 20% 65%;
-    --accent: 142 60% 20%;
-    --accent-foreground: 142 60% 90%;
+    --accent: 180 60% 20%;
+    --accent-foreground: 180 60% 90%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 92%;
     --border: 217 30% 16%;
     --input: 217 30% 16%;
-    --ring: 142 72% 45%;
+    --ring: 180 72% 45%;
     
     /* Dark theme customization - sidebar colors */
-    --sidebar-bg: 142 35% 15%;
-    --sidebar-bg-hover: 142 30% 20%;
-    --sidebar-border: 142 25% 25%;
-    --sidebar-text: 0 0% 98%;
-    --sidebar-text-muted: 142 15% 60%;
+    --sidebar-background: 180 35% 15%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 180 72% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 180 30% 20%;
+    --sidebar-accent-foreground: 180 15% 60%;
+    --sidebar-border: 180 25% 25%;
+    --sidebar-ring: 180 72% 45%;
     
-    --chart-1: 142 72% 45%;
-    --chart-2: 142 60% 55%;
-    --chart-3: 142 45% 65%;
+    --chart-1: 180 72% 45%;
+    --chart-2: 180 60% 55%;
+    --chart-3: 180 45% 65%;
     --chart-4: 220 30% 60%;
     --chart-5: 220 20% 70%;
     
-    /* Green palette */
-    --green-light: 142 60% 20%;
-    --green-dark: 142 72% 45%;
+    /* Teal palette */
+    --green-light: 180 60% 20%;
+    --green-dark: 180 72% 45%;
     
-    /* Green gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(142 72% 45%), hsl(142 60% 55%));
+    /* Teal gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(180 72% 45%), hsl(180 60% 55%));
     --gradient-secondary: linear-gradient(135deg, hsl(217 30% 14%), hsl(222 47% 11%));
-    --gradient-accent: linear-gradient(180deg, hsl(222 47% 11%), hsl(142 60% 15%));
+    --gradient-accent: linear-gradient(180deg, hsl(222 47% 11%), hsl(180 60% 15%));
     
     /* Glass effect colors */
     --glass-bg: rgba(0, 0, 0, 0.7);
-    --glass-border: rgba(22, 163, 74, 0.2);
+    --glass-border: rgba(0, 128, 128, 0.2);
+    
+    /* Font size variables for settings */
+    --font-size-small: 14px;
+    --font-size-medium: 16px;
+    --font-size-large: 18px;
   }
 
   /* Theme support */
   * { 
     color-scheme: light; 
+  }
+  
+  /* Font size settings support */
+  html[style*="font-size"] {
+    font-size: var(--font-size-medium) !important;
+  }
+  
+  html[style*="font-size: 14px"] {
+    font-size: var(--font-size-small) !important;
+  }
+  
+  html[style*="font-size: 16px"] {
+    font-size: var(--font-size-medium) !important;
+  }
+  
+  html[style*="font-size: 18px"] {
+    font-size: var(--font-size-large) !important;
+  }
+  
+  /* Custom slider styles */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+  }
+  
+  .slider::-webkit-slider-track {
+    background: hsl(var(--muted));
+    height: 8px;
+    border-radius: 4px;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: hsl(var(--primary));
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+  }
+  
+  .slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .slider::-moz-range-track {
+    background: hsl(var(--muted));
+    height: 8px;
+    border-radius: 4px;
+    border: none;
+  }
+  
+  .slider::-moz-range-thumb {
+    background: hsl(var(--primary));
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
 
   * {
@@ -958,6 +1046,7 @@ img.logo.on-dark {
 .dark .sidebar-item.active {
   background-color: hsl(217.2 91.2% 59.8%);
   color: hsl(222.2 84% 4.9%);
+  border-color: hsl(217.2 91.2% 65%);
   box-shadow: 0 2px 4px 0 hsl(217.2 91.2% 59.8% / 0.3);
 }
 

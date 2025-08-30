@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.analog_tachograph_files (
     file_size BIGINT NOT NULL,
     file_type VARCHAR(50) NOT NULL,
     upload_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    driver_id UUID REFERENCES public.drivers(id) ON DELETE SET NULL,
+    driver_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     vehicle_id UUID REFERENCES public.vehicles(id) ON DELETE SET NULL,
     chart_date DATE NOT NULL,
     chart_type VARCHAR(20) NOT NULL DEFAULT 'analog' CHECK (chart_type IN ('analog', 'digital')),
@@ -124,3 +124,4 @@ CREATE POLICY "Users can delete tachograph files" ON storage.objects
             WHERE id = auth.uid()
         )
     );
+

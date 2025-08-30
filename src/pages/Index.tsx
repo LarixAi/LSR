@@ -1,17 +1,67 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileSplashScreen from '@/components/mobile/MobileSplashScreen';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Menu, X, ArrowRight, Check, Star, Truck, MapPin, Shield, Users, BarChart3, Zap, Route } from 'lucide-react';
+import { Menu, X, ArrowRight, Check, Star, Truck, MapPin, Shield, Users, BarChart3, Zap, Route, Palette } from 'lucide-react';
 import BookDemoDialog from '@/components/BookDemoDialog';
+
+// Custom CSS for the color slider
+const customSliderStyles = `
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+    cursor: pointer;
+    border: 2px solid #d1d5db;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+    cursor: pointer;
+    border: 2px solid #d1d5db;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .slider::-webkit-slider-track {
+    background: linear-gradient(to right, #f0f0f0, #e0e0e0);
+    border-radius: 10px;
+    height: 8px;
+  }
+  
+  .slider::-moz-range-track {
+    background: linear-gradient(to right, #f0f0f0, #e0e0e0);
+    border-radius: 10px;
+    height: 8px;
+  }
+`;
 
 const Index = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const [selectedColor, setSelectedColor] = useState('teal');
+  const [customHue, setCustomHue] = useState(180);
+
+  // Color options for the dashboard mockup
+  const colorOptions = [
+    { name: 'Teal', value: 'teal', hue: 180, bgColor: 'bg-teal-800', hoverColor: 'hover:bg-teal-700', textColor: 'text-teal-100', textMuted: 'text-teal-200' },
+    { name: 'Blue', value: 'blue', hue: 220, bgColor: 'bg-blue-800', hoverColor: 'hover:bg-blue-700', textColor: 'text-blue-100', textMuted: 'text-blue-200' },
+    { name: 'Purple', value: 'purple', hue: 270, bgColor: 'bg-purple-800', hoverColor: 'hover:bg-purple-700', textColor: 'text-purple-100', textMuted: 'text-purple-200' },
+    { name: 'Indigo', value: 'indigo', hue: 240, bgColor: 'bg-indigo-800', hoverColor: 'hover:bg-indigo-700', textColor: 'text-indigo-100', textMuted: 'text-indigo-200' },
+    { name: 'Emerald', value: 'emerald', hue: 150, bgColor: 'bg-emerald-800', hoverColor: 'hover:bg-emerald-700', textColor: 'text-emerald-100', textMuted: 'text-emerald-200' },
+    { name: 'Custom', value: 'custom', hue: customHue, bgColor: `bg-[hsl(${customHue},70%,25%)]`, hoverColor: `hover:bg-[hsl(${customHue},70%,30%)]`, textColor: `text-[hsl(${customHue},70%,90%)]`, textMuted: `text-[hsl(${customHue},70%,80%)]` }
+  ];
+
+  const currentColor = colorOptions.find(option => option.value === selectedColor) || colorOptions[0];
 
   // Redirect authenticated users to dashboard
   if (user) {
@@ -58,7 +108,9 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="bg-white text-gray-900 selection:bg-green-600 selection:text-white">
+    <>
+      <style>{customSliderStyles}</style>
+      <div className="bg-white text-gray-900 selection:bg-green-600 selection:text-white">
       {/* NAV */}
       <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-gray-100">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -152,6 +204,60 @@ const Index = () => {
             </div>
           </div>
 
+          {/* Color Customization Panel */}
+          <div className="reveal mb-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg">
+                <div className="text-center mb-6">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Palette className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Customize Your Dashboard Colors</h3>
+                  </div>
+                  <p className="text-gray-600">Choose your preferred color scheme - the same colors you'll see in your admin dashboard!</p>
+                </div>
+                
+                <div className="flex flex-wrap justify-center gap-3 mb-6">
+                  {colorOptions.slice(0, -1).map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => setSelectedColor(color.value)}
+                      className={`w-12 h-12 rounded-xl border-2 transition-all duration-200 ${
+                        selectedColor === color.value 
+                          ? 'border-gray-900 scale-110 shadow-lg' 
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                      style={{ backgroundColor: `hsl(${color.hue}, 70%, 25%)` }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+                
+                {/* Custom Color Slider */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Custom:</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="360"
+                      value={customHue}
+                      onChange={(e) => {
+                        setCustomHue(parseInt(e.target.value));
+                        setSelectedColor('custom');
+                      }}
+                      className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                    <div 
+                      className="w-8 h-8 rounded-lg border border-gray-300"
+                      style={{ backgroundColor: `hsl(${customHue}, 70%, 25%)` }}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-500">Hue: {customHue}°</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Large Admin Interface Mockup - Full Width */}
           <div className="relative reveal">
             <div className="dashboard-float w-full max-w-6xl mx-auto opacity-0 transform translate-y-12 scale-95">
@@ -180,35 +286,35 @@ const Index = () => {
                   
                   {/* Main Interface */}
                   <div className="flex h-full">
-                    {/* Sidebar */}
-                    <div className="w-80 bg-green-800 text-white p-6">
+                    {/* Sidebar - Now with dynamic colors */}
+                    <div className={`w-80 ${currentColor.bgColor} text-white p-6`}>
                       <div className="mb-8">
-                        <h3 className="font-semibold text-green-100 text-lg">City Transport Ltd</h3>
-                        <p className="text-sm text-green-200">Lindsey Smith</p>
+                        <h3 className={`font-semibold ${currentColor.textColor} text-lg`}>City Transport Ltd</h3>
+                        <p className={`text-sm ${currentColor.textMuted}`}>Lindsey Smith</p>
                       </div>
                       <nav className="space-y-2">
-                        <div className="flex items-center gap-4 p-3 rounded bg-green-700">
+                        <div className={`flex items-center gap-4 p-3 rounded ${currentColor.hoverColor}`}>
                           <div className="w-5 h-5 bg-white rounded-sm"></div>
                           <span className="text-base">Dashboard</span>
                         </div>
-                        <div className="flex items-center gap-4 p-3 rounded hover:bg-green-700">
-                          <div className="w-5 h-5 bg-green-300 rounded-sm"></div>
+                        <div className={`flex items-center gap-4 p-3 rounded ${currentColor.hoverColor}`}>
+                          <div className="w-5 h-5 bg-white rounded-sm opacity-60"></div>
                           <span className="text-base">Vehicles</span>
                         </div>
-                        <div className="flex items-center gap-4 p-3 rounded hover:bg-green-700">
-                          <div className="w-5 h-5 bg-green-300 rounded-sm"></div>
+                        <div className={`flex items-center gap-4 p-3 rounded ${currentColor.hoverColor}`}>
+                          <div className="w-5 h-5 bg-white rounded-sm opacity-60"></div>
                           <span className="text-base">Drivers</span>
                         </div>
-                        <div className="flex items-center gap-4 p-3 rounded hover:bg-green-700">
-                          <div className="w-5 h-5 bg-green-300 rounded-sm"></div>
+                        <div className={`flex items-center gap-4 p-3 rounded ${currentColor.hoverColor}`}>
+                          <div className="w-5 h-5 bg-white rounded-sm opacity-60"></div>
                           <span className="text-base">Routes</span>
                         </div>
-                        <div className="flex items-center gap-4 p-3 rounded hover:bg-green-700">
-                          <div className="w-5 h-5 bg-green-300 rounded-sm"></div>
+                        <div className={`flex items-center gap-4 p-3 rounded ${currentColor.hoverColor}`}>
+                          <div className="w-5 h-5 bg-white rounded-sm opacity-60"></div>
                           <span className="text-base">Maintenance</span>
                         </div>
-                        <div className="flex items-center gap-4 p-3 rounded hover:bg-green-700">
-                          <div className="w-5 h-5 bg-green-300 rounded-sm"></div>
+                        <div className={`flex items-center gap-4 p-3 rounded ${currentColor.hoverColor}`}>
+                          <div className="w-5 h-5 bg-white rounded-sm opacity-60"></div>
                           <span className="text-base">Reports</span>
                         </div>
                       </nav>
@@ -227,10 +333,10 @@ const Index = () => {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-600">Active Vehicles</p>
-                              <p className="text-3xl font-bold text-green-600">24</p>
+                              <p className="text-3xl font-bold" style={{color: `hsl(${currentColor.hue}, 70%, 40%)`}}>24</p>
                             </div>
-                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                              <div className="w-6 h-6 bg-green-600 rounded"></div>
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 95%)`}}>
+                              <div className="w-6 h-6 rounded" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 40%)`}}></div>
                             </div>
                           </div>
                         </div>
@@ -238,10 +344,10 @@ const Index = () => {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-600">Active Drivers</p>
-                              <p className="text-3xl font-bold text-blue-600">18</p>
+                              <p className="text-3xl font-bold" style={{color: `hsl(${currentColor.hue}, 70%, 35%)`}}>18</p>
                             </div>
-                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                              <div className="w-6 h-6 bg-blue-600 rounded-full"></div>
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 90%)`}}>
+                              <div className="w-6 h-6 rounded-full" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 35%)`}}></div>
                             </div>
                           </div>
                         </div>
@@ -249,10 +355,10 @@ const Index = () => {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-600">Today's Routes</p>
-                              <p className="text-3xl font-bold text-purple-600">12</p>
+                              <p className="text-3xl font-bold" style={{color: `hsl(${currentColor.hue}, 70%, 45%)`}}>12</p>
                             </div>
-                            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                              <div className="w-6 h-6 bg-purple-600 rounded"></div>
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 92%)`}}>
+                              <div className="w-6 h-6 rounded" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 45%)`}}></div>
                             </div>
                           </div>
                         </div>
@@ -260,10 +366,10 @@ const Index = () => {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-600">Maintenance Due</p>
-                              <p className="text-3xl font-bold text-orange-600">3</p>
+                              <p className="text-3xl font-bold" style={{color: `hsl(${currentColor.hue}, 70%, 30%)`}}>3</p>
                             </div>
-                            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                              <div className="w-6 h-6 bg-orange-600 rounded"></div>
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 88%)`}}>
+                              <div className="w-6 h-6 rounded" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 30%)`}}></div>
                             </div>
                           </div>
                         </div>
@@ -274,12 +380,12 @@ const Index = () => {
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                           <h3 className="font-semibold text-gray-900 mb-4 text-lg">Monthly Fuel Costs</h3>
                           <div className="h-40 bg-gray-100 rounded-lg flex items-end justify-between p-4">
-                            <div className="w-12 bg-green-500 rounded-t" style={{height: '60%'}}></div>
-                            <div className="w-12 bg-green-500 rounded-t" style={{height: '80%'}}></div>
-                            <div className="w-12 bg-green-500 rounded-t" style={{height: '45%'}}></div>
-                            <div className="w-12 bg-green-500 rounded-t" style={{height: '90%'}}></div>
-                            <div className="w-12 bg-green-500 rounded-t" style={{height: '70%'}}></div>
-                            <div className="w-12 bg-green-500 rounded-t" style={{height: '85%'}}></div>
+                            <div className="w-12 rounded-t" style={{height: '60%', backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
+                            <div className="w-12 rounded-t" style={{height: '80%', backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
+                            <div className="w-12 rounded-t" style={{height: '45%', backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
+                            <div className="w-12 rounded-t" style={{height: '90%', backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
+                            <div className="w-12 rounded-t" style={{height: '70%', backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
+                            <div className="w-12 rounded-t" style={{height: '85%', backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
                           </div>
                           <div className="flex justify-between text-sm text-gray-500 mt-3">
                             <span>Aug</span>
@@ -296,21 +402,21 @@ const Index = () => {
                             <div className="flex items-center justify-between">
                               <span className="text-base text-gray-600">Active</span>
                               <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                                <div className="w-4 h-4 rounded-full" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
                                 <span className="text-base font-medium">24 vehicles</span>
                               </div>
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-base text-gray-600">In Maintenance</span>
                               <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+                                <div className="w-4 h-4 rounded-full" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 40%)`}}></div>
                                 <span className="text-base font-medium">3 vehicles</span>
                               </div>
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-base text-gray-600">Out of Service</span>
                               <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                                <div className="w-4 h-4 rounded-full" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 30%)`}}></div>
                                 <span className="text-base font-medium">1 vehicle</span>
                               </div>
                             </div>
@@ -325,7 +431,7 @@ const Index = () => {
               {/* Floating Elements */}
               <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl shadow-xl border border-gray-200 p-4 animate-bounce">
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className="w-3 h-3 rounded-full animate-pulse" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
                   <span className="text-sm font-medium text-gray-700">Live Updates</span>
                 </div>
               </div>
@@ -370,10 +476,10 @@ const Index = () => {
           <svg viewBox="0 0 1200 120" className="absolute inset-0 w-full h-full">
             <defs>
               <marker id="arrow" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L0,6 L6,3 z" fill="#16a34a" />
+                <path d="M0,0 L0,6 L6,3 z" style={{fill: `hsl(${currentColor.hue}, 70%, 40%)`}} />
               </marker>
             </defs>
-            <path d="M0,80 C300,10 900,150 1200,30" fill="none" stroke="#86efac" strokeWidth="2" markerEnd="url(#arrow)"/>
+            <path d="M0,80 C300,10 900,150 1200,30" fill="none" style={{stroke: `hsl(${currentColor.hue}, 70%, 80%)`}} strokeWidth="2" markerEnd="url(#arrow)"/>
           </svg>
         </div>
       </section>
@@ -890,13 +996,7 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Floating social-proof pill */}
-      <div className="floating-pill">
-        <div className="flex items-stretch rounded-xl border border-green-600 bg-white overflow-hidden soft-shadow">
-          <div className="bg-green-600 text-white px-4 py-3 font-bold tracking-widest">24</div>
-          <div className="px-4 py-3 text-sm text-gray-700">Companies using Logistics Solution Resources!</div>
-        </div>
-      </div>
+
 
       {/* Chat button placeholder */}
       <button className="chat-btn" aria-label="Chat">
@@ -905,6 +1005,7 @@ const Index = () => {
         </svg>
       </button>
     </div>
+      </>
   );
 };
 

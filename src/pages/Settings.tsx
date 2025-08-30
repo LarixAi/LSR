@@ -39,8 +39,14 @@ import {
   Accessibility,
   Contrast,
   Type,
-  Sparkles
+  Sparkles,
+  User as UserIcon,
+  Palette as PaletteIcon,
+  Monitor as MonitorIcon,
+
 } from 'lucide-react';
+
+import { Link } from 'react-router-dom';
 
 interface ThemeColor {
   name: string;
@@ -205,6 +211,7 @@ const Settings = () => {
             <SettingsIcon className="w-4 h-4" />
             Advanced
           </TabsTrigger>
+
         </TabsList>
 
         {/* Appearance Tab */}
@@ -469,7 +476,7 @@ const Settings = () => {
                     <input
                       id="name"
                       type="text"
-                      defaultValue={profile?.full_name || user?.email || ''}
+                                             defaultValue={`${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || user?.email || ''}
                       className="w-full p-2 border rounded-md bg-background text-foreground"
                       placeholder="Enter your full name"
                     />
@@ -491,10 +498,12 @@ const Settings = () => {
               {/* Avatar Upload */}
               <div className="space-y-4">
                 <h3 className="font-medium text-foreground">Profile Picture</h3>
-                <AvatarUpload
-                  currentAvatarUrl={profile?.avatar_url}
-                  onAvatarUpdate={handleAvatarUpdate}
-                />
+                                  <AvatarUpload
+                    currentAvatarUrl={profile?.avatar_url}
+                    onAvatarUpdate={handleAvatarUpdate}
+                    userId={user?.id || ''}
+                    initials={`${profile?.first_name?.[0] || ''}${profile?.last_name?.[0] || ''}`.toUpperCase()}
+                  />
               </div>
 
               {/* Account Actions */}
@@ -639,6 +648,8 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+
       </Tabs>
     </div>
   );

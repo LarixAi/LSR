@@ -58,14 +58,14 @@ interface PageLayoutProps {
   children: React.ReactNode;
   isLoading?: boolean;
   emptyState?: {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
+    icon?: React.ReactNode;
+    title?: string;
+    description?: string;
     action?: {
       label: string;
       onClick: () => void;
     };
-  };
+  } | null;
 }
 
 export default function PageLayout({
@@ -84,6 +84,21 @@ export default function PageLayout({
   isLoading = false,
   emptyState
 }: PageLayoutProps) {
+  // Debug logging for PageLayout
+  console.log('PageLayout Debug:', {
+    title,
+    activeTab,
+    isLoading,
+    hasEmptyState: !!emptyState,
+    emptyStateTitle: emptyState?.title,
+    emptyStateDescription: emptyState?.description,
+    hasChildren: !!children,
+    shouldShowEmptyState: !isLoading && emptyState && emptyState.title && emptyState.description,
+    shouldShowChildren: !isLoading && (!emptyState || !emptyState.title || !emptyState.description),
+    finalDecision: isLoading ? 'loading' : 
+                  (emptyState && emptyState.title && emptyState.description) ? 'emptyState' : 
+                  children ? 'children' : 'fallback'
+  });
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -182,7 +197,7 @@ export default function PageLayout({
             <div className="flex items-center justify-center py-8">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
-          ) : emptyState ? (
+          ) : emptyState && emptyState.title && emptyState.description && !isLoading ? (
             <div className="text-center py-8">
               {emptyState.icon}
               <h3 className="text-lg font-medium text-gray-900 mb-2">{emptyState.title}</h3>
@@ -194,8 +209,13 @@ export default function PageLayout({
                 </Button>
               )}
             </div>
-          ) : (
+          ) : children ? (
             children
+          ) : (
+            <div className="text-center py-8">
+              <div className="inline-block rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <p className="text-gray-500 mt-2">No content available</p>
+            </div>
           )}
         </TabsContent>
       </Tabs>

@@ -1,15 +1,35 @@
 import { useEffect } from 'react';
 import { useTheme } from '@/components/theme-provider';
+import { storageManager } from '@/utils/localStorage';
 
 export const useThemeColors = () => {
   const { theme } = useTheme();
 
+  // Apply teal color by default on mount if no color is saved
   useEffect(() => {
-    const savedColor = localStorage.getItem('themeColor');
-    const savedHue = localStorage.getItem('themeHue');
+    const themeSettings = storageManager.getThemeSettings();
     
-    if (savedColor && savedHue) {
-      applyColorTheme(savedHue, theme);
+    if (themeSettings.themeColor && themeSettings.customHue) {
+      applyColorTheme(themeSettings.customHue, theme);
+    } else {
+      // Apply teal color by default for new users
+      applyColorTheme('180', theme);
+      // Save the default teal color to storage manager
+      storageManager.setThemeSettings({
+        themeColor: 'teal',
+        customHue: '180'
+      });
+    }
+  }, []); // Only run on mount
+
+  useEffect(() => {
+    const themeSettings = storageManager.getThemeSettings();
+    
+    if (themeSettings.themeColor && themeSettings.customHue) {
+      applyColorTheme(themeSettings.customHue, theme);
+    } else {
+      // Apply teal color by default for new users
+      applyColorTheme('180', theme);
     }
   }, [theme]);
 
@@ -53,3 +73,4 @@ export const useThemeColors = () => {
 
   return { applyColorTheme };
 };
+

@@ -113,6 +113,7 @@ const TransportSidebar = () => {
   // Organized navigation items with collapsible groups - UPDATED TO MATCH ACTUAL ROUTES
   const navigationItems = [
     { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
+    { title: 'Fleet Overview', icon: Truck, url: '/fleet-management' },
     
     // Fleet Management Group
     {
@@ -172,7 +173,7 @@ const TransportSidebar = () => {
         { title: 'Inspections', url: '/inspections', icon: ClipboardCheck },
         { title: 'Vehicle Check Questions', url: '/vehicle-check-questions', icon: CheckSquare },
         { title: 'Licenses', url: '/licenses', icon: FileText },
-        { title: 'Incidents', url: '/incidents', icon: AlertCircle },
+      
         { title: 'Incident Reports', url: '/incident-reports', icon: AlertTriangle },
       ]
     },
@@ -186,7 +187,7 @@ const TransportSidebar = () => {
         { title: 'Email Management', url: '/email-management', icon: Mail },
         { title: 'Advanced Notifications', url: '/notifications', icon: Bell },
         { title: 'Support Tickets', url: '/support-tickets', icon: Ticket },
-        { title: 'Admin Support Tickets', url: '/admin/support-tickets', icon: Ticket },
+
       ]
     },
     

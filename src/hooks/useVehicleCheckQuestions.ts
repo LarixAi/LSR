@@ -1,180 +1,83 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
-export interface VehicleCheckQuestion {
+export interface InspectionQuestion {
   id: string;
   question: string;
-  category: 'exterior' | 'interior' | 'engine' | 'safety' | 'documentation' | 'lights' | 'tires' | 'brakes' | 'fuel' | 'general' | 'driver';
-  question_type: 'yes_no' | 'multiple_choice' | 'text' | 'number' | 'photo';
+  category: string;
   is_required: boolean;
-  is_critical: boolean;
   has_photo: boolean;
   has_notes: boolean;
   order_index: number;
-  guidance?: string;
   question_set_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface VehicleCheckQuestionSet {
+export interface QuestionSet {
   id: string;
   name: string;
-  description?: string;
+  description: string;
   is_active: boolean;
   is_default: boolean;
   organization_id: string;
   created_by: string;
   created_at: string;
   updated_at: string;
-  questions?: VehicleCheckQuestion[];
+  questions: InspectionQuestion[];
 }
 
-// Default fallback questions (matches the mobile component)
-const getDefaultVehicleCheckQuestions = (): VehicleCheckQuestion[] => {
-  return [
-    {
-      id: '1',
-      question: 'Are there any fuel, oil, or fluid leaks under the vehicle?',
-      category: 'exterior',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: true,
-      has_notes: true,
-      order_index: 1,
-      guidance: 'Check for any visible leaks under the vehicle. Look for oil, fuel, coolant, or other fluid stains on the ground. Pay attention to the engine area, transmission, and fuel tank.',
-      question_set_id: 'default'
-    },
-    {
-      id: '2',
-      question: 'Is the windscreen clean and free from cracks or damage?',
-      category: 'exterior',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: true,
-      has_notes: true,
-      order_index: 2,
-      guidance: 'Inspect the windscreen for cracks, chips, or damage. Ensure it\'s clean and provides clear visibility. Check for any delamination or distortion.',
-      question_set_id: 'default'
-    },
-    {
-      id: '3',
-      question: 'Are the windscreen wipers and washers working correctly?',
-      category: 'exterior',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: false,
-      has_notes: true,
-      order_index: 3,
-      guidance: 'Test the wipers by turning them on. Check that they clear the windscreen effectively. Test the washer fluid spray and ensure it reaches the windscreen.',
-      question_set_id: 'default'
-    },
-    {
-      id: '4',
-      question: 'Are the headlights (main/dip) working and lenses clean?',
-      category: 'lights',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: true,
-      has_notes: true,
-      order_index: 4,
-      guidance: 'Turn on the headlights and check both main beam and dipped beam. Ensure lenses are clean and not cracked. Check that both lights are working.',
-      question_set_id: 'default'
-    },
-    {
-      id: '5',
-      question: 'Are the front indicators including side repeaters working?',
-      category: 'lights',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: false,
-      has_notes: true,
-      order_index: 5,
-      guidance: 'Test all front indicators including side repeaters. Ensure they flash at the correct rate and are visible from all angles.',
-      question_set_id: 'default'
-    },
-    {
-      id: '6',
-      question: 'Is the horn working clearly?',
-      category: 'general',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: false,
-      has_notes: true,
-      order_index: 6,
-      guidance: 'Test the horn by pressing it. Ensure it produces a clear, audible sound that can be heard from outside the vehicle.',
-      question_set_id: 'default'
-    },
-    {
-      id: '7',
-      question: 'Are mirrors fitted, secure, adjusted, and not cracked?',
-      category: 'exterior',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: true,
-      has_notes: true,
-      order_index: 7,
-      guidance: 'Check all mirrors are securely fitted and properly adjusted. Ensure they\'re not cracked or damaged. Test that they provide adequate rearward visibility.',
-      question_set_id: 'default'
-    },
-    {
-      id: '8',
-      question: 'Is the front registration plate present, clean, and secure?',
-      category: 'exterior',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: true,
-      has_notes: true,
-      order_index: 8,
-      guidance: 'Verify the front registration plate is present, clean, and securely attached. Check that all numbers and letters are clearly visible and not obscured.',
-      question_set_id: 'default'
-    },
-    {
-      id: '9',
-      question: 'Are the tyres in good condition with adequate tread depth and proper inflation?',
-      category: 'tires',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: true,
-      has_notes: true,
-      order_index: 9,
-      guidance: 'Inspect all tyres on the passenger side. Check tread depth (minimum 1.6mm), look for cuts, bulges, or damage. Check tyre pressure and ensure valve caps are present.',
-      question_set_id: 'default'
-    },
-    {
-      id: '10',
-      question: 'Are the wheel nuts secure with no cracks, rust marks, or missing nuts?',
-      category: 'tires',
-      question_type: 'yes_no',
-      is_required: true,
-      is_critical: true,
-      has_photo: true,
-      has_notes: true,
-      order_index: 10,
-      guidance: 'Check all wheel nuts are present and properly tightened. Look for any signs of rust, cracks, or missing nuts. Ensure wheel covers are secure.',
-      question_set_id: 'default'
-    }
-  ];
-};
+export interface CreateQuestionSetData {
+  name: string;
+  description: string;
+  is_active: boolean;
+  is_default: boolean;
+  organization_id: string;
+  created_by: string;
+}
 
-// Hook to fetch question sets for the organization
-export const useVehicleCheckQuestionSets = () => {
-  const { profile } = useAuth();
+export interface CreateQuestionData {
+  question: string;
+  category: string;
+  is_required: boolean;
+  has_photo: boolean;
+  has_notes: boolean;
+  question_set_id: string;
+  order_index: number;
+}
 
-  return useQuery({
-    queryKey: ['vehicle-check-question-sets', profile?.organization_id],
+export interface UpdateQuestionSetData {
+  id: string;
+  name?: string;
+  description?: string;
+  is_active?: boolean;
+  is_default?: boolean;
+}
+
+export interface UpdateQuestionData {
+  id: string;
+  question?: string;
+  category?: string;
+  is_required?: boolean;
+  has_photo?: boolean;
+  has_notes?: boolean;
+  order_index?: number;
+}
+
+export const useVehicleCheckQuestions = (organizationId: string | null) => {
+  const queryClient = useQueryClient();
+
+  // Fetch question sets with questions
+  const {
+    data: questionSets = [],
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['vehicle-check-questions', organizationId],
     queryFn: async () => {
-      if (!profile?.organization_id) {
-        throw new Error('No organization ID available');
-      }
+      if (!organizationId) return [];
 
       const { data, error } = await supabase
         .from('inspection_question_sets')
@@ -182,8 +85,7 @@ export const useVehicleCheckQuestionSets = () => {
           *,
           questions:inspection_questions(*)
         `)
-        .eq('organization_id', profile.organization_id)
-        .eq('is_active', true)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -191,158 +93,339 @@ export const useVehicleCheckQuestionSets = () => {
         throw error;
       }
 
-      return data as VehicleCheckQuestionSet[];
+      return data as QuestionSet[];
     },
-    enabled: !!profile?.organization_id,
+    enabled: !!organizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
-};
 
-// Hook to fetch questions for vehicle checks (prioritizes admin-controlled questions)
-export const useVehicleCheckQuestions = (questionSetId?: string) => {
-  const { profile } = useAuth();
-  
-  return useQuery({
-    queryKey: ['vehicle-check-questions', profile?.organization_id, questionSetId],
-    queryFn: async () => {
-      if (!profile?.organization_id) {
-        console.log('No organization ID, using default questions');
-        return getDefaultVehicleCheckQuestions();
-      }
-
-      try {
-        // First, try to get questions from a specific set
-        if (questionSetId) {
-          const { data: questions, error } = await supabase
-            .from('inspection_questions')
-            .select('*')
-            .eq('question_set_id', questionSetId)
-            .order('order_index', { ascending: true });
-
-          if (error) {
-            console.error('Error fetching specific question set:', error);
-            throw error;
-          }
-
-          if (questions && questions.length > 0) {
-            console.log(`Using questions from set ${questionSetId}:`, questions.length, 'questions');
-            return questions.map(q => ({
-              id: q.id,
-              question: q.question,
-              category: q.category as VehicleCheckQuestion['category'],
-              question_type: q.question_type as VehicleCheckQuestion['question_type'],
-              is_required: q.is_required,
-              is_critical: q.is_critical,
-              has_photo: q.has_photo,
-              has_notes: q.has_notes,
-              order_index: q.order_index,
-              guidance: q.guidance,
-              question_set_id: q.question_set_id
-            })) as VehicleCheckQuestion[];
-          }
-        }
-
-        // If no specific set or set is empty, get default questions from org
-        const { data: questionSets, error: setsError } = await supabase
-          .from('inspection_question_sets')
-          .select(`
-            id,
-            questions:inspection_questions(*)
-          `)
-          .eq('organization_id', profile.organization_id)
-          .eq('is_active', true)
-          .eq('is_default', true)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (setsError) {
-          console.error('Error fetching default question sets:', setsError);
-          throw setsError;
-        }
-
-        if (questionSets && questionSets.length > 0 && questionSets[0].questions?.length > 0) {
-          const questions = questionSets[0].questions;
-          console.log('Using default organization questions:', questions.length, 'questions');
-          return questions
-            .sort((a, b) => a.order_index - b.order_index)
-            .map(q => ({
-              id: q.id,
-              question: q.question,
-              category: q.category as VehicleCheckQuestion['category'],
-              question_type: q.question_type as VehicleCheckQuestion['question_type'],
-              is_required: q.is_required,
-              is_critical: q.is_critical,
-              has_photo: q.has_photo,
-              has_notes: q.has_notes,
-              order_index: q.order_index,
-              guidance: q.guidance,
-              question_set_id: q.question_set_id
-            })) as VehicleCheckQuestion[];
-        }
-
-        // Fallback to default questions
-        console.log('No admin questions found, using default fallback questions');
-        return getDefaultVehicleCheckQuestions();
-
-      } catch (error) {
-        console.error('Error fetching vehicle check questions:', error);
-        console.log('Falling back to default questions');
-        return getDefaultVehicleCheckQuestions();
-      }
-    },
-    enabled: true,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-  });
-};
-
-// Hook to create a new question set
-export const useCreateQuestionSet = () => {
-  const { profile } = useAuth();
-
-  return {
-    create: async (data: Partial<VehicleCheckQuestionSet>) => {
-      if (!profile?.organization_id || !profile?.id) {
-        throw new Error('Authentication required');
-      }
-
-      const { data: result, error } = await supabase
+  // Create question set mutation
+  const createQuestionSetMutation = useMutation({
+    mutationFn: async (setData: CreateQuestionSetData) => {
+      const { data, error } = await supabase
         .from('inspection_question_sets')
-        .insert({
-          name: data.name!,
-          description: data.description,
-          is_active: data.is_active ?? true,
-          is_default: data.is_default ?? false,
-          organization_id: profile.organization_id,
-          created_by: profile.id
-        })
+        .insert(setData)
         .select()
         .single();
 
       if (error) {
+        console.error('Error creating question set:', error);
         throw error;
       }
 
-      return result;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      toast.success('Question set created successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error creating question set:', error);
+      toast.error(`Failed to create question set: ${error.message}`);
     }
-  };
-};
+  });
 
-// Hook to create questions in a set
-export const useCreateQuestions = () => {
-  return {
-    create: async (questions: Partial<VehicleCheckQuestion>[]) => {
-      const { data: result, error } = await supabase
-        .from('inspection_questions')
-        .insert(questions)
-        .select();
+  // Update question set mutation
+  const updateQuestionSetMutation = useMutation({
+    mutationFn: async (setData: UpdateQuestionSetData) => {
+      const { id, ...updateData } = setData;
+      const { data, error } = await supabase
+        .from('inspection_question_sets')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) {
+        console.error('Error updating question set:', error);
         throw error;
       }
 
-      return result;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      toast.success('Question set updated successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error updating question set:', error);
+      toast.error(`Failed to update question set: ${error.message}`);
     }
+  });
+
+  // Delete question set mutation
+  const deleteQuestionSetMutation = useMutation({
+    mutationFn: async (setId: string) => {
+      const { error } = await supabase
+        .from('inspection_question_sets')
+        .delete()
+        .eq('id', setId);
+
+      if (error) {
+        console.error('Error deleting question set:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      toast.success('Question set deleted successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error deleting question set:', error);
+      toast.error(`Failed to delete question set: ${error.message}`);
+    }
+  });
+
+  // Create question mutation
+  const createQuestionMutation = useMutation({
+    mutationFn: async (questionData: CreateQuestionData) => {
+      const { data, error } = await supabase
+        .from('inspection_questions')
+        .insert(questionData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating question:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      toast.success('Question added successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error creating question:', error);
+      toast.error(`Failed to add question: ${error.message}`);
+    }
+  });
+
+  // Update question mutation
+  const updateQuestionMutation = useMutation({
+    mutationFn: async (questionData: UpdateQuestionData) => {
+      const { id, ...updateData } = questionData;
+      const { data, error } = await supabase
+        .from('inspection_questions')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating question:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      toast.success('Question updated successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error updating question:', error);
+      toast.error(`Failed to update question: ${error.message}`);
+    }
+  });
+
+  // Delete question mutation
+  const deleteQuestionMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      const { error } = await supabase
+        .from('inspection_questions')
+        .delete()
+        .eq('id', questionId);
+
+      if (error) {
+        console.error('Error deleting question:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      toast.success('Question deleted successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error deleting question:', error);
+      toast.error(`Failed to delete question: ${error.message}`);
+    }
+  });
+
+  // Update question order mutation
+  const updateQuestionOrderMutation = useMutation({
+    mutationFn: async ({ questionId, newOrderIndex }: { questionId: string; newOrderIndex: number }) => {
+      const { error } = await supabase
+        .from('inspection_questions')
+        .update({ order_index: newOrderIndex })
+        .eq('id', questionId);
+
+      if (error) {
+        console.error('Error updating question order:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      toast.success('Question order updated successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error updating question order:', error);
+      toast.error(`Failed to update question order: ${error.message}`);
+    }
+  });
+
+  // Create default question set with comprehensive questions
+  const createDefaultQuestionSetMutation = useMutation({
+    mutationFn: async ({ organizationId, createdBy }: { organizationId: string; createdBy: string }) => {
+      // First create the question set
+      const { data: setData, error: setError } = await supabase
+        .from('inspection_question_sets')
+        .insert({
+          name: 'Daily Pre-Trip Inspection',
+          description: 'Comprehensive daily vehicle inspection covering all safety-critical areas',
+          is_active: true,
+          is_default: true,
+          organization_id: organizationId,
+          created_by: createdBy
+        })
+        .select()
+        .single();
+
+      if (setError) {
+        console.error('Error creating default question set:', setError);
+        throw setError;
+      }
+
+      // Define comprehensive questions
+      const defaultQuestions = [
+        // Exterior Checks
+        { question: 'Are there any fuel, oil, or fluid leaks under the vehicle?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 1 },
+        { question: 'Is the windscreen clean and free from cracks or damage?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 2 },
+        { question: 'Are all mirrors clean, secure, and properly adjusted?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 3 },
+        { question: 'Are the headlights working and lenses clean?', category: 'lights', is_required: true, has_photo: true, has_notes: true, order_index: 4 },
+        { question: 'Are the brake lights working properly?', category: 'lights', is_required: true, has_photo: true, has_notes: true, order_index: 5 },
+        { question: 'Are the indicators working correctly?', category: 'lights', is_required: true, has_photo: true, has_notes: true, order_index: 6 },
+        { question: 'Are the hazard lights functioning?', category: 'lights', is_required: true, has_photo: true, has_notes: true, order_index: 7 },
+        { question: 'Are the tyres in good condition with adequate tread depth?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 8 },
+        { question: 'Are the tyre pressures correct?', category: 'exterior', is_required: true, has_photo: false, has_notes: true, order_index: 9 },
+        { question: 'Are the wheels and wheel nuts secure?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 10 },
+        
+        // Engine Checks
+        { question: 'Is the engine oil level correct?', category: 'engine', is_required: true, has_photo: false, has_notes: true, order_index: 11 },
+        { question: 'Is the coolant level adequate?', category: 'engine', is_required: true, has_photo: false, has_notes: true, order_index: 12 },
+        { question: 'Is the brake fluid level correct?', category: 'engine', is_required: true, has_photo: false, has_notes: true, order_index: 13 },
+        { question: 'Is the power steering fluid level adequate?', category: 'engine', is_required: true, has_photo: false, has_notes: true, order_index: 14 },
+        { question: 'Is the fuel level sufficient for the journey?', category: 'engine', is_required: true, has_photo: false, has_notes: true, order_index: 15 },
+        
+        // Interior Checks
+        { question: 'Are all seat belts in good condition and working properly?', category: 'interior', is_required: true, has_photo: true, has_notes: true, order_index: 16 },
+        { question: 'Are all seats secure and in good condition?', category: 'interior', is_required: true, has_photo: true, has_notes: true, order_index: 17 },
+        { question: 'Is the steering wheel secure and in good condition?', category: 'interior', is_required: true, has_photo: true, has_notes: true, order_index: 18 },
+        { question: 'Are all dashboard instruments working correctly?', category: 'interior', is_required: true, has_photo: true, has_notes: true, order_index: 19 },
+        { question: 'Is the horn working?', category: 'interior', is_required: true, has_photo: false, has_notes: true, order_index: 20 },
+        
+        // Safety Equipment
+        { question: 'Is the fire extinguisher present and in date?', category: 'safety', is_required: true, has_photo: true, has_notes: true, order_index: 21 },
+        { question: 'Is the first aid kit present and complete?', category: 'safety', is_required: true, has_photo: true, has_notes: true, order_index: 22 },
+        { question: 'Are warning triangles present?', category: 'safety', is_required: true, has_photo: true, has_notes: true, order_index: 23 },
+        { question: 'Is the high-visibility vest present?', category: 'safety', is_required: true, has_photo: true, has_notes: true, order_index: 24 },
+        
+        // Brake Checks
+        { question: 'Do the brakes feel firm and responsive?', category: 'brakes', is_required: true, has_photo: false, has_notes: true, order_index: 25 },
+        { question: 'Is there any unusual brake noise or vibration?', category: 'brakes', is_required: true, has_photo: false, has_notes: true, order_index: 26 },
+        { question: 'Is the handbrake working effectively?', category: 'brakes', is_required: true, has_photo: false, has_notes: true, order_index: 27 },
+        
+        // Documentation
+        { question: 'Is the vehicle registration document present?', category: 'documentation', is_required: true, has_photo: true, has_notes: true, order_index: 28 },
+        { question: 'Is the insurance certificate present and valid?', category: 'documentation', is_required: true, has_photo: true, has_notes: true, order_index: 29 },
+        { question: 'Is the MOT certificate present and valid?', category: 'documentation', is_required: true, has_photo: true, has_notes: true, order_index: 30 },
+        { question: 'Is the tachograph card present and valid?', category: 'documentation', is_required: true, has_photo: true, has_notes: true, order_index: 31 },
+        
+        // Driver Checks
+        { question: 'Is the driver\'s license present and valid?', category: 'driver', is_required: true, has_photo: true, has_notes: true, order_index: 32 },
+        { question: 'Is the driver fit and well to drive?', category: 'driver', is_required: true, has_photo: false, has_notes: true, order_index: 33 },
+        { question: 'Has the driver had adequate rest?', category: 'driver', is_required: true, has_photo: false, has_notes: true, order_index: 34 },
+        { question: 'Is the driver wearing appropriate footwear?', category: 'driver', is_required: true, has_photo: false, has_notes: true, order_index: 35 },
+        
+        // Additional Checks
+        { question: 'Are all doors closing properly and securely?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 36 },
+        { question: 'Is the exhaust system secure and not leaking?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 37 },
+        { question: 'Are all windows clean and free from damage?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 38 },
+        { question: 'Is the wiper system working correctly?', category: 'exterior', is_required: true, has_photo: true, has_notes: true, order_index: 39 },
+        { question: 'Is the washer fluid level adequate?', category: 'exterior', is_required: true, has_photo: false, has_notes: true, order_index: 40 },
+        { question: 'Are all air vents working and clear?', category: 'interior', is_required: true, has_photo: true, has_notes: true, order_index: 41 },
+        { question: 'Is the heating/cooling system working?', category: 'interior', is_required: true, has_photo: false, has_notes: true, order_index: 42 },
+        { question: 'Are all interior lights working?', category: 'interior', is_required: true, has_photo: true, has_notes: true, order_index: 43 },
+        { question: 'Is the radio/entertainment system working?', category: 'interior', is_required: false, has_photo: false, has_notes: true, order_index: 44 },
+        { question: 'Is the satellite navigation working?', category: 'interior', is_required: false, has_photo: false, has_notes: true, order_index: 45 },
+        { question: 'Are all storage compartments secure?', category: 'interior', is_required: true, has_photo: true, has_notes: true, order_index: 46 },
+        { question: 'Is the load secure and properly distributed?', category: 'general', is_required: true, has_photo: true, has_notes: true, order_index: 47 },
+        { question: 'Are all tools and equipment present?', category: 'general', is_required: true, has_photo: true, has_notes: true, order_index: 48 },
+        { question: 'Is the vehicle clean and presentable?', category: 'general', is_required: true, has_photo: true, has_notes: true, order_index: 49 },
+        { question: 'Are all warning lights off when engine is running?', category: 'engine', is_required: true, has_photo: true, has_notes: true, order_index: 50 },
+        { question: 'Is the battery secure and terminals clean?', category: 'engine', is_required: true, has_photo: true, has_notes: true, order_index: 51 },
+        { question: 'Are all belts and hoses in good condition?', category: 'engine', is_required: true, has_photo: true, has_notes: true, order_index: 52 },
+        { question: 'Is the air filter clean and secure?', category: 'engine', is_required: true, has_photo: true, has_notes: true, order_index: 53 },
+        { question: 'Are all electrical connections secure?', category: 'engine', is_required: true, has_photo: true, has_notes: true, order_index: 54 },
+        { question: 'Is the fuel cap secure and not leaking?', category: 'engine', is_required: true, has_photo: true, has_notes: true, order_index: 55 },
+        { question: 'Is the vehicle ready for the journey?', category: 'general', is_required: true, has_photo: false, has_notes: true, order_index: 56 }
+      ];
+
+      // Insert all questions
+      const questionsWithSetId = defaultQuestions.map(q => ({
+        ...q,
+        question_set_id: setData.id
+      }));
+
+      const { error: questionsError } = await supabase
+        .from('inspection_questions')
+        .insert(questionsWithSetId);
+
+      if (questionsError) {
+        console.error('Error creating default questions:', questionsError);
+        throw questionsError;
+      }
+
+      return setData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle-check-questions'] });
+      toast.success('Default "Daily Pre-Trip Inspection" question set created with 56 comprehensive questions!');
+    },
+    onError: (error: any) => {
+      console.error('Error creating default question set:', error);
+      toast.error(`Failed to create default question set: ${error.message}`);
+    }
+  });
+
+  return {
+    // Data
+    questionSets,
+    isLoading,
+    error,
+    
+    // Actions
+    refetch,
+    createQuestionSet: createQuestionSetMutation.mutate,
+    updateQuestionSet: updateQuestionSetMutation.mutate,
+    deleteQuestionSet: deleteQuestionSetMutation.mutate,
+    createQuestion: createQuestionMutation.mutate,
+    updateQuestion: updateQuestionMutation.mutate,
+    deleteQuestion: deleteQuestionMutation.mutate,
+    updateQuestionOrder: updateQuestionOrderMutation.mutate,
+    createDefaultQuestionSet: createDefaultQuestionSetMutation.mutate,
+    
+    // Loading states
+    isCreatingSet: createQuestionSetMutation.isPending,
+    isUpdatingSet: updateQuestionSetMutation.isPending,
+    isDeletingSet: deleteQuestionSetMutation.isPending,
+    isCreatingQuestion: createQuestionMutation.isPending,
+    isUpdatingQuestion: updateQuestionMutation.isPending,
+    isDeletingQuestion: deleteQuestionMutation.isPending,
+    isUpdatingOrder: updateQuestionOrderMutation.isPending,
+    isCreatingDefault: createDefaultQuestionSetMutation.isPending
   };
 };

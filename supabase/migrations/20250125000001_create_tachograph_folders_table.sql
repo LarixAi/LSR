@@ -21,6 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_tachograph_folders_created_by ON public.tachograp
 ALTER TABLE public.tachograph_folders ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
+DROP POLICY IF EXISTS "Users can view folders in their organization" ON public.tachograph_folders;
 CREATE POLICY "Users can view folders in their organization" ON public.tachograph_folders
     FOR SELECT USING (
         organization_id IN (
@@ -29,6 +30,7 @@ CREATE POLICY "Users can view folders in their organization" ON public.tachograp
         )
     );
 
+DROP POLICY IF EXISTS "Users can create folders in their organization" ON public.tachograph_folders;
 CREATE POLICY "Users can create folders in their organization" ON public.tachograph_folders
     FOR INSERT WITH CHECK (
         organization_id IN (
@@ -37,6 +39,7 @@ CREATE POLICY "Users can create folders in their organization" ON public.tachogr
         )
     );
 
+DROP POLICY IF EXISTS "Users can update folders in their organization" ON public.tachograph_folders;
 CREATE POLICY "Users can update folders in their organization" ON public.tachograph_folders
     FOR UPDATE USING (
         organization_id IN (
@@ -45,6 +48,7 @@ CREATE POLICY "Users can update folders in their organization" ON public.tachogr
         )
     );
 
+DROP POLICY IF EXISTS "Users can delete folders in their organization" ON public.tachograph_folders;
 CREATE POLICY "Users can delete folders in their organization" ON public.tachograph_folders
     FOR DELETE USING (
         organization_id IN (
@@ -62,47 +66,46 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_tachograph_folders_updated_at ON public.tachograph_folders;
 CREATE TRIGGER update_tachograph_folders_updated_at 
     BEFORE UPDATE ON public.tachograph_folders 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert some default folders for testing
-INSERT INTO public.tachograph_folders (name, parent_folder_id, organization_id, created_by, description)
+INSERT INTO public.tachograph_folders (name, parent_folder_id, organization_id, created_by)
 SELECT 
     'Driver Cards' as name,
     NULL as parent_folder_id,
     o.id as organization_id,
-    p.id as created_by,
-    'Default folder for driver tachograph card data' as description
+    p.id as created_by
 FROM public.organizations o
 CROSS JOIN public.profiles p
 WHERE p.organization_id = o.id
 LIMIT 1
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.tachograph_folders (name, parent_folder_id, organization_id, created_by, description)
+INSERT INTO public.tachograph_folders (name, parent_folder_id, organization_id, created_by)
 SELECT 
     'Vehicle Cards' as name,
     NULL as parent_folder_id,
     o.id as organization_id,
-    p.id as created_by,
-    'Default folder for vehicle tachograph card data' as description
+    p.id as created_by
 FROM public.organizations o
 CROSS JOIN public.profiles p
 WHERE p.organization_id = o.id
 LIMIT 1
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.tachograph_folders (name, parent_folder_id, organization_id, created_by, description)
+INSERT INTO public.tachograph_folders (name, parent_folder_id, organization_id, created_by)
 SELECT 
     'Archive' as name,
     NULL as parent_folder_id,
     o.id as organization_id,
-    p.id as created_by,
-    'Archive folder for old tachograph data' as description
+    p.id as created_by
 FROM public.organizations o
 CROSS JOIN public.profiles p
 WHERE p.organization_id = o.id
 LIMIT 1
 ON CONFLICT DO NOTHING;
+

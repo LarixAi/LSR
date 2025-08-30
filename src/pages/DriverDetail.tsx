@@ -117,6 +117,7 @@ export default function DriverDetail() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [showProfileImageUpload, setShowProfileImageUpload] = useState(false);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [selectedLicenseId, setSelectedLicenseId] = useState<string | null>(null);
   
   // Document request form state
   const [documentRequestForm, setDocumentRequestForm] = useState({
@@ -221,6 +222,23 @@ export default function DriverDetail() {
   // Get stats
   const documentStats = useDriverDocumentStats(driverId);
   const renewalStats = useRenewalReminderStats(driverId);
+
+  // Handle URL parameters for tab and license focus
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const licenseIdParam = urlParams.get('licenseId');
+    
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+    
+    // If licenseId is provided, we'll handle it in the license section
+    if (licenseIdParam) {
+      // Store the license ID to highlight it in the license section
+      setSelectedLicenseId(licenseIdParam);
+    }
+  }, []);
 
   useEffect(() => {
     if (!driverId) {
@@ -881,6 +899,206 @@ export default function DriverDetail() {
                       </Card>
                     ))}
                   </div>
+
+                  {/* License Information Section - Shows when licenseId is provided */}
+                  {selectedLicenseId && driverLicenses && driverLicenses.length > 0 && (
+                    <div className="space-y-4 mt-8 pt-8 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">License Information</h3>
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          <Eye className="w-3 h-3 mr-1" />
+                          Selected License
+                        </Badge>
+                      </div>
+                      
+                      {driverLicenses.map((license) => {
+                        const isSelected = selectedLicenseId === license.id;
+                        if (!isSelected) return null;
+                        
+                        const expiryDate = new Date(license.expiry_date);
+                        const isExpired = expiryDate < new Date();
+                        const daysUntilExpiry = differenceInDays(expiryDate, new Date());
+                        
+                        return (
+                          <Card key={license.id} className="border-l-4 border-l-blue-500 ring-2 ring-blue-500">
+                            <CardContent className="p-6">
+                              {/* License Header */}
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <h4 className="text-lg font-semibold">{license.license_type}</h4>
+                                    <Badge variant={isExpired ? 'destructive' : daysUntilExpiry <= 30 ? 'secondary' : 'default'}>
+                                      {isExpired ? 'Expired' : daysUntilExpiry <= 30 ? 'Expiring Soon' : 'Active'}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-600">
+                                    License Number: <span className="font-mono font-medium">{license.license_number}</span>
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="outline" size="sm">
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button variant="outline" size="sm">
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* License Images Section */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                {/* Front of License */}
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-medium text-gray-700">Front of License</Label>
+                                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 min-h-[200px] flex items-center justify-center">
+                                    {license.photo_url ? (
+                                      <img 
+                                        src={license.photo_url} 
+                                        alt="Front of license" 
+                                        className="max-w-full max-h-[180px] object-contain rounded"
+                                      />
+                                    ) : (
+                                      <div className="text-center text-gray-500">
+                                        <FileText className="w-8 h-8 mx-auto mb-2" />
+                                        <p className="text-sm">No front image uploaded</p>
+                                        <Button variant="outline" size="sm" className="mt-2">
+                                          <Upload className="w-4 h-4 mr-1" />
+                                          Upload
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Back of License */}
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-medium text-gray-700">Back of License</Label>
+                                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 min-h-[200px] flex items-center justify-center">
+                                    {license.document_url ? (
+                                      <img 
+                                        src={license.document_url} 
+                                        alt="Back of license" 
+                                        className="max-w-full max-h-[180px] object-contain rounded"
+                                      />
+                                    ) : (
+                                      <div className="text-center text-gray-500">
+                                        <FileText className="w-8 h-8 mx-auto mb-2" />
+                                        <p className="text-sm">No back image uploaded</p>
+                                        <Button variant="outline" size="sm" className="mt-2">
+                                          <Upload className="w-4 h-4 mr-1" />
+                                          Upload
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* License Details Grid */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-500">Issuing Authority</Label>
+                                  <p className="text-sm font-medium">{license.issuing_authority || 'N/A'}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-500">License Class</Label>
+                                  <p className="text-sm font-medium">{license.license_class || 'N/A'}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-500">Issue Date</Label>
+                                  <p className="text-sm font-medium">{format(new Date(license.issue_date), 'MMM dd, yyyy')}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-500">Expiry Date</Label>
+                                  <p className={`text-sm font-medium ${
+                                    isExpired ? 'text-red-600' : daysUntilExpiry <= 30 ? 'text-orange-600' : 'text-green-600'
+                                  }`}>
+                                    {format(expiryDate, 'MMM dd, yyyy')}
+                                    {!isExpired && ` (${daysUntilExpiry} days)`}
+                                    {isExpired && ` (Expired ${Math.abs(daysUntilExpiry)} days ago)`}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Endorsements and Restrictions */}
+                              {(license.endorsements && license.endorsements.length > 0) || 
+                               (license.restrictions && license.restrictions.length > 0) ? (
+                                <div className="space-y-3">
+                                  {license.endorsements && license.endorsements.length > 0 && (
+                                    <div>
+                                      <Label className="text-xs font-medium text-gray-500">Endorsements</Label>
+                                      <div className="flex flex-wrap gap-2 mt-1">
+                                        {license.endorsements.map((endorsement) => (
+                                          <Badge key={endorsement} variant="secondary" className="text-xs">
+                                            {endorsement}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {license.restrictions && license.restrictions.length > 0 && (
+                                    <div>
+                                      <Label className="text-xs font-medium text-gray-500">Restrictions</Label>
+                                      <div className="flex flex-wrap gap-2 mt-1">
+                                        {license.restrictions.map((restriction) => (
+                                          <Badge key={restriction} variant="destructive" className="text-xs">
+                                            {restriction}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : null}
+
+                              {/* Additional Expiry Information */}
+                              {(license.medical_certificate_expiry || license.background_check_expiry || 
+                                license.drug_test_expiry || license.training_expiry) && (
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                  <h5 className="text-sm font-medium text-gray-700 mb-3">Additional Certifications</h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {license.medical_certificate_expiry && (
+                                      <div>
+                                        <Label className="text-xs font-medium text-gray-500">Medical Certificate</Label>
+                                        <p className="text-xs">{format(new Date(license.medical_certificate_expiry), 'MMM dd, yyyy')}</p>
+                                      </div>
+                                    )}
+                                    {license.background_check_expiry && (
+                                      <div>
+                                        <Label className="text-xs font-medium text-gray-500">Background Check</Label>
+                                        <p className="text-xs">{format(new Date(license.background_check_expiry), 'MMM dd, yyyy')}</p>
+                                      </div>
+                                    )}
+                                    {license.drug_test_expiry && (
+                                      <div>
+                                        <Label className="text-xs font-medium text-gray-500">Drug Test</Label>
+                                        <p className="text-xs">{format(new Date(license.drug_test_expiry), 'MMM dd, yyyy')}</p>
+                                      </div>
+                                    )}
+                                    {license.training_expiry && (
+                                      <div>
+                                        <Label className="text-xs font-medium text-gray-500">Training</Label>
+                                        <p className="text-xs">{format(new Date(license.training_expiry), 'MMM dd, yyyy')}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Notes */}
+                              {license.notes && (
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                  <Label className="text-xs font-medium text-gray-500">Notes</Label>
+                                  <p className="text-sm text-gray-600 mt-1">{license.notes}</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -1201,45 +1419,202 @@ export default function DriverDetail() {
                     </Card>
                   </div>
 
-                  {/* License & Certification Status */}
+                  {/* Enhanced License & Certification Status */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">License & Certification Status</h3>
                     {driverLicenses && driverLicenses.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="space-y-6">
                         {driverLicenses.map((license) => {
                           const expiryDate = new Date(license.expiry_date);
                           const isExpired = expiryDate < new Date();
                           const daysUntilExpiry = differenceInDays(expiryDate, new Date());
+                          const isSelected = selectedLicenseId === license.id;
                           
                           return (
                             <Card key={license.id} className={`border-l-4 ${
+                              isSelected ? 'ring-2 ring-blue-500' : ''
+                            } ${
                               isExpired ? 'border-l-red-500' : 
                               daysUntilExpiry <= 30 ? 'border-l-orange-500' : 'border-l-green-500'
                             }`}>
-                              <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
+                              <CardContent className="p-6">
+                                {/* License Header */}
+                                <div className="flex items-center justify-between mb-4">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
-                                      <h4 className="font-semibold">{license.license_type}</h4>
+                                      <h4 className="text-lg font-semibold">{license.license_type}</h4>
                                       <Badge variant={isExpired ? 'destructive' : daysUntilExpiry <= 30 ? 'secondary' : 'default'}>
                                         {isExpired ? 'Expired' : daysUntilExpiry <= 30 ? 'Expiring Soon' : 'Active'}
                                       </Badge>
+                                      {isSelected && (
+                                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                                          <Eye className="w-3 h-3 mr-1" />
+                                          Selected
+                                        </Badge>
+                                      )}
                                     </div>
-                                    <p className="text-sm text-gray-600 mb-2">
-                                      License Number: {license.license_number}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      Expires: {format(expiryDate, 'MMM dd, yyyy')}
-                                      {!isExpired && ` • ${daysUntilExpiry} days remaining`}
-                                      {isExpired && ` • Expired ${Math.abs(daysUntilExpiry)} days ago`}
+                                    <p className="text-sm text-gray-600">
+                                      License Number: <span className="font-mono font-medium">{license.license_number}</span>
                                     </p>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <Button variant="outline" size="sm">
-                                      <Eye className="w-4 h-4" />
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button variant="outline" size="sm">
+                                      <Download className="w-4 h-4" />
                                     </Button>
                                   </div>
                                 </div>
+
+                                {/* License Images Section */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                  {/* Front of License */}
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-gray-700">Front of License</Label>
+                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 min-h-[200px] flex items-center justify-center">
+                                      {license.photo_url ? (
+                                        <img 
+                                          src={license.photo_url} 
+                                          alt="Front of license" 
+                                          className="max-w-full max-h-[180px] object-contain rounded"
+                                        />
+                                      ) : (
+                                        <div className="text-center text-gray-500">
+                                          <FileText className="w-8 h-8 mx-auto mb-2" />
+                                          <p className="text-sm">No front image uploaded</p>
+                                          <Button variant="outline" size="sm" className="mt-2">
+                                            <Upload className="w-4 h-4 mr-1" />
+                                            Upload
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Back of License */}
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-gray-700">Back of License</Label>
+                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 min-h-[200px] flex items-center justify-center">
+                                      {license.document_url ? (
+                                        <img 
+                                          src={license.document_url} 
+                                          alt="Back of license" 
+                                          className="max-w-full max-h-[180px] object-contain rounded"
+                                        />
+                                      ) : (
+                                        <div className="text-center text-gray-500">
+                                          <FileText className="w-8 h-8 mx-auto mb-2" />
+                                          <p className="text-sm">No back image uploaded</p>
+                                          <Button variant="outline" size="sm" className="mt-2">
+                                            <Upload className="w-4 h-4 mr-1" />
+                                            Upload
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* License Details Grid */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                  <div>
+                                    <Label className="text-xs font-medium text-gray-500">Issuing Authority</Label>
+                                    <p className="text-sm font-medium">{license.issuing_authority || 'N/A'}</p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs font-medium text-gray-500">License Class</Label>
+                                    <p className="text-sm font-medium">{license.license_class || 'N/A'}</p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs font-medium text-gray-500">Issue Date</Label>
+                                    <p className="text-sm font-medium">{format(new Date(license.issue_date), 'MMM dd, yyyy')}</p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs font-medium text-gray-500">Expiry Date</Label>
+                                    <p className={`text-sm font-medium ${
+                                      isExpired ? 'text-red-600' : daysUntilExpiry <= 30 ? 'text-orange-600' : 'text-green-600'
+                                    }`}>
+                                      {format(expiryDate, 'MMM dd, yyyy')}
+                                      {!isExpired && ` (${daysUntilExpiry} days)`}
+                                      {isExpired && ` (Expired ${Math.abs(daysUntilExpiry)} days ago)`}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Endorsements and Restrictions */}
+                                {(license.endorsements && license.endorsements.length > 0) || 
+                                 (license.restrictions && license.restrictions.length > 0) ? (
+                                  <div className="space-y-3">
+                                    {license.endorsements && license.endorsements.length > 0 && (
+                                      <div>
+                                        <Label className="text-xs font-medium text-gray-500">Endorsements</Label>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                          {license.endorsements.map((endorsement) => (
+                                            <Badge key={endorsement} variant="secondary" className="text-xs">
+                                              {endorsement}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {license.restrictions && license.restrictions.length > 0 && (
+                                      <div>
+                                        <Label className="text-xs font-medium text-gray-500">Restrictions</Label>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                          {license.restrictions.map((restriction) => (
+                                            <Badge key={restriction} variant="destructive" className="text-xs">
+                                              {restriction}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : null}
+
+                                {/* Additional Expiry Information */}
+                                {(license.medical_certificate_expiry || license.background_check_expiry || 
+                                  license.drug_test_expiry || license.training_expiry) && (
+                                  <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <h5 className="text-sm font-medium text-gray-700 mb-3">Additional Certifications</h5>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                      {license.medical_certificate_expiry && (
+                                        <div>
+                                          <Label className="text-xs font-medium text-gray-500">Medical Certificate</Label>
+                                          <p className="text-xs">{format(new Date(license.medical_certificate_expiry), 'MMM dd, yyyy')}</p>
+                                        </div>
+                                      )}
+                                      {license.background_check_expiry && (
+                                        <div>
+                                          <Label className="text-xs font-medium text-gray-500">Background Check</Label>
+                                          <p className="text-xs">{format(new Date(license.background_check_expiry), 'MMM dd, yyyy')}</p>
+                                        </div>
+                                      )}
+                                      {license.drug_test_expiry && (
+                                        <div>
+                                          <Label className="text-xs font-medium text-gray-500">Drug Test</Label>
+                                          <p className="text-xs">{format(new Date(license.drug_test_expiry), 'MMM dd, yyyy')}</p>
+                                        </div>
+                                      )}
+                                      {license.training_expiry && (
+                                        <div>
+                                          <Label className="text-xs font-medium text-gray-500">Training</Label>
+                                          <p className="text-xs">{format(new Date(license.training_expiry), 'MMM dd, yyyy')}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Notes */}
+                                {license.notes && (
+                                  <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <Label className="text-xs font-medium text-gray-500">Notes</Label>
+                                    <p className="text-sm text-gray-600 mt-1">{license.notes}</p>
+                                  </div>
+                                )}
                               </CardContent>
                             </Card>
                           );

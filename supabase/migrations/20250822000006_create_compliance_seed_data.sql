@@ -1,107 +1,108 @@
 -- Insert sample vehicle inspections for testing
-INSERT INTO public.vehicle_inspections (
-  organization_id,
-  vehicle_id,
-  driver_id,
-  inspection_date,
-  inspection_type,
-  status,
-  inspector_name,
-  inspector_id,
-  inspection_notes,
-  defects_found,
-  compliance_score,
-  next_inspection_date,
-  inspection_location,
-  weather_conditions,
-  vehicle_mileage,
-  fuel_level,
-  oil_level,
-  tire_condition,
-  brake_condition,
-  lights_condition,
-  emergency_equipment,
-  created_by
-) 
-SELECT 
-  org.id,
-  v.id,
-  prof.id,
-  '2024-01-15',
-  'daily',
-  'passed',
-  'John Smith',
-  prof.id,
-  'All systems functioning properly. Vehicle ready for service.',
-  ARRAY['Minor scratch on passenger door'],
-  95,
-  '2024-01-16',
-  'Depot Yard A',
-  'Clear',
-  125000,
-  '3/4',
-  'Good',
-  'Good',
-  'Good',
-  'All working',
-  ARRAY['First Aid Kit', 'Fire Extinguisher', 'Warning Triangle'],
-  prof.id
-FROM public.organizations org
-CROSS JOIN (SELECT id FROM public.vehicles LIMIT 1) v
-CROSS JOIN (SELECT id FROM public.profiles WHERE role = 'driver' LIMIT 1) prof
-LIMIT 1;
+-- Temporarily comment out until vehicle_inspections table is created
+-- INSERT INTO public.vehicle_inspections (
+--   organization_id,
+--   vehicle_id,
+--   driver_id,
+--   inspection_date,
+--   inspection_type,
+--   status,
+--   inspector_name,
+--   inspector_id,
+--   inspection_notes,
+--   defects_found,
+--   compliance_score,
+--   next_inspection_date,
+--   inspection_location,
+--   weather_conditions,
+--   vehicle_mileage,
+--   fuel_level,
+--   oil_level,
+--   tire_condition,
+--   brake_condition,
+--   lights_condition,
+--   emergency_equipment,
+--   created_by
+-- ) 
+-- SELECT 
+--   org.id,
+--   v.id,
+--   prof.id,
+--   '2024-01-15',
+--   'daily',
+--   'passed',
+--   'John Smith',
+--   prof.id,
+--   'All systems functioning properly. Vehicle ready for service.',
+--   ARRAY['Minor scratch on passenger door'],
+--   95,
+--   '2024-01-16',
+--   'Depot Yard A',
+--   'Clear',
+--   125000,
+--   '3/4',
+--   'Good',
+--   'Good',
+--   'Good',
+--   'All working',
+--   ARRAY['First Aid Kit', 'Fire Extinguisher', 'Warning Triangle'],
+--   prof.id
+-- FROM public.organizations org
+-- CROSS JOIN (SELECT id FROM public.vehicles LIMIT 1) v
+-- CROSS JOIN (SELECT id FROM public.profiles WHERE role = 'driver' LIMIT 1) prof
+-- LIMIT 1;
 
-INSERT INTO public.vehicle_inspections (
-  organization_id,
-  vehicle_id,
-  driver_id,
-  inspection_date,
-  inspection_type,
-  status,
-  inspector_name,
-  inspector_id,
-  inspection_notes,
-  defects_found,
-  compliance_score,
-  next_inspection_date,
-  inspection_location,
-  weather_conditions,
-  vehicle_mileage,
-  fuel_level,
-  oil_level,
-  tire_condition,
-  brake_condition,
-  lights_condition,
-  emergency_equipment,
-  created_by
-) 
-SELECT 
-  org.id,
-  v.id,
-  prof.id,
-  '2024-01-14',
-  'weekly',
-  'passed',
-  'Sarah Johnson',
-  prof.id,
-  'Weekly inspection completed. Minor maintenance required.',
-  ARRAY['Low tire pressure on rear left', 'Wiper blade needs replacement'],
-  88,
-  '2024-01-21',
-  'Maintenance Bay 3',
-  'Rainy',
-  124500,
-  '1/2',
-  'Good',
-  'Good',
-  'Needs attention',
-  'All working',
-  ARRAY['First Aid Kit', 'Fire Extinguisher', 'Warning Triangle', 'Spare Tire'],
-  prof.id
-FROM public.organizations org
-CROSS JOIN (SELECT id FROM public.vehicles LIMIT 1) v
-CROSS JOIN (SELECT id FROM public.profiles WHERE role = 'driver' LIMIT 1) prof
-LIMIT 1;
+-- INSERT INTO public.vehicle_inspections (
+--   organization_id,
+--   vehicle_id,
+--   driver_id,
+--   inspection_date,
+--   inspection_type,
+--   status,
+--   inspector_name,
+--   inspector_id,
+--   inspection_notes,
+--   defects_found,
+--   compliance_score,
+--   next_inspection_date,
+--   inspection_location,
+--   weather_conditions,
+--   vehicle_mileage,
+--   fuel_level,
+--   oil_level,
+--   tire_condition,
+--   brake_condition,
+--   lights_condition,
+--   emergency_equipment,
+--   created_by
+-- ) 
+-- SELECT 
+--   org.id,
+--   v.id,
+--   prof.id,
+--   '2024-01-14',
+--   'weekly',
+--   'passed',
+--   'Sarah Johnson',
+--   prof.id,
+--   'Weekly inspection completed. Minor maintenance required.',
+--   ARRAY['Low tire pressure on rear left', 'Wiper blade needs replacement'],
+--   88,
+--   '2024-01-21',
+--   'Maintenance Bay 3',
+--   'Rainy',
+--   124500,
+--   '1/2',
+--   'Good',
+--   'Good',
+--   'Needs attention',
+--   'All working',
+--   ARRAY['First Aid Kit', 'Fire Extinguisher', 'Warning Triangle', 'Spare Tire'],
+--   prof.id
+-- FROM public.organizations org
+-- CROSS JOIN (SELECT id FROM public.vehicles LIMIT 1) v
+-- CROSS JOIN (SELECT id FROM public.profiles WHERE role = 'driver' LIMIT 1) prof
+-- LIMIT 1;
 
 -- Insert sample tachograph records for testing
 INSERT INTO public.tachograph_records (

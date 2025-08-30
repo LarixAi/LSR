@@ -91,8 +91,8 @@ CREATE INDEX IF NOT EXISTS idx_notification_messages_read_at ON public.notificat
 CREATE INDEX IF NOT EXISTS idx_notification_messages_priority ON public.notification_messages(priority);
 CREATE INDEX IF NOT EXISTS idx_notification_messages_category ON public.notification_messages(category);
 
-CREATE INDEX IF NOT EXISTS idx_notification_templates_organization_id ON public.notification_templates(organization_id);
-CREATE INDEX IF NOT EXISTS idx_notification_templates_is_default ON public.notification_templates(is_default);
+-- CREATE INDEX IF NOT EXISTS idx_notification_templates_organization_id ON public.notification_templates(organization_id);
+-- CREATE INDEX IF NOT EXISTS idx_notification_templates_is_default ON public.notification_templates(is_default);
 
 CREATE INDEX IF NOT EXISTS idx_notification_settings_user_id ON public.notification_settings(user_id);
 CREATE INDEX IF NOT EXISTS idx_notification_settings_organization_id ON public.notification_settings(organization_id);
@@ -142,33 +142,34 @@ CREATE POLICY "Users can mark notifications as read" ON public.notification_mess
   WITH CHECK (recipient_id = auth.uid());
 
 -- 8. Create RLS Policies for notification_templates
--- Users can view templates in their organization
-CREATE POLICY "Users can view organization templates" ON public.notification_templates
-  FOR SELECT USING (
-    organization_id IN (
-      SELECT organization_id FROM public.profiles WHERE id = auth.uid()
-    ) OR is_default = true
-  );
+-- Temporarily comment out these policies until the table structure is compatible
+-- -- Users can view templates in their organization
+-- CREATE POLICY "Users can view organization templates" ON public.notification_templates
+--   FOR SELECT USING (
+--     organization_id IN (
+--       SELECT organization_id FROM public.profiles WHERE id = auth.uid()
+--     ) OR is_default = true
+--   );
 
--- Admins can create templates
-CREATE POLICY "Admins can create templates" ON public.notification_templates
-  FOR INSERT WITH CHECK (
-    organization_id IN (
-      SELECT organization_id FROM public.profiles 
-      WHERE id = auth.uid() 
-      AND role IN ('admin', 'council')
-    )
-  );
+-- -- Admins can create templates
+-- CREATE POLICY "Admins can create templates" ON public.notification_templates
+--   FOR INSERT WITH CHECK (
+--     organization_id IN (
+--       SELECT organization_id FROM public.profiles 
+--       WHERE id = auth.uid() 
+--       AND role IN ('admin', 'council')
+--     )
+--   );
 
--- Admins can update templates
-CREATE POLICY "Admins can update templates" ON public.notification_templates
-  FOR UPDATE USING (
-    organization_id IN (
-      SELECT organization_id FROM public.profiles 
-      WHERE id = auth.uid() 
-      AND role IN ('admin', 'council')
-    )
-  );
+-- -- Admins can update templates
+-- CREATE POLICY "Admins can update templates" ON public.notification_templates
+--   FOR UPDATE USING (
+--     organization_id IN (
+--       SELECT organization_id FROM public.profiles 
+--       WHERE id = auth.uid() 
+--       AND role IN ('admin', 'council')
+--     )
+--   );
 
 -- 9. Create RLS Policies for notification_settings
 -- Users can view their own settings
@@ -200,15 +201,16 @@ CREATE POLICY "System can insert delivery logs" ON public.notification_delivery_
   FOR INSERT WITH CHECK (true);
 
 -- 11. Insert default notification templates
-INSERT INTO public.notification_templates (name, title, body, type, priority, category, is_default) VALUES
-  ('Safety Alert', 'Safety Alert - Immediate Action Required', 'Please review and acknowledge this safety alert. Your immediate attention is required.', 'warning', 'high', 'safety', true),
-  ('Schedule Change', 'Schedule Update', 'There has been a change to your schedule. Please review the updated details.', 'info', 'normal', 'schedule', true),
-  ('Maintenance Reminder', 'Vehicle Maintenance Due', 'Your vehicle is due for maintenance. Please schedule an appointment.', 'warning', 'normal', 'maintenance', true),
-  ('Emergency Notice', 'EMERGENCY - Immediate Response Required', 'This is an emergency notification requiring immediate attention.', 'error', 'emergency', 'emergency', true),
-  ('Route Delay', 'Route Delay Notification', 'Your route is experiencing delays. Please check for updates.', 'warning', 'normal', 'schedule', true),
-  ('Weather Alert', 'Weather Alert - Route Impact', 'Severe weather conditions may impact your route. Please exercise caution.', 'warning', 'high', 'safety', true),
-  ('Job Assignment', 'New Job Assignment', 'You have been assigned a new job. Please review the details.', 'info', 'normal', 'general', true),
-  ('Compliance Reminder', 'Compliance Document Due', 'You have compliance documents that need to be updated.', 'warning', 'normal', 'general', true);
+-- Temporarily comment out this INSERT until table structure is compatible
+-- INSERT INTO public.notification_templates (name, title, body, type, priority, category, is_default) VALUES
+--   ('Safety Alert', 'Safety Alert - Immediate Action Required', 'Please review and acknowledge this safety alert. Your immediate attention is required.', 'warning', 'high', 'safety', true),
+--   ('Schedule Change', 'Schedule Update', 'There has been a change to your schedule. Please review the updated details.', 'info', 'normal', 'schedule', true),
+--   ('Maintenance Reminder', 'Vehicle Maintenance Due', 'Your vehicle is due for maintenance. Please schedule an appointment.', 'warning', 'normal', 'maintenance', true),
+--   ('Emergency Notice', 'EMERGENCY - Immediate Response Required', 'This is an emergency notification requiring immediate attention.', 'error', 'emergency', 'emergency', true),
+--   ('Route Delay', 'Route Delay Notification', 'Your route is experiencing delays. Please check for updates.', 'warning', 'normal', 'schedule', true),
+--   ('Weather Alert', 'Weather Alert - Route Impact', 'Severe weather conditions may impact your route. Please exercise caution.', 'warning', 'high', 'safety', true),
+--   ('Job Assignment', 'New Job Assignment', 'You have been assigned a new job. Please review the details.', 'info', 'normal', 'general', true),
+--   ('Compliance Reminder', 'Compliance Document Due', 'You have compliance documents that need to be updated.', 'warning', 'normal', 'general', true);
 
 -- 12. Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
