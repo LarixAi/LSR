@@ -22,7 +22,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { useDrivers } from '@/hooks/useDrivers';
-import AddDriverForm from '@/components/drivers/AddDriverForm';
+
 import { PasswordChangeDialog } from '@/components/admin/PasswordChangeDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,7 +31,7 @@ import { format } from 'date-fns';
 export default function DriverManagement() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const [addDriverOpen, setAddDriverOpen] = useState(false);
+
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<{
     id: string;
@@ -91,9 +91,8 @@ export default function DriverManagement() {
     testConnection();
   }, [profile?.organization_id]);
 
-  const handleDriverAdded = () => {
-    setAddDriverOpen(false);
-    refetch();
+  const handleAddDriver = () => {
+    navigate('/add-driver');
   };
 
   const handlePasswordChange = (driver: {
@@ -235,7 +234,7 @@ export default function DriverManagement() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setAddDriverOpen(true)}>
+                            <Button onClick={handleAddDriver}>
             <Plus className="w-4 h-4 mr-2" />
             Add Driver
           </Button>
@@ -460,12 +459,7 @@ export default function DriverManagement() {
         </CardContent>
       </Card>
 
-      {/* Add Driver Dialog */}
-      <AddDriverForm
-        open={addDriverOpen}
-        onOpenChange={setAddDriverOpen}
-        onDriverAdded={handleDriverAdded}
-      />
+
 
       {/* Password Change Dialog */}
       <PasswordChangeDialog

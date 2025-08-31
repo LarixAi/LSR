@@ -9,6 +9,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { SecurityProvider } from "./contexts/SecurityContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { DashboardSettingsProvider } from "./contexts/DashboardSettingsContext";
+import { VehicleManagementSettingsProvider } from "./contexts/VehicleManagementSettingsContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -46,7 +48,7 @@ const StaffDirectory = lazy(() => import("./pages/StaffDirectory"));
 const ComplianceReportsPage = lazy(() => import("./pages/ComplianceReportsPage"));
 const VehicleInspections = lazy(() => import("./pages/VehicleInspections"));
 const CustomerAuth = lazy(() => import("./pages/CustomerAuth"));
-const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
+
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const DriverMobile = lazy(() => import("./pages/DriverMobile"));
 const RealTimeTracking = lazy(() => import("./pages/RealTimeTracking"));
@@ -65,6 +67,10 @@ const VehicleServicePage = lazy(() => import("./pages/VehicleServicePage"));
 const FuelManagement = lazy(() => import("./pages/FuelManagement"));
 const Mechanics = lazy(() => import("./pages/Mechanics"));
 const FleetOverview = lazy(() => import("./pages/FleetOverview"));
+const AddComplianceEntry = lazy(() => import("./pages/AddComplianceEntry"));
+const AddVehicle = lazy(() => import("./pages/AddVehicle"));
+const AddServiceEntry = lazy(() => import("./pages/AddServiceEntry"));
+const AddDriver = lazy(() => import("./pages/AddDriver"));
 
 
 // New pages - Mechanic specific
@@ -248,7 +254,9 @@ const App = () => {
                           <Route path="/" element={<Index />} />
                           <Route path="/dashboard" element={
                             <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
-                              <Dashboard />
+                              <DashboardSettingsProvider>
+                                <Dashboard />
+                              </DashboardSettingsProvider>
                             </ProtectedRoute>
                           } />
 
@@ -493,11 +501,26 @@ const App = () => {
                             <VehicleManagement />
                           </ProtectedRoute>
                         } />
-                        <Route path="/vehicle-management" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
-                            <VehicleManagement />
-                          </ProtectedRoute>
-                        } />
+                                <Route path="/vehicle-management" element={
+          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+            <VehicleManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/add-compliance-entry" element={
+          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+            <AddComplianceEntry />
+          </ProtectedRoute>
+        } />
+        <Route path="/add-vehicle" element={
+          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+            <AddVehicle />
+          </ProtectedRoute>
+        } />
+        <Route path="/add-service-entry" element={
+          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+            <AddServiceEntry />
+          </ProtectedRoute>
+        } />
                         <Route path="/vehicle-management-settings" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <VehicleManagementSettings />
@@ -615,6 +638,11 @@ const App = () => {
                             <DriverManagement />
                           </ProtectedRoute>
                         } />
+                        <Route path="/add-driver" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AddDriver />
+                          </ProtectedRoute>
+                        } />
                                 <Route path="/admin-driver-documents" element={
           <ProtectedRoute allowedRoles={['admin', 'council']}>
             <AdminDriverDocuments />
@@ -660,7 +688,11 @@ const App = () => {
                         {/* Settings */}
                         <Route path="/settings" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
-                            <Settings />
+                            <DashboardSettingsProvider>
+                              <VehicleManagementSettingsProvider>
+                                <Settings />
+                              </VehicleManagementSettingsProvider>
+                            </DashboardSettingsProvider>
                           </ProtectedRoute>
                         } />
 
@@ -717,7 +749,7 @@ const App = () => {
                         } />
 
                         {/* Customer Auth */}
-                        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+
                         <Route path="/driver-mobile" element={
                           <ProtectedRoute allowedRoles={['driver', 'admin', 'council']}>
                             <DriverMobile />

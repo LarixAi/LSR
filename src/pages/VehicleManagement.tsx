@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Car, Plus, Wrench, AlertTriangle, CheckCircle, Database, Settings, Shield, Scale, Clock, FileText, Users, TrendingUp } from 'lucide-react';
+import { Car, Plus, Wrench, AlertTriangle, CheckCircle, Database, Settings, Shield, Scale, Clock, FileText, Users, TrendingUp, ArrowLeft } from 'lucide-react';
 import { useVehicles, useDeleteVehicle, useVehicleStats, type Vehicle } from '@/hooks/useVehicles';
 import VehiclesList from '@/components/vehicles/VehiclesList';
 import EditVehicleDialog from '@/components/vehicles/EditVehicleDialog';
@@ -18,6 +18,7 @@ export default function VehicleManagement() {
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showBackButton, setShowBackButton] = useState(false);
   const navigate = useNavigate();
   
   // Debug logging
@@ -76,8 +77,29 @@ export default function VehicleManagement() {
   };
 
   const handleOpenSettings = () => {
-    navigate('/vehicle-settings');
+    navigate('/settings?tab=vehicle-management');
   };
+
+  const handleBackToSettings = () => {
+    navigate('/settings?tab=vehicle-management');
+  };
+
+  // Check if user came from settings page
+  useEffect(() => {
+    const referrer = document.referrer;
+    const currentUrl = window.location.href;
+    
+    // Show back button if user came from settings page
+    if (referrer && referrer.includes('/settings')) {
+      setShowBackButton(true);
+    }
+    
+    // Also check URL parameters for a flag
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('fromSettings') === 'true') {
+      setShowBackButton(true);
+    }
+  }, []);
 
   // Use stats from the hook
   const totalVehicles = vehicleStats.total;
@@ -134,6 +156,16 @@ export default function VehicleManagement() {
     <PageLayout
       title="Vehicle Management"
       description="Fleet management with ORV & BOR roadworthiness compliance"
+      backButton={showBackButton ? {
+        label: "Back to Settings",
+        onClick: handleBackToSettings,
+        icon: <ArrowLeft className="h-4 w-4" />
+      } : undefined}
+      settingsButton={{
+        label: "Settings",
+        onClick: handleOpenSettings,
+        icon: <Settings className="h-4 w-4 mr-2" />
+      }}
       actionButton={{
         label: "Add Vehicle",
         onClick: handleAddVehicle,

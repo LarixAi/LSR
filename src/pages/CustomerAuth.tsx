@@ -52,7 +52,7 @@ const CustomerAuth = () => {
         title: "Login Successful!",
         description: "Welcome back to your dashboard.",
       });
-      navigate('/customer-dashboard');
+      navigate('/');
       setIsLoading(false);
     }, 1500);
   };
@@ -77,7 +77,7 @@ const CustomerAuth = () => {
         title: "Account Created!",
         description: "Welcome! You can now start booking your transport.",
       });
-      navigate('/customer-dashboard');
+      navigate('/');
       setIsLoading(false);
     }, 2000);
   };

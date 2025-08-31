@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useVehicles, useDeleteVehicle } from '@/hooks/useVehicles';
 import EditVehicleDialog from './EditVehicleDialog';
 import { Plus, Edit, Trash2, Car, Shield, Scale, AlertTriangle, CheckCircle, Wrench, Clock } from 'lucide-react';
-import AddVehicleDialog from './AddVehicleDialog';
+
 import { toast } from 'sonner';
 
 const VehiclesList = () => {
@@ -16,7 +16,7 @@ const VehiclesList = () => {
   const deleteVehicle = useDeleteVehicle();
   const [editingVehicle, setEditingVehicle] = React.useState<any>(null);
   const [deletingVehicle, setDeletingVehicle] = React.useState<any>(null);
-  const [showAddDialog, setShowAddDialog] = React.useState(false);
+
 
   const handleDeleteVehicle = async (vehicle: any) => {
     try {
@@ -117,7 +117,7 @@ const VehiclesList = () => {
                 Get started by adding your first vehicle to the fleet.
               </p>
               <div className="mt-6">
-                <Button onClick={() => setShowAddDialog(true)}>
+                <Button onClick={() => navigate('/add-vehicle')}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Vehicle
                 </Button>
@@ -132,7 +132,7 @@ const VehiclesList = () => {
                     ORV: Off-Road Vehicle | BOR: Back On Road
                   </span>
                 </div>
-                <Button onClick={() => setShowAddDialog(true)}>
+                <Button onClick={() => navigate('/add-vehicle')}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Vehicle
                 </Button>
@@ -224,14 +224,7 @@ const VehiclesList = () => {
         </CardContent>
       </Card>
 
-      {/* Add Vehicle Dialog */}
-      <AddVehicleDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onSuccess={() => {
-          setShowAddDialog(false);
-        }}
-      />
+
 
       {/* Edit Vehicle Dialog */}
       <EditVehicleDialog

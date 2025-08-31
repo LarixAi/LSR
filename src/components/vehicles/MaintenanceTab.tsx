@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -125,6 +126,7 @@ interface MaintenanceData {
 }
 
 const MaintenanceTab: React.FC = () => {
+  const navigate = useNavigate();
   const [activeSubTab, setActiveSubTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [vehicleFilter, setVehicleFilter] = useState('all');
@@ -520,7 +522,7 @@ const MaintenanceTab: React.FC = () => {
           <Button variant="outline" size="sm">
             <Settings className="w-4 h-4" />
           </Button>
-          <Button>
+          <Button onClick={() => navigate('/add-service-entry')}>
             <Plus className="w-4 h-4 mr-2" />
             Add Service Entry
           </Button>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Settings, ArrowLeft } from 'lucide-react';
 
 interface SummaryCard {
   title: string;
@@ -29,7 +29,17 @@ interface PageLayoutProps {
   // Header
   title: string;
   description: string;
+  backButton?: {
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+  };
   actionButton?: {
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+  };
+  settingsButton?: {
     label: string;
     onClick: () => void;
     icon?: React.ReactNode;
@@ -71,7 +81,9 @@ interface PageLayoutProps {
 export default function PageLayout({
   title,
   description,
+  backButton,
   actionButton,
+  settingsButton,
   summaryCards,
   searchPlaceholder = "Search...",
   searchValue,
@@ -103,16 +115,32 @@ export default function PageLayout({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-          <p className="text-gray-600 mt-1">{description}</p>
+        <div className="flex items-center gap-4">
+          {backButton && (
+            <Button variant="outline" onClick={backButton.onClick} className="flex items-center gap-2">
+              {backButton.icon || <ArrowLeft className="w-4 h-4" />}
+              {backButton.label}
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+            <p className="text-gray-600 mt-1">{description}</p>
+          </div>
         </div>
-        {actionButton && (
-          <Button onClick={actionButton.onClick}>
-            {actionButton.icon || <Plus className="w-4 h-4 mr-2" />}
-            {actionButton.label}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {settingsButton && (
+            <Button variant="outline" onClick={settingsButton.onClick}>
+              {settingsButton.icon || <Settings className="w-4 h-4 mr-2" />}
+              {settingsButton.label}
+            </Button>
+          )}
+          {actionButton && (
+            <Button onClick={actionButton.onClick}>
+              {actionButton.icon || <Plus className="w-4 h-4 mr-2" />}
+              {actionButton.label}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Summary Cards */}

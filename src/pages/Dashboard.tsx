@@ -41,12 +41,13 @@ import {
   BarChart3,
   PieChart,
   LineChart,
-  MoreVertical
+  MoreVertical,
+  Clock
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import StandardPageLayout, { 
   MetricCard, 
   NavigationTab, 
@@ -172,6 +173,8 @@ export default function Dashboard() {
   const [showWidgetSelector, setShowWidgetSelector] = useState(false);
   const [showWidgetConfig, setShowWidgetConfig] = useState(false);
   const [configuringWidget, setConfiguringWidget] = useState<DashboardWidget | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const navigate = useNavigate();
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Fetch real data from database
@@ -836,7 +839,7 @@ const WidgetConfigurationForm: React.FC<WidgetConfigurationFormProps> = ({ widge
     },
     {
       label: "Dashboard Settings",
-      onClick: () => console.log("Dashboard settings clicked"),
+      onClick: () => navigate('/settings?tab=dashboard'),
       icon: <Settings className="w-4 h-4" />,
       variant: "outline"
     }
@@ -1326,7 +1329,8 @@ const WidgetConfigurationForm: React.FC<WidgetConfigurationFormProps> = ({ widge
       metricsCards={metricsCards}
       showMetricsDashboard={true}
       navigationTabs={navigationTabs}
-      activeTab="overview"
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
     >
       {/* Edit Mode Instructions */}
       {isEditMode && (
@@ -1419,43 +1423,375 @@ const WidgetConfigurationForm: React.FC<WidgetConfigurationFormProps> = ({ widge
         </div>
       )}
 
-      {/* Dashboard Widgets Grid */}
-      <div 
-        ref={gridRef}
-        className="grid grid-cols-4 gap-4 auto-rows-min min-h-[400px] bg-gray-50 p-4 rounded-lg mb-6"
-        style={{
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gridAutoRows: 'minmax(200px, auto)'
-        }}
-      >
-        {widgets.filter(w => w.isVisible).map((widget) => (
-          <WidgetRenderer
-            key={widget.id}
-            widget={widget}
-            onRemove={removeWidget}
-            onToggleVisibility={toggleWidgetVisibility}
-            onToggleLock={toggleWidgetLock}
-            onMove={moveWidget}
-            isEditMode={isEditMode}
-            gridRef={gridRef}
-          />
-        ))}
-      </div>
-
-      {/* Widget Management Instructions */}
-      {isEditMode && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-2 text-blue-800">
-            <Settings className="w-5 h-5" />
-            <span className="font-medium">Edit Mode Active</span>
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Dashboard Widgets Grid */}
+          <div 
+            ref={gridRef}
+            className="grid grid-cols-4 gap-4 auto-rows-min min-h-[400px] bg-gray-50 p-4 rounded-lg mb-6"
+            style={{
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridAutoRows: 'minmax(200px, auto)'
+            }}
+          >
+            {widgets.filter(w => w.isVisible).map((widget) => (
+              <WidgetRenderer
+                key={widget.id}
+                widget={widget}
+                onRemove={removeWidget}
+                onToggleVisibility={toggleWidgetVisibility}
+                onToggleLock={toggleWidgetLock}
+                onMove={moveWidget}
+                isEditMode={isEditMode}
+                gridRef={gridRef}
+              />
+            ))}
           </div>
-          <p className="text-blue-700 text-sm mt-1">
-            Use the 3-dot menu (⋮) on any widget to access all widget controls and dashboard management options.
-          </p>
+
+                {/* Widget Management Instructions */}
+          {isEditMode && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-2 text-blue-800">
+                <Settings className="w-5 h-5" />
+                <span className="font-medium">Edit Mode Active</span>
+              </div>
+              <p className="text-blue-700 text-sm mt-1">
+                Use the 3-dot menu (⋮) on any widget to access all widget controls and dashboard management options.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Recent Activity Tab */}
+      {activeTab === 'activity' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Activity className="w-5 h-5 text-primary" />
+                <span>Recent Activity</span>
+              </CardTitle>
+              <p className="text-muted-foreground">Latest updates and activities across your fleet</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Recent Incidents */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium">Recent Incidents</h3>
+                  {incidents.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                      <p>No recent incidents - Great job!</p>
+                    </div>
+                  ) : (
+                    incidents.slice(0, 10).map((incident, index) => (
+                      <div key={incident.id || index} className="flex items-center space-x-4 rounded-lg border p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex-shrink-0">
+                          <AlertTriangle className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">{incident.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {incident.description?.substring(0, 150)}...
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(incident.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge 
+                          variant={
+                            incident.severity === 'high' ? 'destructive' : 
+                            incident.severity === 'medium' ? 'default' : 'secondary'
+                          }
+                        >
+                          {incident.severity}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Recent Maintenance */}
+                <div className="space-y-3 pt-6 border-t">
+                  <h3 className="text-lg font-medium">Recent Maintenance</h3>
+                  {maintenanceRequests.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                      <p>No recent maintenance requests</p>
+                    </div>
+                  ) : (
+                    maintenanceRequests.slice(0, 10).map((request, index) => (
+                      <div key={request.id || index} className="flex items-center space-x-4 rounded-lg border p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex-shrink-0">
+                          <Wrench className="w-5 h-5 text-blue-500" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">{request.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {request.description?.substring(0, 150)}...
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(request.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge 
+                          variant={
+                            request.status === 'pending' ? 'default' : 
+                            request.status === 'in_progress' ? 'secondary' : 'outline'
+                          }
+                        >
+                          {request.status}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Recent Vehicle Updates */}
+                <div className="space-y-3 pt-6 border-t">
+                  <h3 className="text-lg font-medium">Vehicle Updates</h3>
+                  <div className="space-y-3">
+                    {vehicles.slice(0, 5).map((vehicle, index) => (
+                      <div key={vehicle.id || index} className="flex items-center space-x-4 rounded-lg border p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex-shrink-0">
+                          <Truck className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">{vehicle.license_plate || `Vehicle ${index + 1}`}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {vehicle.make} {vehicle.model} - {vehicle.year}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Status: {vehicle.status || 'Active'}
+                          </p>
+                        </div>
+                        <Badge variant="outline">
+                          {vehicle.status || 'Active'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Maintenance Tab */}
+      {activeTab === 'maintenance' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Wrench className="w-5 h-5 text-primary" />
+                <span>Maintenance Management</span>
+              </CardTitle>
+              <p className="text-muted-foreground">Track and manage vehicle maintenance requests</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Maintenance Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-800">Pending</span>
+                      </div>
+                      <p className="text-2xl font-bold text-blue-900">{pendingMaintenance}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-yellow-50 border-yellow-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <Wrench className="w-5 h-5 text-yellow-600" />
+                        <span className="text-sm font-medium text-yellow-800">In Progress</span>
+                      </div>
+                      <p className="text-2xl font-bold text-yellow-900">
+                        {maintenanceRequests.filter(r => r.status === 'in_progress').length}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-green-50 border-green-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">Completed</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-900">
+                        {maintenanceRequests.filter(r => r.status === 'completed').length}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Maintenance Requests Table */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Maintenance Requests</h3>
+                    <Button variant="outline" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Request
+                    </Button>
+                  </div>
+                  
+                  {maintenanceRequests.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                      <p>No maintenance requests found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {maintenanceRequests.map((request, index) => (
+                        <div key={request.id || index} className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0">
+                              <Wrench className="w-5 h-5 text-blue-500" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium leading-none">{request.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {request.description?.substring(0, 100)}...
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Created: {new Date(request.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge 
+                              variant={
+                                request.status === 'pending' ? 'default' : 
+                                request.status === 'in_progress' ? 'secondary' : 'outline'
+                              }
+                            >
+                              {request.status}
+                            </Badge>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Incidents Tab */}
+      {activeTab === 'incidents' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-primary" />
+                <span>Incident Management</span>
+              </CardTitle>
+              <p className="text-muted-foreground">Track and manage fleet incidents and safety reports</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Incident Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="bg-red-50 border-red-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <AlertTriangle className="w-5 h-5 text-red-600" />
+                        <span className="text-sm font-medium text-red-800">Total Incidents</span>
+                      </div>
+                      <p className="text-2xl font-bold text-red-900">{recentIncidents}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-orange-50 border-orange-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-800">Open Cases</span>
+                      </div>
+                      <p className="text-2xl font-bold text-orange-900">
+                        {incidents.filter(i => i.status === 'open').length}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-green-50 border-green-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">Resolved</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-900">
+                        {incidents.filter(i => i.status === 'resolved').length}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Incidents Table */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Recent Incidents</h3>
+                    <Button variant="outline" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Report Incident
+                    </Button>
+                  </div>
+                  
+                  {incidents.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                      <p>No incidents reported</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {incidents.map((incident, index) => (
+                        <div key={incident.id || index} className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0">
+                              <AlertTriangle className="w-5 h-5 text-orange-500" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium leading-none">{incident.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {incident.description?.substring(0, 100)}...
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Reported: {new Date(incident.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge 
+                              variant={
+                                incident.severity === 'high' ? 'destructive' : 
+                                incident.severity === 'medium' ? 'default' : 'secondary'
+                              }
+                            >
+                              {incident.severity}
+                            </Badge>
+                            <Badge variant="outline">
+                              {incident.status || 'Open'}
+                            </Badge>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 sm:gap-6">
         {/* Recent Activity */}
         <Card className="lg:col-span-4 border-primary/10 hover:border-primary/20 transition-all">

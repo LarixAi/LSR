@@ -10,7 +10,10 @@ import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useDashboardSettings } from '@/contexts/DashboardSettingsContext';
 import AvatarUpload from '@/components/AvatarUpload';
+import { DashboardSettingsModal } from '@/components/dashboard/DashboardSettingsModal';
+import VehicleManagementSettings from '@/components/settings/VehicleManagementSettings';
 import { toast } from 'sonner';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -43,10 +46,15 @@ import {
   User as UserIcon,
   Palette as PaletteIcon,
   Monitor as MonitorIcon,
-
+  BarChart3,
+  Layout,
+  Square,
+  Cog,
+  ArrowLeft,
+  Car,
 } from 'lucide-react';
 
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 
 interface ThemeColor {
   name: string;
@@ -70,10 +78,16 @@ const Settings = () => {
   const { user, profile } = useAuth();
   const { applyColorTheme } = useThemeColors();
   const { settings, updateSetting, resetSettings, isLoading } = useSettings();
+  const { settings: dashboardSettings, resetToDefaults: resetDashboardSettings } = useDashboardSettings();
+  const navigate = useNavigate();
   
   // Local state for UI interactions
   const [selectedColor, setSelectedColor] = useState(settings.themeColor);
   const [isCustomColor, setIsCustomColor] = useState(settings.themeColor === 'custom');
+  const [showDashboardSettingsModal, setShowDashboardSettingsModal] = useState(false);
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'appearance';
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   const isDark = theme === 'dark';
 
@@ -95,6 +109,11 @@ const Settings = () => {
       }
     }
   }, [theme, updateSetting]); // Re-run when theme changes
+
+  // Update activeTab when URL changes
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
 
   const applyColorThemeLocal = (hue: string) => {
     applyColorTheme(hue, theme);
@@ -180,9 +199,22 @@ const Settings = () => {
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground mt-1">Customize your app experience</p>
+        <div className="flex items-center gap-4">
+          {defaultTab === 'dashboard' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+            <p className="text-muted-foreground mt-1">Customize your app experience</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -193,8 +225,8 @@ const Settings = () => {
       </div>
 
       {/* Settings Tabs */}
-      <Tabs defaultValue="appearance" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="appearance" className="flex items-center gap-2">
             <Palette className="w-4 h-4" />
             Appearance
@@ -202,6 +234,14 @@ const Settings = () => {
           <TabsTrigger value="account" className="flex items-center gap-2">
             <User className="w-4 h-4" />
             Account
+          </TabsTrigger>
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="vehicle-management" className="flex items-center gap-2">
+            <Car className="w-4 h-4" />
+            Vehicle Management
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="w-4 h-4" />
@@ -528,6 +568,193 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
+        {/* Dashboard Tab */}
+        <TabsContent value="dashboard" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Dashboard Settings
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Customize your admin dashboard layout, widgets, and display preferences
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Quick Settings */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Quick Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-foreground">Auto Layout</div>
+                        <div className="text-sm text-muted-foreground">Automatically arrange widgets</div>
+                      </div>
+                      <Switch 
+                        checked={dashboardSettings.defaultLayout.autoLayout} 
+                        onCheckedChange={(enabled) => {
+                          // This would be handled by the dashboard settings context
+                          console.log('Auto layout:', enabled);
+                        }}
+                        disabled
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-foreground">Show Animations</div>
+                        <div className="text-sm text-muted-foreground">Enable smooth transitions</div>
+                      </div>
+                      <Switch 
+                        checked={dashboardSettings.animations} 
+                        onCheckedChange={(enabled) => {
+                          console.log('Animations:', enabled);
+                        }}
+                        disabled
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-foreground">Lazy Loading</div>
+                        <div className="text-sm text-muted-foreground">Load widgets on demand</div>
+                      </div>
+                      <Switch 
+                        checked={dashboardSettings.lazyLoading} 
+                        onCheckedChange={(enabled) => {
+                          console.log('Lazy loading:', enabled);
+                        }}
+                        disabled
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-foreground">Cache Data</div>
+                        <div className="text-sm text-muted-foreground">Store data locally for faster access</div>
+                      </div>
+                      <Switch 
+                        checked={dashboardSettings.cacheSettings.enabled} 
+                        onCheckedChange={(enabled) => {
+                          console.log('Cache:', enabled);
+                        }}
+                        disabled
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Grid Configuration */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Grid Configuration</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gridColumns">Grid Columns</Label>
+                    <select 
+                      id="gridColumns"
+                      className="w-full p-2 border rounded-md"
+                      value={dashboardSettings.gridConfig.columns}
+                      onChange={(e) => {
+                        console.log('Grid columns:', e.target.value);
+                      }}
+                      disabled
+                    >
+                      <option value="12">12 Columns</option>
+                      <option value="16">16 Columns</option>
+                      <option value="24">24 Columns</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gridSpacing">Grid Spacing</Label>
+                    <select 
+                      id="gridSpacing"
+                      className="w-full p-2 border rounded-md"
+                      value={dashboardSettings.defaultLayout.spacing}
+                      onChange={(e) => {
+                        console.log('Grid spacing:', e.target.value);
+                      }}
+                      disabled
+                    >
+                      <option value="compact">Compact</option>
+                      <option value="normal">Normal</option>
+                      <option value="spacious">Spacious</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="refreshInterval">Refresh Interval</Label>
+                    <select 
+                      id="refreshInterval"
+                      className="w-full p-2 border rounded-md"
+                      value="300"
+                      onChange={(e) => {
+                        console.log('Refresh interval:', e.target.value);
+                      }}
+                      disabled
+                    >
+                      <option value="30">30 seconds</option>
+                      <option value="60">1 minute</option>
+                      <option value="300">5 minutes</option>
+                      <option value="900">15 minutes</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Advanced Dashboard Settings */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-foreground">Advanced Dashboard Settings</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Access comprehensive dashboard configuration options
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowDashboardSettingsModal(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Cog className="w-4 h-4" />
+                    Open Dashboard Settings
+                  </Button>
+                </div>
+              </div>
+
+              {/* Dashboard Templates */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Dashboard Templates</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Layout className="w-4 h-4" />
+                      <span className="font-medium">Fleet Manager</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Optimized for fleet operations</p>
+                  </div>
+                  <div className="p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BarChart3 className="w-4 h-4" />
+                      <span className="font-medium">Operations Manager</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Focused on operational metrics</p>
+                  </div>
+                  <div className="p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Square className="w-4 h-4" />
+                      <span className="font-medium">Financial Manager</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Emphasizes financial data</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
           <Card>
@@ -583,6 +810,11 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Vehicle Management Tab */}
+        <TabsContent value="vehicle-management" className="space-y-6">
+          {activeTab === 'vehicle-management' && <VehicleManagementSettings />}
         </TabsContent>
 
         {/* Advanced Tab */}
@@ -651,6 +883,14 @@ const Settings = () => {
 
 
       </Tabs>
+
+      {/* Dashboard Settings Modal */}
+      {showDashboardSettingsModal && (
+        <DashboardSettingsModal
+          isOpen={showDashboardSettingsModal}
+          onClose={() => setShowDashboardSettingsModal(false)}
+        />
+      )}
     </div>
   );
 };
