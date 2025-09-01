@@ -289,6 +289,75 @@ export const useReviewDriverDocument = () => {
   });
 };
 
+// Create standard agreement document requests for a driver (admin)
+export const useCreateStandardAgreementDocs = () => {
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ driver_id, clearExisting }: { driver_id: string; clearExisting?: boolean }) => {
+      if (!profile?.organization_id || !profile?.id) {
+        throw new Error('Organization and user information required');
+      }
+
+      // Optionally mark existing docs as archived
+      if (clearExisting) {
+        const { error: clearErr } = await supabase
+          .from('driver_documents')
+          .update({ status: 'archived' as any })
+          .eq('organization_id', profile.organization_id)
+          .eq('driver_id', driver_id);
+        if (clearErr) throw clearErr;
+      }
+
+      const now = new Date().toISOString();
+      const due = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+
+      const rows = [
+        {
+          name: 'Driver Employment Agreement',
+          category: 'employment',
+          description: 'Standard driver employment contract to sign',
+          driver_id,
+          organization_id: profile.organization_id,
+          requested_by: profile.id,
+          requested_at: now,
+          due_date: due,
+          priority: 'high',
+          status: 'required' as const,
+          is_urgent: true,
+        },
+        {
+          name: 'Staff Employment Agreement',
+          category: 'employment',
+          description: 'Standard staff employment contract to sign',
+          driver_id,
+          organization_id: profile.organization_id,
+          requested_by: profile.id,
+          requested_at: now,
+          due_date: due,
+          priority: 'medium',
+          status: 'required' as const,
+          is_urgent: false,
+        },
+      ];
+
+      const { error } = await supabase.from('driver_documents').insert(rows);
+      if (error) throw error;
+      return { ok: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['driver-documents'] });
+      queryClient.invalidateQueries({ queryKey: ['all-driver-documents'] });
+      toast.success('Standard agreements added to driver documents');
+    },
+    onError: (error: any) => {
+      console.error('Error creating standard agreements:', error);
+      toast.error('Failed to add agreements: ' + error.message);
+    },
+  });
+};
+
 // Hook to fetch document notifications
 export const useDocumentNotifications = () => {
   const { profile } = useAuth();

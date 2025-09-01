@@ -21,7 +21,8 @@ import {
   Shield,
   MapPin
 } from 'lucide-react';
-import { useDrivers } from '@/hooks/useDrivers';
+import { useDrivers, useUpdateDriver, useDeleteDriver } from '@/hooks/useDrivers';
+import { toast } from 'sonner';
 
 import { PasswordChangeDialog } from '@/components/admin/PasswordChangeDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,6 +46,14 @@ export default function DriverManagement() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const { data: drivers = [], isLoading, error, refetch } = useDrivers();
+
+  // Sorting and pagination
+  const [sortAsc, setSortAsc] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const { mutateAsync: updateDriver } = useUpdateDriver();
+  const { mutateAsync: deactivateDriver } = useDeleteDriver();
 
   // Test Supabase connection
   const [connectionStatus, setConnectionStatus] = React.useState<'testing' | 'connected' | 'error'>('testing');
@@ -125,8 +134,8 @@ export default function DriverManagement() {
   // Filter drivers based on search and filters
   const filteredDrivers = drivers.filter(driver => {
     const matchesSearch = searchTerm === '' || 
-      `${driver.first_name} ${driver.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      driver.email.toLowerCase().includes(searchTerm.toLowerCase());
+      `${driver.first_name || ''} ${driver.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (driver.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'active' && driver.is_active) ||
@@ -136,6 +145,20 @@ export default function DriverManagement() {
     
     return matchesSearch && matchesStatus && matchesType;
   });
+
+  // Sort by name
+  const sortedDrivers = [...filteredDrivers].sort((a, b) => {
+    const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim().toLowerCase();
+    const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim().toLowerCase();
+    if (nameA < nameB) return sortAsc ? -1 : 1;
+    if (nameA > nameB) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(sortedDrivers.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedDrivers = sortedDrivers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -234,7 +257,7 @@ export default function DriverManagement() {
           </div>
         </div>
         <div className="flex gap-2">
-                            <Button onClick={handleAddDriver}>
+          <Button onClick={handleAddDriver}>
             <Plus className="w-4 h-4 mr-2" />
             Add Driver
           </Button>
@@ -344,10 +367,10 @@ export default function DriverManagement() {
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
-                  <TableHead className="cursor-pointer">
-                    <div className="flex items-center gap-1">
+                  <TableHead className="cursor-pointer" onClick={() => setSortAsc(!sortAsc)}>
+                    <div className="flex items-center gap-1 select-none">
                       Name
-                      <span className="text-gray-400">▲</span>
+                      <span className="text-gray-400">{sortAsc ? '▲' : '▼'}</span>
                     </div>
                   </TableHead>
                   <TableHead>Email</TableHead>
@@ -362,7 +385,7 @@ export default function DriverManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDrivers.map((driver) => (
+                {paginatedDrivers.map((driver) => (
                   <TableRow 
                     key={driver.id}
                     className="cursor-pointer hover:bg-gray-50 transition-colors"
@@ -394,9 +417,25 @@ export default function DriverManagement() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${getStatusColor(driver.is_active)}`}></div>
-                        <span className={driver.is_active ? 'underline cursor-pointer' : ''}>
+                        <button
+                          className={`text-left ${driver.is_active ? 'underline hover:text-blue-600' : 'text-gray-600 hover:text-foreground'} cursor-pointer`}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              if (driver.is_active) {
+                                await deactivateDriver(driver.id);
+                                toast.success('Driver deactivated');
+                              } else {
+                                await updateDriver({ id: driver.id, updates: { is_active: true } });
+                                toast.success('Driver reactivated');
+                              }
+                            } catch (err) {
+                              toast.error('Failed to update status');
+                            }
+                          }}
+                        >
                           {getStatusText(driver.is_active)}
-                        </span>
+                        </button>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -450,9 +489,15 @@ export default function DriverManagement() {
           </div>
           {filteredDrivers.length > 0 && (
             <div className="p-4 border-t">
-              <div className="flex justify-between items-center text-sm text-gray-600">
-                <span>1-{filteredDrivers.length} of {filteredDrivers.length}</span>
-                <span>Showing {filteredDrivers.length} results</span>
+              <div className="flex flex-col md:flex-row gap-3 md:justify-between md:items-center text-sm text-gray-600">
+                <span>
+                  Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredDrivers.length)} of {filteredDrivers.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</Button>
+                  <span>Page {currentPage} / {totalPages}</span>
+                  <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</Button>
+                </div>
               </div>
             </div>
           )}

@@ -107,6 +107,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
           autoSave: appSettings.autoSave,
           debugMode: appSettings.debugMode,
           analyticsEnabled: appSettings.analyticsEnabled,
+          lastSaved: appSettings.lastSaved || Date.now(),
         };
         
         setSettings(mergedSettings);
@@ -219,7 +220,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   }, [settings, isLoading]);
 
   const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings(prev => ({ ...prev, [key]: value, lastSaved: Date.now() }));
   };
 
   const resetSettings = () => {

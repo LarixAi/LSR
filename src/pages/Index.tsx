@@ -63,22 +63,13 @@ const Index = () => {
 
   const currentColor = colorOptions.find(option => option.value === selectedColor) || colorOptions[0];
 
-  // Redirect authenticated users to dashboard
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Show mobile splash screen on mobile devices
-  if (isMobile) {
-    return <MobileSplashScreen />;
-  }
-
+  // Keep all hooks before any conditional returns to maintain consistent hook order
   useEffect(() => {
     // Reveal on scroll animation
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
-          e.target.classList.add('show');
+          (e.target as HTMLElement).classList.add('show');
           io.unobserve(e.target);
         }
       });
@@ -90,7 +81,7 @@ const Index = () => {
     const heroElements = document.querySelectorAll('.hero-animate');
     heroElements.forEach((el, index) => {
       setTimeout(() => {
-        el.classList.add('animate-in');
+        (el as HTMLElement).classList.add('animate-in');
       }, index * 200);
     });
     
@@ -98,14 +89,24 @@ const Index = () => {
     const dashboard = document.querySelector('.dashboard-float');
     if (dashboard) {
       setTimeout(() => {
-        dashboard.classList.add('float-in');
+        (dashboard as HTMLElement).classList.add('float-in');
       }, 1000);
     }
     
     return () => {
       document.querySelectorAll('.reveal').forEach(el => io.unobserve(el));
     };
-  }, []);
+  }, [customHue, selectedColor]);
+
+  // Redirect authenticated users to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Show mobile splash screen on mobile devices
+  if (isMobile) {
+    return <MobileSplashScreen />;
+  }
 
   return (
     <>
@@ -398,28 +399,43 @@ const Index = () => {
                         </div>
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                           <h3 className="font-semibold text-gray-900 mb-4 text-lg">Vehicle Status</h3>
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <span className="text-base text-gray-600">Active</span>
-                              <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 rounded-full" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 50%)`}}></div>
-                                <span className="text-base font-medium">24 vehicles</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-base text-gray-600">In Maintenance</span>
-                              <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 rounded-full" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 40%)`}}></div>
-                                <span className="text-base font-medium">3 vehicles</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-base text-gray-600">Out of Service</span>
-                              <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 rounded-full" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 30%)`}}></div>
-                                <span className="text-base font-medium">1 vehicle</span>
-                              </div>
-                            </div>
+                          <div className="h-40 bg-gray-100 rounded-lg grid grid-cols-3 gap-3 p-4">
+                            <div className="h-full rounded-lg" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 95%)`}}></div>
+                            <div className="h-full rounded-lg" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 85%)`}}></div>
+                            <div className="h-full rounded-lg" style={{backgroundColor: `hsl(${currentColor.hue}, 70%, 75%)`}}></div>
+                          </div>
+                          <div className="flex justify-between text-sm text-gray-500 mt-3">
+                            <span>In Service</span>
+                            <span>Maintenance</span>
+                            <span>Out of Service</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Map/Routes Row */}
+                      <div className="grid grid-cols-2 gap-8 mt-8">
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                          <h3 className="font-semibold text-gray-900 mb-4 text-lg">Live Routes</h3>
+                          <div className="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <MapPin className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <div className="flex justify-between text-sm text-gray-500 mt-3">
+                            <span>Active</span>
+                            <span>Planned</span>
+                            <span>Completed</span>
+                          </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                          <h3 className="font-semibold text-gray-900 mb-4 text-lg">System Load</h3>
+                          <div className="h-48 bg-gray-100 rounded-lg grid grid-cols-6 gap-2 p-4">
+                            {Array.from({ length: 18 }).map((_, i) => (
+                              <div key={i} className="rounded" style={{height: `${30 + (i % 6) * 10}%`, backgroundColor: `hsl(${currentColor.hue}, 70%, ${70 - (i % 6) * 5}%)`}}></div>
+                            ))}
+                          </div>
+                          <div className="flex justify-between text-sm text-gray-500 mt-3">
+                            <span>CPU</span>
+                            <span>Memory</span>
+                            <span>Network</span>
                           </div>
                         </div>
                       </div>

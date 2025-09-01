@@ -132,22 +132,7 @@
     color-scheme: light; 
   }
   
-  /* Font size settings support */
-  html[style*="font-size"] {
-    font-size: var(--font-size-medium) !important;
-  }
-  
-  html[style*="font-size: 14px"] {
-    font-size: var(--font-size-small) !important;
-  }
-  
-  html[style*="font-size: 16px"] {
-    font-size: var(--font-size-medium) !important;
-  }
-  
-  html[style*="font-size: 18px"] {
-    font-size: var(--font-size-large) !important;
-  }
+  /* Font size settings support - allow inline root font-size to take effect */
   
   /* Custom slider styles */
   .slider {

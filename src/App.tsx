@@ -34,6 +34,7 @@ const TimeManagement = lazy(() => import("./pages/TimeManagementRefactored")); /
 const LicenseManagement = lazy(() => import("./pages/LicenseManagement"));
 const DriverManagement = lazy(() => import("./pages/DriverManagement"));
 const DriverDetail = lazy(() => import("./pages/DriverDetail"));
+const DriverDocumentPreview = lazy(() => import("./pages/DriverDocumentPreview"));
 const Documents = lazy(() => import("./pages/DocumentsEnhanced")); // Use enhanced version
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const IncidentReports = lazy(() => import("./pages/IncidentReports"));
@@ -87,6 +88,8 @@ const AdvancedNotifications = lazy(() => import("./pages/AdvancedNotifications")
 const MobileNotificationSystem = lazy(() => import("./components/notifications/MobileNotificationSystem"));
 const MobileDriverDocuments = lazy(() => import("./components/mobile/MobileDriverDocuments"));
 const AdminDriverDocuments = lazy(() => import("./pages/AdminDriverDocuments"));
+const TrainingAssignmentDetail = lazy(() => import("./pages/TrainingAssignmentDetail"));
+const TrainingModuleDetail = lazy(() => import("./pages/TrainingModuleDetail"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const DataSubjectRights = lazy(() => import("./components/DataSubjectRights"));
 const DPIA = lazy(() => import("./components/DPIA"));
@@ -312,6 +315,21 @@ const App = () => {
                         <Route path="/admin/tire-management" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <TireManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/training" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AdminTrainingManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/training/assignment/:id" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <TrainingAssignmentDetail />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/training/module/:id" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <TrainingModuleDetail />
                           </ProtectedRoute>
                         } />
                         <Route path="/admin/infringement-management" element={
@@ -631,6 +649,11 @@ const App = () => {
                         <Route path="/drivers/:driverId" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <DriverDetail />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/drivers/:driverId/documents/preview" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <DriverDocumentPreview />
                           </ProtectedRoute>
                         } />
                         <Route path="/driver-management" element={

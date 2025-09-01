@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Home, Save, Loader2, User, Briefcase, Car, Heart, Shield, MapPin, CreditCard, AlertCircle, GraduationCap, FileText, DollarSign, Calendar, Phone, Clock, CheckCircle, XCircle, Eye, CalendarDays, Truck, Flame, HeartHandshake, FileCheck, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, Home, Save, Loader2, User, Briefcase, Car, Heart, Shield, MapPin, CreditCard, AlertCircle, GraduationCap, FileText, DollarSign, Calendar, Phone, Clock, CheckCircle, XCircle, Eye, CalendarDays, Truck, Flame, HeartHandshake, FileCheck, ClipboardCheck, Link as LinkIcon } from 'lucide-react';
+import OnboardingComplianceChecklist, { OnboardingComplianceState } from '@/components/drivers/OnboardingComplianceChecklist';
 
 const AddDriver = () => {
   const navigate = useNavigate();
@@ -139,6 +140,23 @@ const AddDriver = () => {
     manual_handling_training_verification_date: '',
     all_documents_verified: false,
     verification_notes: '',
+  });
+
+  const [compliance, setCompliance] = useState<OnboardingComplianceState>({
+    jurisdiction: 'UK',
+    contract_issued: false,
+    right_to_work_verified: false,
+    payroll_registered: false,
+    tax_forms_collected: false,
+    new_hire_reported: false,
+    workers_comp_coverage: false,
+    safety_induction_done: false,
+    eeo_policy_ack: false,
+    privacy_notice_ack: false,
+    required_posters_displayed: false,
+    benefits_enrolled_required: false,
+    pension_auto_enrolment: false,
+    super_choice_provided: false,
   });
 
   const { toast } = useToast();
@@ -319,7 +337,10 @@ const AddDriver = () => {
       return;
     }
 
-    await createDriverMutation.mutateAsync(formData);
+    await createDriverMutation.mutateAsync({
+      ...formData,
+      onboarding_compliance: compliance,
+    });
   };
 
   const handleBack = () => {
@@ -1475,6 +1496,15 @@ const AddDriver = () => {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-3 rounded border bg-muted/30">
+                <div className="text-sm text-muted-foreground">
+                  Use our hiring compliance checklist based on the guide.
+                </div>
+                <a href="/docs/EMPLOYING_STAFF_REQUIREMENTS.md" target="_blank" rel="noreferrer" className="inline-flex items-center text-blue-600 hover:underline">
+                  <LinkIcon className="w-4 h-4 mr-1" /> Hiring requirements guide
+                </a>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex items-center space-x-2">
                   <input
@@ -1533,6 +1563,9 @@ const AddDriver = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Employment Legal Compliance Checklist */}
+          <OnboardingComplianceChecklist value={compliance} onChange={(u)=>setCompliance(prev=>({ ...prev, ...u }))} />
 
           {/* Right to Work & Driver License Checklist */}
           <Card id="compliance-checklist" className="border-2 border-blue-500 bg-blue-50">

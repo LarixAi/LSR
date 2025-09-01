@@ -173,6 +173,7 @@ const TransportSidebar = () => {
         { title: 'Inspections', url: '/inspections', icon: ClipboardCheck },
         { title: 'Vehicle Check Questions', url: '/vehicle-check-questions', icon: CheckSquare },
         { title: 'Licenses', url: '/licenses', icon: FileText },
+        { title: 'Training Courses', url: '/admin/training', icon: BookOpen },
       
         { title: 'Incident Reports', url: '/incident-reports', icon: AlertTriangle },
       ]

@@ -16,6 +16,8 @@ import { DashboardSettingsModal } from '@/components/dashboard/DashboardSettings
 import VehicleManagementSettings from '@/components/settings/VehicleManagementSettings';
 import { toast } from 'sonner';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { Slider } from '@/components/ui/slider';
+import { syncWithServer } from '@/utils/localStorage';
 
 import {
   Palette,
@@ -90,6 +92,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   const isDark = theme === 'dark';
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load saved theme color on component mount
   useEffect(() => {
@@ -170,7 +173,9 @@ const Settings = () => {
   };
 
   const handleFontSizeChange = (size: 'small' | 'medium' | 'large') => {
+    // Apply preset and clear custom override so preset takes effect
     updateSetting('fontSize', size);
+    updateSetting('customFontSize', 16);
     toast.success(`Font size changed to ${size}`);
   };
 
@@ -217,9 +222,24 @@ const Settings = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            disabled={isSaving}
+            onClick={async () => {
+              try {
+                setIsSaving(true);
+                updateSetting('lastSaved', Date.now());
+                await syncWithServer();
+                toast.success('Settings saved');
+              } catch (e) {
+                toast.error('Failed to save settings');
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+          >
             <Save className="w-4 h-4 mr-2" />
-            Save Changes
+            {isSaving ? 'Saving…' : 'Save Changes'}
           </Button>
         </div>
       </div>
@@ -409,6 +429,32 @@ const Settings = () => {
                   </div>
                 </div>
 
+                {/* Custom Font Size Slider */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Custom Font Size</div>
+                      <div className="text-sm text-muted-foreground">Fine-tune the font size (px)</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground min-w-[60px] text-right">
+                      {settings.customFontSize}px
+                    </div>
+                  </div>
+                  <div className="px-1">
+                    <Slider
+                      min={12}
+                      max={22}
+                      step={1}
+                      value={[settings.customFontSize]}
+                      onValueChange={(val) => updateSetting('customFontSize', Number(val[0]))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Tip: Setting a custom value overrides the preset until reset.
+                  </div>
+                </div>
+
                 {/* Reduced Motion */}
                 <div className="flex items-center justify-between">
                   <div>
@@ -457,44 +503,7 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          {/* Theme Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Theme Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Sample Components */}
-                <div className="space-y-4">
-                  <h3 className="font-medium text-foreground">Sample Components</h3>
-                  <div className="space-y-3">
-                    <Button>Primary Button</Button>
-                    <Button variant="outline">Outline Button</Button>
-                    <Button variant="secondary">Secondary Button</Button>
-                    <div className="flex gap-2">
-                      <Badge>Default</Badge>
-                      <Badge variant="secondary">Secondary</Badge>
-                      <Badge variant="destructive">Destructive</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sample Text */}
-                <div className="space-y-4">
-                  <h3 className="font-medium text-foreground">Typography</h3>
-                  <div className="space-y-2">
-                    <h1 className="text-2xl font-bold text-foreground">Heading 1</h1>
-                    <h2 className="text-xl font-semibold text-foreground">Heading 2</h2>
-                    <p className="text-foreground">This is regular paragraph text.</p>
-                    <p className="text-muted-foreground">This is muted text for secondary information.</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Theme preview removed as requested */}
         </TabsContent>
 
         {/* Account Tab */}

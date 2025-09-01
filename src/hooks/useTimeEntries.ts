@@ -83,10 +83,11 @@ export const useTodayTimeEntry = () => {
         .select('*')
         .eq('driver_id', profile.id)
         .eq('entry_date', today)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (error) {
+        console.warn('time_entries not available or RLS prevented access (today entry)', error);
+        return null;
       }
 
       return data;
@@ -120,7 +121,10 @@ export const useTimeEntries = (startDate?: string, endDate?: string) => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.warn('time_entries not available or RLS prevented access (list)', error);
+        return [] as any[];
+      }
       return data || [];
     },
     enabled: !!profile?.id,
@@ -147,7 +151,7 @@ export const useClockIn = () => {
         .select('id')
         .eq('driver_id', profile.id)
         .eq('entry_date', today)
-        .single();
+        .maybeSingle();
 
       if (existingEntry) {
         throw new Error('Already clocked in today');
@@ -163,9 +167,14 @@ export const useClockIn = () => {
           status: 'active'
         })
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        if ((error as any).code === '42P01') {
+          throw new Error('Time entries feature is not enabled on this workspace');
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -204,9 +213,14 @@ export const useClockOut = () => {
         .eq('entry_date', today)
         .eq('status', 'active')
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        if ((error as any).code === '42P01') {
+          throw new Error('Time entries feature is not enabled on this workspace');
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -243,9 +257,14 @@ export const useStartBreak = () => {
         .eq('entry_date', today)
         .eq('status', 'active')
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        if ((error as any).code === '42P01') {
+          throw new Error('Time entries feature is not enabled on this workspace');
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -281,9 +300,14 @@ export const useEndBreak = () => {
         .eq('entry_date', today)
         .eq('status', 'active')
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        if ((error as any).code === '42P01') {
+          throw new Error('Time entries feature is not enabled on this workspace');
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
