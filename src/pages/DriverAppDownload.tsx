@@ -1,4 +1,5 @@
 import React from 'react';
+import DriverLayout from '@/components/layout/DriverLayout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,7 @@ export default function DriverAppDownload() {
   ];
 
   return (
+    <DriverLayout title="Driver App" description="Download the mobile app for vehicle checks">
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
@@ -316,6 +318,7 @@ export default function DriverAppDownload() {
         </div>
       </div>
     </div>
+    </DriverLayout>
   );
 }
 

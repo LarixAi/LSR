@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { SecurityProvider } from "./contexts/SecurityContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
@@ -56,7 +56,13 @@ const RealTimeTracking = lazy(() => import("./pages/RealTimeTracking"));
 const RoutesPage = lazy(() => import("./pages/Routes"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const WorkOrders = lazy(() => import("./pages/WorkOrders"));
+const CreateWorkOrder = lazy(() => import("./pages/CreateWorkOrder"));
+const CreateSchedule = lazy(() => import("./pages/CreateSchedule"));
+const CreateJob = lazy(() => import("./pages/CreateJob"));
+const WorkOrderDetail = lazy(() => import("./pages/WorkOrderDetail"));
+const EditWorkOrder = lazy(() => import("./pages/EditWorkOrder"));
 const DefectReports = lazy(() => import("./pages/DefectReports"));
+const DefectReportDetail = lazy(() => import("./pages/DefectReportDetail"));
 const PartsSupplies = lazy(() => import("./pages/PartsSuppliesRefactored")); // Use refactored version
 const NotificationCenterPage = lazy(() => import("./pages/NotificationCenter"));
 const VehicleDetail = lazy(() => import("./pages/VehicleDetail"));
@@ -72,10 +78,18 @@ const AddComplianceEntry = lazy(() => import("./pages/AddComplianceEntry"));
 const AddVehicle = lazy(() => import("./pages/AddVehicle"));
 const AddServiceEntry = lazy(() => import("./pages/AddServiceEntry"));
 const AddDriver = lazy(() => import("./pages/AddDriver"));
+const AddTire = lazy(() => import("./pages/AddTire"));
+const AddFuel = lazy(() => import("./pages/AddFuel"));
+const AddPart = lazy(() => import("./pages/AddPart"));
+const AddMechanic = lazy(() => import("./pages/AddMechanic"));
+const MechanicDashboard = lazy(() => import("./pages/MechanicDashboard"));
+const MechanicEmploymentContract = lazy(() => import("./pages/MechanicEmploymentContract"));
+const TransportMechanicContract = lazy(() => import("./pages/TransportMechanicContract"));
+const ContractsOverview = lazy(() => import("./pages/ContractsOverview"));
+const CreateDefectReport = lazy(() => import("./pages/CreateDefectReport"));
 
 
 // New pages - Mechanic specific
-const MechanicDashboard = lazy(() => import("./pages/MechanicDashboard"));
 
 // New pages - Admin specific
 const TireManagement = lazy(() => import("./pages/TireManagement"));
@@ -171,6 +185,21 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Redirect drivers to the dedicated driver settings page when hitting /settings
+const UserProfileSettingsRedirect = () => {
+  const { profile } = useAuth();
+  if (profile?.role === 'driver') {
+    return <Navigate to="/driver/settings" replace />;
+  }
+  return (
+    <DashboardSettingsProvider>
+      <VehicleManagementSettingsProvider>
+        <Settings />
+      </VehicleManagementSettingsProvider>
+    </DashboardSettingsProvider>
+  );
+};
 
 const App = () => {
   return (
@@ -280,6 +309,21 @@ const App = () => {
                             <WorkOrders />
                           </ProtectedRoute>
                         } />
+                        <Route path="/work-orders/create" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <CreateWorkOrder />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/work-orders/:id" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <WorkOrderDetail />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/work-orders/:id/edit" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <EditWorkOrder />
+                          </ProtectedRoute>
+                        } />
                         <Route path="/defect-reports" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
                             <DefectReports />
@@ -290,9 +334,24 @@ const App = () => {
                             <DefectReports />
                           </ProtectedRoute>
                         } />
+                                <Route path="/defect-reports/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+            <DefectReportDetail />
+          </ProtectedRoute>
+        } />
+        <Route path="/defect-reports/create" element={
+          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+            <CreateDefectReport />
+          </ProtectedRoute>
+        } />
                         <Route path="/parts-supplies" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
                             <PartsSupplies />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/parts-supplies/add" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic']}>
+                            <AddPart />
                           </ProtectedRoute>
                         } />
                         <Route path="/inventory" element={
@@ -301,8 +360,13 @@ const App = () => {
                           </ProtectedRoute>
                         } />
                         <Route path="/fuel-management" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
                             <FuelManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/fuel-management/add" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
+                            <AddFuel />
                           </ProtectedRoute>
                         } />
                         <Route path="/mechanics" element={
@@ -310,11 +374,41 @@ const App = () => {
                             <Mechanics />
                           </ProtectedRoute>
                         } />
+                        <Route path="/mechanics/add" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AddMechanic />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/mechanics/contract" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <MechanicEmploymentContract />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/mechanics/transport-contract" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <TransportMechanicContract />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/mechanics/contracts" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <ContractsOverview />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/mechanic-dashboard" element={
+                          <ProtectedRoute allowedRoles={['mechanic', 'admin']}>
+                            <MechanicDashboard />
+                          </ProtectedRoute>
+                        } />
 
                         {/* Admin-specific routes */}
                         <Route path="/admin/tire-management" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <TireManagement />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/admin/tire-management/add" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <AddTire />
                           </ProtectedRoute>
                         } />
                         <Route path="/admin/training" element={
@@ -615,6 +709,11 @@ const App = () => {
                             <JobManagement />
                           </ProtectedRoute>
                         } />
+                        <Route path="/jobs/create" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <CreateJob />
+                          </ProtectedRoute>
+                        } />
                         <Route path="/job-management" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <JobManagement />
@@ -711,11 +810,8 @@ const App = () => {
                         {/* Settings */}
                         <Route path="/settings" element={
                           <ProtectedRoute allowedRoles={['admin', 'council', 'mechanic', 'driver', 'parent']}>
-                            <DashboardSettingsProvider>
-                              <VehicleManagementSettingsProvider>
-                                <Settings />
-                              </VehicleManagementSettingsProvider>
-                            </DashboardSettingsProvider>
+                            {/* Redirect drivers to their dedicated settings page */}
+                            <UserProfileSettingsRedirect />
                           </ProtectedRoute>
                         } />
 
@@ -796,6 +892,11 @@ const App = () => {
                         <Route path="/schedule" element={
                           <ProtectedRoute allowedRoles={['admin', 'council']}>
                             <AdminSchedule />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/schedule/create" element={
+                          <ProtectedRoute allowedRoles={['admin', 'council']}>
+                            <CreateSchedule />
                           </ProtectedRoute>
                         } />
 

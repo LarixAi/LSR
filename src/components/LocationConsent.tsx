@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import BackNavigation from '@/components/BackNavigation';
 import { 
   MapPin, 
@@ -310,9 +310,12 @@ const LocationConsent: React.FC = () => {
 
       {/* Information Dialog */}
       <Dialog open={showInfo} onOpenChange={setShowInfo}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="location-info-desc">
           <DialogHeader>
             <DialogTitle>Location Services Information</DialogTitle>
+            <DialogDescription id="location-info-desc">
+              Learn about how we use location data to provide safe and efficient transport services.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -379,9 +382,12 @@ const LocationConsent: React.FC = () => {
 
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent>
+        <DialogContent aria-describedby="location-settings-desc">
           <DialogHeader>
             <DialogTitle>Location Settings</DialogTitle>
+            <DialogDescription id="location-settings-desc">
+              Configure your location service preferences and data retention settings.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>

@@ -12,8 +12,9 @@ export interface WorkOrder {
   description?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   status: 'open' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
-  work_type: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'modification' | 'other';
+  work_type: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'other';
   estimated_hours?: number;
+  estimated_cost?: number;
   actual_hours?: number;
   parts_required?: string[];
   labor_cost?: number;
@@ -70,15 +71,12 @@ export interface CreateWorkOrderData {
   description?: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   status?: 'open' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
-  work_type: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'modification' | 'other';
+  work_type: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'other';
   estimated_hours?: number;
-  parts_required?: string[];
+  estimated_cost?: number;
   scheduled_date?: string;
   due_date?: string;
   location?: string;
-  work_area?: string;
-  tools_required?: string[];
-  safety_requirements?: string[];
   notes?: string;
 }
 
@@ -88,21 +86,12 @@ export interface UpdateWorkOrderData {
   description?: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   status?: 'open' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
-  work_type?: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'modification' | 'other';
+  work_type?: 'preventive' | 'corrective' | 'emergency' | 'inspection' | 'other';
   estimated_hours?: number;
-  actual_hours?: number;
-  parts_required?: string[];
-  labor_cost?: number;
-  parts_cost?: number;
-  total_cost?: number;
+  estimated_cost?: number;
   scheduled_date?: string;
-  started_date?: string;
-  completed_date?: string;
   due_date?: string;
   location?: string;
-  work_area?: string;
-  tools_required?: string[];
-  safety_requirements?: string[];
   notes?: string;
 }
 

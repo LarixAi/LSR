@@ -454,10 +454,10 @@ const SupportTicketManagement = () => {
 
       {/* Ticket Details Dialog */}
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="ticket-details-desc">
           <DialogHeader>
             <DialogTitle>Ticket #{selectedTicket?.ticket_number}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="ticket-details-desc">
               {selectedTicket?.subject}
             </DialogDescription>
           </DialogHeader>

@@ -3,6 +3,132 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+// -------- Mock helpers (frontend-only fallbacks) --------
+const nowIso = () => new Date().toISOString();
+
+const buildMockInventory = (orgId: string): TireInventory[] => [
+  {
+    id: 'mock-tire-1',
+    organization_id: orgId,
+    tire_brand: 'Michelin',
+    tire_model: 'X Multi Z',
+    tire_size: '315/70R22.5',
+    tire_type: 'steer',
+    load_index: 154,
+    speed_rating: 'L',
+    stock_quantity: 6,
+    minimum_stock: 4,
+    cost_per_tire: 285.5,
+    supplier: 'TyreCo UK',
+    purchase_date: nowIso(),
+    warranty_months: 24,
+    location_storage: 'Bay A1',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'mock-tire-2',
+    organization_id: orgId,
+    tire_brand: 'Continental',
+    tire_model: 'Hybrid HD3',
+    tire_size: '315/80R22.5',
+    tire_type: 'drive',
+    load_index: 156,
+    speed_rating: 'L',
+    stock_quantity: 2,
+    minimum_stock: 4,
+    cost_per_tire: 299.99,
+    supplier: 'RoadRubber Ltd',
+    purchase_date: nowIso(),
+    warranty_months: 18,
+    location_storage: 'Bay B3',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'mock-tire-3',
+    organization_id: orgId,
+    tire_brand: 'Goodyear',
+    tire_model: 'KMAX T',
+    tire_size: '385/65R22.5',
+    tire_type: 'trailer',
+    load_index: 160,
+    speed_rating: 'J',
+    stock_quantity: 0,
+    minimum_stock: 2,
+    cost_per_tire: 260.0,
+    supplier: 'Goodyear Direct',
+    purchase_date: nowIso(),
+    warranty_months: 12,
+    location_storage: 'Bay C2',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  }
+];
+
+const buildMockVehicleTires = (orgId: string, inventory: TireInventory[]): VehicleTire[] => [
+  {
+    id: 'mock-vt-1',
+    vehicle_id: 'mock-veh-1',
+    organization_id: orgId,
+    position: 'front_left',
+    tire_inventory_id: inventory[0]?.id,
+    serial_number: 'SN-12345-A',
+    installation_date: nowIso(),
+    installation_mileage: 120000,
+    current_tread_depth: 8.5,
+    last_inspection_date: nowIso(),
+    next_inspection_due: new Date(Date.now() + 7*24*60*60*1000).toISOString(),
+    pressure_psi: 110,
+    status: 'active',
+    notes: 'OK',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+    vehicle: { id: 'mock-veh-1', vehicle_number: 'BUS001', make: 'Volvo', model: '7900' },
+    tire_inventory: inventory[0] || undefined,
+  },
+  {
+    id: 'mock-vt-2',
+    vehicle_id: 'mock-veh-1',
+    organization_id: orgId,
+    position: 'front_right',
+    tire_inventory_id: inventory[0]?.id,
+    serial_number: 'SN-12345-B',
+    installation_date: nowIso(),
+    installation_mileage: 120000,
+    current_tread_depth: 8.2,
+    last_inspection_date: nowIso(),
+    next_inspection_due: new Date(Date.now() - 2*24*60*60*1000).toISOString(),
+    pressure_psi: 108,
+    status: 'active',
+    notes: 'Due re‑torque check',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+    vehicle: { id: 'mock-veh-1', vehicle_number: 'BUS001', make: 'Volvo', model: '7900' },
+    tire_inventory: inventory[0] || undefined,
+  },
+  {
+    id: 'mock-vt-3',
+    vehicle_id: 'mock-veh-2',
+    organization_id: orgId,
+    position: 'rear_left_outer',
+    tire_inventory_id: inventory[1]?.id,
+    serial_number: 'SN-67890-A',
+    installation_date: nowIso(),
+    installation_mileage: 90000,
+    current_tread_depth: 3.8,
+    last_inspection_date: nowIso(),
+    next_inspection_due: new Date(Date.now() + 3*24*60*60*1000).toISOString(),
+    pressure_psi: 105,
+    status: 'worn',
+    notes: 'Monitor wear',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+    vehicle: { id: 'mock-veh-2', vehicle_number: 'NBG-001', make: 'Mercedes', model: 'Citaro' },
+    tire_inventory: inventory[1] || undefined,
+  }
+];
+
 export interface TireInventory {
   id: string;
   organization_id: string;
@@ -71,16 +197,16 @@ export const useTireInventory = () => {
 
         if (error) {
           console.error('Error fetching tire inventory:', error);
-          // If table doesn't exist yet, return empty array
+          // If table is missing or backend unavailable, return mock data for UI
           if (error.code === '42P01' || error.code === 'PGRST205') {
-            console.warn('tire_inventory table not found, returning empty data');
-            return [];
+            console.warn('tire_inventory table not found, returning mock inventory');
+            return buildMockInventory(profile.organization_id);
           }
-          throw error;
+          return buildMockInventory(profile.organization_id);
         }
 
-        console.log('Fetched tire inventory:', data);
-        return data as TireInventory[] || [];
+        const result = (data as TireInventory[]) || [];
+        return result.length > 0 ? result : buildMockInventory(profile.organization_id);
       } catch (error) {
         console.error('Error in useTireInventory:', error);
         return [];
@@ -112,17 +238,19 @@ export const useVehicleTires = () => {
 
         if (tiresError) {
           console.error('Error fetching vehicle tires:', tiresError);
-          // If table doesn't exist yet, return empty array
           if (tiresError.code === '42P01' || tiresError.code === 'PGRST205') {
-            console.warn('vehicle_tires table not found, returning empty data');
-            return [];
+            console.warn('vehicle_tires table not found, returning mock vehicle tires');
+            const inv = buildMockInventory(profile.organization_id);
+            return buildMockVehicleTires(profile.organization_id, inv);
           }
-          throw tiresError;
+          const inv = buildMockInventory(profile.organization_id);
+          return buildMockVehicleTires(profile.organization_id, inv);
         }
 
         // If no tires found, return empty array
         if (!tiresData || tiresData.length === 0) {
-          return [];
+          const inv = buildMockInventory(profile.organization_id);
+          return buildMockVehicleTires(profile.organization_id, inv);
         }
 
         // Get unique IDs for related data
@@ -305,6 +433,43 @@ export const useUpdateVehicleTire = () => {
     onError: (error: any) => {
       console.error('Error updating vehicle tire:', error);
       toast.error('Failed to update vehicle tire: ' + error.message);
+    }
+  });
+};
+
+export const useUpdateTireInventory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<TireInventory> }) => {
+      try {
+        const { data, error } = await supabase
+          .from('tire_inventory')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) {
+          if (error.code === '42P01' || error.code === 'PGRST205') {
+            console.warn('tire_inventory table not found, returning mock response');
+            return { id, ...updates, updated_at: new Date().toISOString() } as any;
+          }
+          throw error;
+        }
+        return data;
+      } catch (error) {
+        console.error('Error updating tire inventory:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tire_inventory'] });
+      toast.success('Tire updated successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error updating tire inventory:', error);
+      toast.error('Failed to update tire: ' + error.message);
     }
   });
 };

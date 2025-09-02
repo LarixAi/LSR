@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DriverLayout from '@/components/layout/DriverLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,16 +22,19 @@ import {
   EyeOff,
   Save,
   Download,
-  Upload
+  Mail
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import AvatarUpload from '@/components/AvatarUpload';
+import { useProfile } from '@/hooks/useProfile';
 import { Separator } from '@/components/ui/separator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileSettings from '@/components/mobile/MobileSettings';
+import { Badge } from '@/components/ui/badge';
 
 const DriverSettings: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
+  const { updateProfile } = useProfile();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -102,11 +106,16 @@ const DriverSettings: React.FC = () => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSaveProfile = () => {
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been saved successfully.",
-    });
+  const handleSaveProfile = async () => {
+    try {
+      await updateProfile({
+        first_name: settings.firstName,
+        last_name: settings.lastName,
+        phone: settings.phone,
+      });
+    } catch (e) {
+      // useProfile already handles toasts; keep here for safety
+    }
   };
 
   const handleSaveNotifications = () => {
@@ -166,6 +175,7 @@ const DriverSettings: React.FC = () => {
   };
 
   return (
+    <DriverLayout title="Settings" description="Manage your account settings and preferences">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -186,24 +196,34 @@ const DriverSettings: React.FC = () => {
       {/* Profile Summary Card */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={profile.avatar_url} alt={profile.first_name} />
-              <AvatarFallback className="text-lg">
-                {profile.first_name?.[0]}{profile.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold">
-                {profile.first_name} {profile.last_name}
-              </h3>
-              <p className="text-muted-foreground">{profile.email}</p>
-              <p className="text-sm text-muted-foreground">Driver • {profile.employee_id}</p>
+          <div className="flex items-center gap-6 flex-wrap">
+            {user && (
+              <div className="shrink-0">
+                <AvatarUpload
+                  currentAvatarUrl={profile.avatar_url}
+                  userId={user.id}
+                  initials={`${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`}
+                  onAvatarUpdate={async (newAvatarUrl) => {
+                    await updateProfile({ avatar_url: newAvatarUrl });
+                  }}
+                />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-2xl font-semibold truncate">
+                  {profile.first_name} {profile.last_name}
+                </h3>
+                <Badge variant="secondary" className="capitalize">Driver</Badge>
+              </div>
+              <div className="flex items-center text-muted-foreground mt-1">
+                <Mail className="w-4 h-4 mr-2" />
+                <span className="truncate">{profile.email}</span>
+              </div>
+              {profile.employee_id && (
+                <p className="text-sm text-muted-foreground mt-1">Employee ID: {profile.employee_id}</p>
+              )}
             </div>
-            <Button variant="outline">
-              <Upload className="w-4 h-4 mr-2" />
-              Change Photo
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -697,6 +717,7 @@ const DriverSettings: React.FC = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </DriverLayout>
   );
 };
 

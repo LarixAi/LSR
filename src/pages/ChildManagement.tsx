@@ -533,12 +533,12 @@ const ChildManagement = () => {
 
       {/* Call Options Dialog */}
       <Dialog open={!!showCallDialog} onOpenChange={() => setShowCallDialog(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="call-options-desc">
           <DialogHeader>
             <DialogTitle>
               Contact Options - {showCallDialog && getChildById(showCallDialog)?.firstName}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="call-options-desc">
               Choose who you'd like to contact regarding your child's transport.
             </DialogDescription>
           </DialogHeader>
@@ -576,10 +576,10 @@ const ChildManagement = () => {
 
       {/* Edit Child Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="edit-child-desc">
           <DialogHeader>
             <DialogTitle>Edit Child Information</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="edit-child-desc">
               Update your child's transport and school information.
             </DialogDescription>
           </DialogHeader>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Settings, Cookie, Shield, Info } from 'lucide-react';
@@ -158,12 +158,15 @@ const CookieConsent: React.FC = () => {
 
       {/* Cookie Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="cookie-preferences-desc">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Cookie className="w-5 h-5" />
               Cookie Preferences
             </DialogTitle>
+            <DialogDescription id="cookie-preferences-desc">
+              Manage your cookie preferences and control how your data is used on our website.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">

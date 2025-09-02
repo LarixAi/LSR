@@ -1,4 +1,5 @@
 import React from 'react';
+import DriverLayout from '@/components/layout/DriverLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +91,7 @@ const DriverMore: React.FC = () => {
   ];
 
   return (
+    <DriverLayout title="More Options" description="Access additional features and settings">
     <div className="space-y-6 p-4">
       {/* Header */}
       <div className="text-center">
@@ -159,6 +161,7 @@ const DriverMore: React.FC = () => {
         </CardContent>
       </Card>
     </div>
+    </DriverLayout>
   );
 };
 

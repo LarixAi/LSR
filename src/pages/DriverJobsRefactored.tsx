@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
+import StandardPageLayout from '@/components/layout/StandardPageLayout';
 
 export default function DriverJobs() {
   const { user, profile } = useAuth();
@@ -117,16 +118,23 @@ export default function DriverJobs() {
     );
   }
 
+  const navigationTabs = [
+    { value: 'active', label: 'Active Jobs' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'assignments', label: 'Route Assignments' },
+    { value: 'all', label: 'All Jobs' }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Jobs</h1>
-          <p className="text-muted-foreground">
-            View your job assignments, invoices, and earnings
-          </p>
-        </div>
-      </div>
+    <StandardPageLayout
+      title="My Jobs"
+      description="View your job assignments, invoices, and earnings"
+      showMetricsDashboard={true}
+      navigationTabs={navigationTabs}
+      activeTab={selectedTab}
+      onTabChange={setSelectedTab}
+    >
+      <div className="space-y-6">
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -180,13 +188,6 @@ export default function DriverJobs() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList>
-          <TabsTrigger value="active">Active Jobs</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="assignments">Route Assignments</TabsTrigger>
-          <TabsTrigger value="all">All Jobs</TabsTrigger>
-        </TabsList>
-
         <TabsContent value={selectedTab} className="space-y-4">
           {selectedTab === "assignments" ? (
             <Card>
@@ -309,6 +310,7 @@ export default function DriverJobs() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </StandardPageLayout>
   );
 }

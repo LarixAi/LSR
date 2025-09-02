@@ -16,13 +16,13 @@ export const NoSubscriptionDialog: React.FC<NoSubscriptionDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg animate-in fade-in-0 zoom-in-95 duration-200">
+      <DialogContent className="max-w-lg animate-in fade-in-0 zoom-in-95 duration-200" aria-describedby="subscription-required-desc">
         <DialogHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center mb-4 shadow-md">
             <AlertCircle className="w-8 h-8 text-white" />
           </div>
           <DialogTitle className="text-2xl font-bold text-gray-900">Subscription Required</DialogTitle>
-          <DialogDescription className="text-base text-gray-600 mt-2">
+          <DialogDescription id="subscription-required-desc" className="text-base text-gray-600 mt-2">
             Access payment settings and manage your billing with an active subscription
           </DialogDescription>
         </DialogHeader>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import {
@@ -74,6 +74,18 @@ const TransportSidebar = () => {
   const isCollapsed = state === 'collapsed';
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
+  // Debug sidebar role-based rendering
+  useEffect(() => {
+    if (profile) {
+      console.log('🗂️ Sidebar rendered for user:', {
+        role: profile.role,
+        userId: profile.id,
+        email: profile.email || user?.email,
+        path: location.pathname
+      });
+    }
+  }, [profile, user, location.pathname]);
+
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -110,116 +122,136 @@ const TransportSidebar = () => {
     return user?.email?.split('@')[0] || 'user';
   };
 
-  // Organized navigation items with collapsible groups - UPDATED TO MATCH ACTUAL ROUTES
-  const navigationItems = [
-    { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
-    { title: 'Fleet Overview', icon: Truck, url: '/fleet-management' },
-    
-    // Fleet Management Group
-    {
-      title: 'Fleet Management',
-      icon: Truck,
-      hasArrow: true,
-      items: [
-        { title: 'Vehicles', url: '/vehicles', icon: Truck },
-        { title: 'Drivers', url: '/drivers', icon: Users },
-        { title: 'Mechanics', url: '/mechanics', icon: Wrench },
-        { title: 'Tire Management', url: '/admin/tire-management', icon: Settings },
-        { title: 'Fuel Management', url: '/fuel-management', icon: Fuel },
-        { title: 'Defect Reports', url: '/defect-reports', icon: AlertTriangle },
-        { title: 'Parts & Supplies', url: '/parts-supplies', icon: Package },
-        { title: 'Work Orders', url: '/work-orders', icon: ClipboardList },
-      ]
-    },
-    
-    // Operations Group
-    {
-      title: 'Operations',
-      icon: Route,
-      hasArrow: true,
-      items: [
-        { title: 'Jobs', url: '/jobs', icon: Briefcase },
-        { title: 'Schedule', url: '/schedule', icon: Calendar },
-        { title: 'Route Planning', url: '/route-planning', icon: MapPin },
-        { title: 'School Routes', url: '/school-routes', icon: School },
-        { title: 'Rail Replacement', url: '/rail-replacement', icon: Train },
-        { title: 'Personal Assistants', url: '/personal-assistants', icon: Users },
-        { title: 'Time Management', url: '/time-management', icon: Clock },
-      ]
-    },
-    
-    // Finance Group
-    {
-      title: 'Finance',
-      icon: DollarSign,
-      hasArrow: true,
-      items: [
-        { title: 'Invoice Management', url: '/invoice-management', icon: FileText },
-        { title: 'Quotation Management', url: '/quotation-management', icon: FileText },
-        { title: 'Inventory Management', url: '/inventory-management', icon: Package },
-        { title: 'Subscriptions', url: '/subscriptions', icon: DollarSign },
-      ]
-    },
-    
-    // Compliance Group
-    {
-      title: 'Compliance',
-      icon: Shield,
-      hasArrow: true,
-      items: [
-        { title: 'Compliance Dashboard', url: '/compliance-dashboard', icon: Shield },
-        { title: 'Infringement Management', url: '/admin/infringement-management', icon: AlertTriangle },
-        { title: 'Tachograph Manager', url: '/tachograph-manager', icon: Activity },
-        { title: 'Inspections', url: '/inspections', icon: ClipboardCheck },
-        { title: 'Vehicle Check Questions', url: '/vehicle-check-questions', icon: CheckSquare },
-        { title: 'Licenses', url: '/licenses', icon: FileText },
-        { title: 'Training Courses', url: '/admin/training', icon: BookOpen },
-      
-        { title: 'Incident Reports', url: '/incident-reports', icon: AlertTriangle },
-      ]
-    },
-    
-    // Communication Group
-    {
-      title: 'Communication',
-      icon: MessageSquare,
-      hasArrow: true,
-      items: [
-        { title: 'Email Management', url: '/email-management', icon: Mail },
-        { title: 'Advanced Notifications', url: '/notifications', icon: Bell },
-        { title: 'Support Tickets', url: '/support-tickets', icon: Ticket },
+  // Build role-aware navigation items
+  const navigationItems = React.useMemo(() => {
+    // Driver: simplified, driver-focused links
+    if (profile?.role === 'driver') {
+      return [
+        { title: 'Driver Dashboard', icon: LayoutDashboard, url: '/driver-dashboard' },
+        { title: 'Vehicle Checks', icon: ClipboardCheck, url: '/driver/vehicle-checks' },
+        { title: 'Schedule', icon: Calendar, url: '/driver-schedule' },
+        { title: 'Incidents', icon: AlertTriangle, url: '/driver-incidents' },
+        { title: 'Compliance', icon: Shield, url: '/driver-compliance' },
+        { title: 'Fuel', icon: Fuel, url: '/driver/fuel' },
+        { title: 'Documents', icon: FileText, url: '/driver/documents' },
+        { title: 'More', icon: MoreHorizontal, url: '/driver/more' },
+      ];
+    }
 
-      ]
-    },
-    
-    // Reports Group
-    {
-      title: 'Reports',
-      icon: BarChart,
-      hasArrow: true,
-      items: [
-        { title: 'Fleet Reports', url: '/fleet-reports', icon: BarChart },
-        { title: 'Compliance Reports', url: '/compliance-reports', icon: FileText },
-        { title: 'Analytics', url: '/analytics', icon: Activity },
-        { title: 'System Diagnostic', url: '/system-diagnostic', icon: Activity },
-      ]
-    },
-    
-    // Support & Tools
-    {
-      title: 'Support & Tools',
-      icon: HelpCircle,
-      hasArrow: true,
-      items: [
-        { title: 'AI Assistants', url: '/ai-assistants', icon: Bot },
-        { title: 'Help & Documentation', url: '/help-documentation', icon: BookOpen },
-        { title: 'Staff Directory', url: '/staff-directory', icon: Users },
-        { title: 'API Management', url: '/api-management', icon: Code },
-        { title: 'Documents', url: '/documents', icon: FileText },
-        { title: 'Admin Driver Documents', url: '/admin-driver-documents', icon: FileText },
-      ]
-    },
-  ];
+    // Mechanic: add mechanic dashboard plus core admin items
+    if (profile?.role === 'mechanic') {
+      return [
+        { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
+        { title: 'Mechanic Dashboard', icon: Wrench, url: '/mechanic-dashboard' },
+        {
+          title: 'Fleet Management',
+          icon: Truck,
+          hasArrow: true,
+          items: [
+            { title: 'Vehicles', url: '/vehicles', icon: Truck },
+            { title: 'Drivers', url: '/drivers', icon: Users },
+            { title: 'Work Orders', url: '/work-orders', icon: ClipboardList },
+            { title: 'Defect Reports', url: '/defect-reports', icon: AlertTriangle },
+          ]
+        },
+      ];
+    }
+
+    // Default (admin/council/staff): full navigation
+    return [
+      { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
+      { title: 'Fleet Overview', icon: Truck, url: '/fleet-management' },
+      {
+        title: 'Fleet Management',
+        icon: Truck,
+        hasArrow: true,
+        items: [
+          { title: 'Vehicles', url: '/vehicles', icon: Truck },
+          { title: 'Drivers', url: '/drivers', icon: Users },
+          { title: 'Mechanics', url: '/mechanics', icon: Wrench },
+          { title: 'Tire Management', url: '/admin/tire-management', icon: Settings },
+          { title: 'Fuel Management', url: '/fuel-management', icon: Fuel },
+          { title: 'Defect Reports', url: '/defect-reports', icon: AlertTriangle },
+          { title: 'Parts & Supplies', url: '/parts-supplies', icon: Package },
+          { title: 'Work Orders', url: '/work-orders', icon: ClipboardList },
+        ]
+      },
+      {
+        title: 'Operations',
+        icon: Route,
+        hasArrow: true,
+        items: [
+          { title: 'Jobs', url: '/jobs', icon: Briefcase },
+          { title: 'Schedule', url: '/schedule', icon: Calendar },
+          { title: 'Route Planning & Tracking', url: '/route-planning', icon: MapPin },
+          { title: 'School Routes', url: '/school-routes', icon: School },
+          { title: 'Rail Replacement', url: '/rail-replacement', icon: Train },
+          { title: 'Personal Assistants', url: '/personal-assistants', icon: Users },
+          { title: 'Time Management', url: '/time-management', icon: Clock },
+        ]
+      },
+      {
+        title: 'Finance',
+        icon: DollarSign,
+        hasArrow: true,
+        items: [
+          { title: 'Invoice Management', url: '/invoice-management', icon: FileText },
+          { title: 'Quotation Management', url: '/quotation-management', icon: FileText },
+          { title: 'Inventory Management', url: '/inventory-management', icon: Package },
+          { title: 'Subscriptions', url: '/subscriptions', icon: DollarSign },
+        ]
+      },
+      {
+        title: 'Compliance',
+        icon: Shield,
+        hasArrow: true,
+        items: [
+          { title: 'Compliance Dashboard', url: '/compliance-dashboard', icon: Shield },
+          { title: 'Infringement Management', url: '/admin/infringement-management', icon: AlertTriangle },
+          { title: 'Tachograph Manager', url: '/tachograph-manager', icon: Activity },
+          { title: 'Inspections', url: '/inspections', icon: ClipboardCheck },
+          { title: 'Vehicle Check Questions', url: '/vehicle-check-questions', icon: CheckSquare },
+          { title: 'Licenses', url: '/licenses', icon: FileText },
+          { title: 'Training Courses', url: '/admin/training', icon: BookOpen },
+          { title: 'Incident Reports', url: '/incident-reports', icon: AlertTriangle },
+        ]
+      },
+      {
+        title: 'Communication',
+        icon: MessageSquare,
+        hasArrow: true,
+        items: [
+          { title: 'Email Management', url: '/email-management', icon: Mail },
+          { title: 'Advanced Notifications', url: '/notifications', icon: Bell },
+          { title: 'Support Tickets', url: '/support-tickets', icon: Ticket },
+        ]
+      },
+      {
+        title: 'Reports',
+        icon: BarChart,
+        hasArrow: true,
+        items: [
+          { title: 'Fleet Reports', url: '/fleet-reports', icon: BarChart },
+          { title: 'Compliance Reports', url: '/compliance-reports', icon: FileText },
+          { title: 'Analytics', url: '/analytics', icon: Activity },
+          { title: 'System Diagnostic', url: '/system-diagnostic', icon: Activity },
+        ]
+      },
+      {
+        title: 'Support & Tools',
+        icon: HelpCircle,
+        hasArrow: true,
+        items: [
+          { title: 'AI Assistants', url: '/ai-assistants', icon: Bot },
+          { title: 'Help & Documentation', url: '/help-documentation', icon: BookOpen },
+          { title: 'Staff Directory', url: '/staff-directory', icon: Users },
+          { title: 'API Management', url: '/api-management', icon: Code },
+          { title: 'Documents', url: '/documents', icon: FileText },
+          { title: 'Admin Driver Documents', url: '/admin-driver-documents', icon: FileText },
+        ]
+      },
+    ];
+  }, [profile?.role]);
 
   const isActiveRoute = (url: string) => {
     return location.pathname === url || location.pathname.startsWith(url + '/');
@@ -330,7 +362,7 @@ const TransportSidebar = () => {
             asChild
             className="text-sidebar-foreground hover:bg-sidebar-accent rounded-lg px-3 py-2"
           >
-            <Link to="/settings" className="flex items-center gap-3">
+            <Link to={profile?.role === 'driver' ? '/driver/settings' : '/settings'} className="flex items-center gap-3">
               <Settings className="h-4 w-4 text-sidebar-accent-foreground" />
               <span className="text-sm">Settings</span>
             </Link>

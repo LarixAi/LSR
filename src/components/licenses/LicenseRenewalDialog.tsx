@@ -60,10 +60,10 @@ const LicenseRenewalDialog: React.FC<LicenseRenewalDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby="license-renewal-desc">
         <DialogHeader>
           <DialogTitle>Renew License</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="license-renewal-desc">
             Record license renewal for {license.license_number}
           </DialogDescription>
         </DialogHeader>

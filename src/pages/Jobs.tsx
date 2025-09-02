@@ -372,9 +372,10 @@ export default function Jobs() {
 
       {/* Create Job Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="jobs-create-desc">
           <DialogHeader>
             <DialogTitle>Create New Job</DialogTitle>
+            <p id="jobs-create-desc" className="sr-only">Fill out the job details to create a new job.</p>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-gray-600">Job creation form will be implemented here.</p>

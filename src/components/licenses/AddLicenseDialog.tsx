@@ -195,10 +195,10 @@ const AddLicenseDialog: React.FC<AddLicenseDialogProps> = ({ open, onOpenChange 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="add-license-desc">
         <DialogHeader>
           <DialogTitle>Add New Driver License</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="add-license-desc">
             Enter all required license information for the driver.
           </DialogDescription>
         </DialogHeader>

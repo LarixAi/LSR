@@ -30,6 +30,7 @@ const Header = () => {
       '/admin-schedule': 'Resource Scheduling',
       '/routes': 'School Routes Management',
       '/admin/route-management': 'Route Planning & Pricing',
+      '/route-planning': 'Route Planning & Tracking',
       '/admin/compliance-dashboard': 'Compliance Dashboard',
       '/admin/tachograph-management': 'Tachograph Management',
       '/admin/api-management': 'API Management',

@@ -1,12 +1,14 @@
 import React from 'react';
+import DriverLayout from '@/components/layout/DriverLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Upload, Download, Calendar } from 'lucide-react';
 
 const DriverDocuments = () => {
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">My Documents</h1>
+    <DriverLayout title="My Documents" description="View and manage your driver documents">
+      <div className="container mx-auto p-6 space-y-6">
+        <h1 className="text-2xl font-bold">My Documents</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
@@ -69,7 +71,7 @@ const DriverDocuments = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DriverLayout>
   );
 };
 

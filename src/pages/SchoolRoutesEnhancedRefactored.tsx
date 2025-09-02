@@ -282,10 +282,10 @@ const SchoolRoutesEnhancedRefactored: React.FC = () => {
               Create New Route
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="create-route-desc">
             <DialogHeader>
               <DialogTitle>Create New School Route</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="create-route-desc">
                 Set up a new school transportation route with stops and assignments
               </DialogDescription>
             </DialogHeader>
@@ -455,10 +455,10 @@ const SchoolRoutesEnhancedRefactored: React.FC = () => {
 
       {/* Route Details Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="route-details-desc">
           <DialogHeader>
             <DialogTitle>Route Details</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="route-details-desc">
               View and manage route information, stops, and assignments
             </DialogDescription>
           </DialogHeader>
@@ -518,10 +518,10 @@ const SchoolRoutesEnhancedRefactored: React.FC = () => {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="delete-route-desc">
           <DialogHeader>
             <DialogTitle>Delete Route</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="delete-route-desc">
               Are you sure you want to delete "{selectedRoute?.routeName}"? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>

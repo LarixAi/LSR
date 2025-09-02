@@ -834,10 +834,10 @@ const EnhancedNotificationSystem: React.FC = () => {
 
       {/* Compose Dialog */}
       <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="compose-notification-desc">
           <DialogHeader>
             <DialogTitle>Compose Notification</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="compose-notification-desc">
               Create and send notifications to your team members
             </DialogDescription>
           </DialogHeader>
@@ -1105,10 +1105,10 @@ const EnhancedNotificationSystem: React.FC = () => {
 
       {/* Templates Dialog */}
       <Dialog open={isTemplateOpen} onOpenChange={setIsTemplateOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="notification-templates-desc">
           <DialogHeader>
             <DialogTitle>Notification Templates</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="notification-templates-desc">
               Use pre-built templates for common notifications
             </DialogDescription>
           </DialogHeader>
@@ -1151,10 +1151,10 @@ const EnhancedNotificationSystem: React.FC = () => {
 
       {/* Bulk Operations Dialog */}
       <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="bulk-operations-desc">
           <DialogHeader>
             <DialogTitle>Bulk Operations</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="bulk-operations-desc">
               Perform actions on multiple notifications at once
             </DialogDescription>
           </DialogHeader>

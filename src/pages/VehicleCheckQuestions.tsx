@@ -1164,10 +1164,10 @@ export default function VehicleCheckQuestions() {
 
       {/* Add Question Dialog */}
       <Dialog open={isAddingQuestion} onOpenChange={setIsAddingQuestion}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="add-question-desc">
           <DialogHeader>
             <DialogTitle>Add New Question</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="add-question-desc">
               Add a new question to the Daily Pre-Trip Inspection. This question will be available to all drivers.
             </DialogDescription>
           </DialogHeader>
@@ -1183,10 +1183,10 @@ export default function VehicleCheckQuestions() {
 
       {/* Edit Question Dialog */}
       <Dialog open={!!editingQuestion} onOpenChange={(open) => !open && setEditingQuestion(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="edit-question-desc">
           <DialogHeader>
             <DialogTitle>Edit Question</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="edit-question-desc">
               Modify the question properties. Changes will be applied immediately.
             </DialogDescription>
           </DialogHeader>

@@ -1023,13 +1023,13 @@ export default function TimeManagement() {
 
       {/* Sign Off Confirmation Dialog */}
       <Dialog open={signOffDialogOpen} onOpenChange={setSignOffDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="sign-off-desc">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <LogOut className="w-5 h-5 text-red-600" />
               <span>Sign Off Work</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="sign-off-desc">
               You are about to sign off work for the day. This action will record your end time and complete your work session.
             </DialogDescription>
           </DialogHeader>
@@ -1082,9 +1082,12 @@ export default function TimeManagement() {
 
       {/* Time Off Request Dialog */}
       <Dialog open={timeOffDialogOpen} onOpenChange={setTimeOffDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="time-off-desc">
           <DialogHeader>
             <DialogTitle>Request Time Off</DialogTitle>
+            <DialogDescription id="time-off-desc">
+              Submit a request for time off or leave from work.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">

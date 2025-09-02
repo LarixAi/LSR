@@ -738,12 +738,12 @@ const Documents: React.FC = () => {
                   Upload
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md mx-4">
+              <DialogContent className="max-w-md mx-4" aria-describedby="upload-document-desc">
                 <DialogHeader>
                   <DialogTitle className="text-base">
                     {uploadingToCategory ? `Upload to ${categories.find(c => c.id === uploadingToCategory)?.name}` : 'Upload New Document'}
                   </DialogTitle>
-                  <DialogDescription className="text-sm text-muted-foreground">
+                  <DialogDescription id="upload-document-desc" className="text-sm text-muted-foreground">
                     {uploadingToCategory 
                       ? `Upload documents to the ${categories.find(c => c.id === uploadingToCategory)?.name} category.`
                       : 'Upload new documents to your organization\'s document library.'
@@ -1281,10 +1281,10 @@ const Documents: React.FC = () => {
 
       {/* Compact Document View Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-sm mx-4">
+        <DialogContent className="max-w-sm mx-4" aria-describedby="document-details-desc">
           <DialogHeader>
             <DialogTitle className="text-base">Document Details</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
+            <DialogDescription id="document-details-desc" className="text-sm text-muted-foreground">
               View and manage document information, metadata, and actions.
             </DialogDescription>
           </DialogHeader>

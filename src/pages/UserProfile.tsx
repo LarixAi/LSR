@@ -38,10 +38,17 @@ import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import AvatarUpload from '@/components/AvatarUpload';
 
 const UserProfile = () => {
   const { user, profile } = useAuth();
   const { updating, updateProfile, updatePassword } = useProfile();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
+
+  React.useEffect(() => {
+    // Keep local avatar in sync if profile changes elsewhere
+    setAvatarUrl(profile?.avatar_url || null);
+  }, [profile?.avatar_url]);
   const { toast } = useToast();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -435,7 +442,7 @@ const UserProfile = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <Avatar className="w-20 h-20">
-                      <AvatarImage src={profile.avatar_url || ''} />
+                      <AvatarImage src={avatarUrl || ''} />
                       <AvatarFallback className="text-lg">
                         {profile.first_name?.[0]}{profile.last_name?.[0]}
                       </AvatarFallback>
@@ -463,14 +470,28 @@ const UserProfile = () => {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="flex items-center space-x-2"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>{isEditing ? 'Cancel' : 'Edit'}</span>
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    {user && (
+                      <AvatarUpload
+                        currentAvatarUrl={avatarUrl || undefined}
+                        userId={user.id}
+                        initials={`${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`}
+                        onAvatarUpdate={async (newUrl) => {
+                          setAvatarUrl(newUrl);
+                          // Ensure profile refresh for rest of the app
+                          await updateProfile({ avatar_url: newUrl });
+                        }}
+                      />
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>{isEditing ? 'Cancel' : 'Edit'}</span>
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
             </Card>

@@ -108,6 +108,7 @@ export interface StandardPageLayoutProps {
   tableData?: any[];
   tableColumns?: TableColumn[];
   showTable?: boolean;
+  onRowClick?: (item: any) => void;
   
   // Pagination
   pagination?: {
@@ -154,6 +155,7 @@ const StandardPageLayout: React.FC<StandardPageLayoutProps> = ({
   tableData = [],
   tableColumns = [],
   showTable = false,
+  onRowClick,
   pagination,
   isLoading = false,
   loadingText = "Loading...",
@@ -284,7 +286,7 @@ const StandardPageLayout: React.FC<StandardPageLayoutProps> = ({
             </TableHeader>
             <TableBody>
               {tableData.map((item, index) => (
-                <TableRow key={index}>
+                <TableRow key={index} className={onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''} onClick={() => onRowClick?.(item)}>
                   {tableColumns.map((column) => (
                     <TableCell key={column.key} className={column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'}>
                       {column.render ? column.render(item) : item[column.key]}

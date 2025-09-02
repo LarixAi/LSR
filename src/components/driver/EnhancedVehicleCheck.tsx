@@ -117,8 +117,22 @@ const EnhancedVehicleCheck: React.FC = () => {
   const { toast } = useToast();
   const createVehicleCheck = useCreateVehicleCheck();
   const { data: vehicles = [], isLoading: vehiclesLoading } = useVehicles();
-  // Use admin-controlled questions from the database (with fallback to defaults)
-  const { data: questions = [], isLoading: questionsLoading } = useVehicleCheckQuestions();
+  // Load admin-controlled question sets for this organization
+  const { questionSets, isLoading: questionsLoading, createDefaultQuestionSet } = useVehicleCheckQuestions(profile?.organization_id ?? null);
+  const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
+
+  const activeQuestionSet = React.useMemo(() => {
+    if (!questionSets || questionSets.length === 0) return null as any;
+    const defaultSet = questionSets.find((s: any) => s.is_default) || questionSets[0];
+    if (!selectedSetId) return defaultSet;
+    return questionSets.find((s: any) => s.id === selectedSetId) || defaultSet;
+  }, [questionSets, selectedSetId]);
+
+  // Derive a flat, ordered question list from the active set
+  const questions = React.useMemo(() => {
+    const list = activeQuestionSet?.questions || [];
+    return [...list].sort((a: any, b: any) => (a?.order_index ?? 0) - (b?.order_index ?? 0));
+  }, [activeQuestionSet]);
   const [currentStep, setCurrentStep] = useState<'vehicle-selection' | 'registration-photo' | 'mileage' | 'questions' | 'signature' | 'review'>('vehicle-selection');
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [registrationPhoto, setRegistrationPhoto] = useState<string>('');
@@ -1087,6 +1101,32 @@ const EnhancedVehicleCheck: React.FC = () => {
 
       case 'questions':
         const question = getCurrentQuestion();
+        if (!question) {
+          return (
+            <Card className="w-full shadow-sm border-0 mobile-card">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-lg sm:text-xl">Vehicle Check Questions</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
+                  {questionsLoading ? 'Loading questions…' : 'No questions available for your organization.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!questionsLoading && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">You can try creating the default Daily Pre‑Trip set.</p>
+                    <Button
+                      onClick={() => {
+                        if (profile?.organization_id && profile?.id) {
+                          createDefaultQuestionSet({ organizationId: profile.organization_id, createdBy: profile.id });
+                        }
+                      }}
+                    >Create Default Question Set</Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        }
         return (
           <Card className="w-full shadow-sm border-0 mobile-card">
             <CardHeader className="pb-3 sm:pb-4">
@@ -1096,6 +1136,26 @@ const EnhancedVehicleCheck: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4">
+              {questionSets && questionSets.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Question Set</Label>
+                  <Select
+                    value={activeQuestionSet?.id}
+                    onValueChange={(v) => setSelectedSetId(v)}
+                  >
+                    <SelectTrigger className="h-10 w-full sm:w-80">
+                      <SelectValue placeholder="Select question set" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {questionSets.map((qs: any) => (
+                        <SelectItem key={qs.id} value={qs.id}>
+                          {qs.name}{qs.is_default ? ' (Default)' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-3 sm:space-y-4">
                 {/* Category Header */}
                 <div className="bg-blue-50 rounded-lg p-2 sm:p-3 border border-blue-200">

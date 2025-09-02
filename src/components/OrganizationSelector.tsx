@@ -245,10 +245,10 @@ const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
                     <span>Request to Join</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent aria-describedby="join-org-desc">
                   <DialogHeader>
                     <DialogTitle>Request to Join Organization</DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription id="join-org-desc">
                       Send a request to join a new organization. You can work with up to 3 companies.
                     </DialogDescription>
                   </DialogHeader>

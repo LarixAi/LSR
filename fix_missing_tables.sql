@@ -141,3 +141,4 @@ WHERE table_schema = 'public'
   AND table_name IN ('time_entries', 'time_off_requests', 'driver_shift_patterns')
 ORDER BY table_name;
 
+

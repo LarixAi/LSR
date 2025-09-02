@@ -492,10 +492,10 @@ const AdvancedNotificationSystem: React.FC = () => {
 
       {/* Compose Notification Dialog */}
       <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="compose-notif-desc">
           <DialogHeader>
             <DialogTitle>Compose Notification</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="compose-notif-desc">
               Send notifications to users in your organization. Choose recipients, priority, and delivery channels.
             </DialogDescription>
           </DialogHeader>

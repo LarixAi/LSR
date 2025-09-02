@@ -526,7 +526,7 @@ const AdminMechanicRequests = () => {
 
       {/* Response Dialog */}
       <Dialog open={isResponseDialogOpen} onOpenChange={setIsResponseDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="mechanic-response-desc">
           <DialogHeader>
             <DialogTitle>
               {selectedRequest && (
@@ -535,7 +535,7 @@ const AdminMechanicRequests = () => {
                 </>
               )}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="mechanic-response-desc">
               {selectedRequest && (
                 <>
                   Respond to {selectedRequest.mechanic?.first_name} {selectedRequest.mechanic?.last_name}'s request to join your organization.

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
   Bell, 
   CheckCircle, 
@@ -456,9 +456,12 @@ export default function PersonalAssistants() {
 
       {/* Create Assistant Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="create-assistant-desc">
           <DialogHeader>
             <DialogTitle>Add New AI Assistant</DialogTitle>
+            <DialogDescription id="create-assistant-desc">
+              Create a new AI assistant to help with various tasks and automation.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-gray-600">AI assistant creation form will be implemented here.</p>

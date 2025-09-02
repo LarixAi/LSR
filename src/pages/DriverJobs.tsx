@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import StandardPageLayout from '@/components/layout/StandardPageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MapPin, 
@@ -476,17 +477,11 @@ const DriverJobs = () => {
   }
 
   return (
-    <div className="space-y-4 p-4">
-      {/* Header - Mobile Optimized */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3 sm:text-3xl">
-            <MapPin className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-            My Jobs
-          </h1>
-          <p className="text-sm text-gray-600 mt-1 sm:text-base">View and manage your assigned transport jobs</p>
-        </div>
-      </div>
+    <StandardPageLayout
+      title="My Jobs"
+      description="View and manage your assigned transport jobs"
+      showMetricsDashboard={true}
+    >
 
       {/* Stats Cards - Mobile Optimized */}
       <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-4">
@@ -611,9 +606,12 @@ const DriverJobs = () => {
                                 <Eye className="w-4 h-4" />
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
+                            <DialogContent className="max-w-2xl" aria-describedby="job-details-desc">
                               <DialogHeader>
                                 <DialogTitle>{job.title}</DialogTitle>
+                                <DialogDescription id="job-details-desc">
+                                  View detailed information about this job including status, customer details, and route information.
+                                </DialogDescription>
                               </DialogHeader>
                               {selectedJob && (
                                 <div className="space-y-4">
@@ -1445,12 +1443,15 @@ const DriverJobs = () => {
 
       {/* Invoice Dialog */}
       <Dialog open={invoiceDialogOpen} onOpenChange={setInvoiceDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="invoice-dialog-desc">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="w-5 h-5" />
               Send Invoice to Management
             </DialogTitle>
+            <DialogDescription id="invoice-dialog-desc">
+              Create and send an invoice for completed jobs to management for review and payment processing.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">
@@ -1541,7 +1542,7 @@ const DriverJobs = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </StandardPageLayout>
   );
 };
 

@@ -877,10 +877,10 @@ const PartsSupplies = () => {
 
       {/* Create Part Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="create-part-desc">
           <DialogHeader>
             <DialogTitle>Add New Part</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="create-part-desc">
               Add a new part to the inventory
             </DialogDescription>
           </DialogHeader>
@@ -1006,10 +1006,10 @@ const PartsSupplies = () => {
 
       {/* Edit Part Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="edit-part-desc">
           <DialogHeader>
             <DialogTitle>Edit Part</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="edit-part-desc">
               Update part information
             </DialogDescription>
           </DialogHeader>
@@ -1126,7 +1126,7 @@ const PartsSupplies = () => {
 
       {/* View Part Dialog */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" aria-describedby="view-part-desc">
           <DialogHeader className="border-b pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -1134,7 +1134,7 @@ const PartsSupplies = () => {
                   <Package className="w-5 h-5 text-primary" />
                   {selectedPart?.name}
                 </DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground mt-1">
+                <DialogDescription id="view-part-desc" className="text-sm text-muted-foreground mt-1">
                   Part Number: {selectedPart?.part_number}
                 </DialogDescription>
               </div>
@@ -1312,10 +1312,10 @@ const PartsSupplies = () => {
 
       {/* Stock In Dialog */}
       <Dialog open={showStockInDialog} onOpenChange={setShowStockInDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="stock-in-desc">
           <DialogHeader>
             <DialogTitle>Stock In</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="stock-in-desc">
               Add stock for {selectedPart?.name}
             </DialogDescription>
           </DialogHeader>
@@ -1387,10 +1387,10 @@ const PartsSupplies = () => {
 
       {/* Stock Out Dialog */}
       <Dialog open={showStockOutDialog} onOpenChange={setShowStockOutDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="stock-out-desc">
           <DialogHeader>
             <DialogTitle>Stock Out</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="stock-out-desc">
               Remove stock for {selectedPart?.name}
             </DialogDescription>
           </DialogHeader>
@@ -1451,10 +1451,10 @@ const PartsSupplies = () => {
 
       {/* Create Order Dialog */}
       <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="create-order-desc">
           <DialogHeader>
             <DialogTitle>Create Order</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="create-order-desc">
               Order {selectedPart?.name}
             </DialogDescription>
           </DialogHeader>
@@ -1531,10 +1531,10 @@ const PartsSupplies = () => {
 
       {/* Stock Movements Dialog */}
       <Dialog open={showMovementsDialog} onOpenChange={setShowMovementsDialog}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl" aria-describedby="stock-movements-desc">
           <DialogHeader>
             <DialogTitle>Stock Movements</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="stock-movements-desc">
               Recent stock movements and audit trail
             </DialogDescription>
           </DialogHeader>

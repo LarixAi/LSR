@@ -2,11 +2,13 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import fs from "fs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
+  const useHttps = env.VITE_USE_HTTPS !== 'false';
   
   return {
     // Set base path for assets - use relative paths for web hosting
@@ -14,9 +16,14 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "0.0.0.0",
       port: 3004,
+      strictPort: true,
+      https: useHttps ? {
+        key: fs.readFileSync('.cert/dev.key'),
+        cert: fs.readFileSync('.cert/dev.crt'),
+      } : false,
       hmr: {
         port: 3004,
-        host: 'localhost'
+        protocol: useHttps ? 'wss' : 'ws'
       }
     },
     build: {
@@ -54,8 +61,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      mode === 'development' &&
-      componentTagger(),
+      mode === 'development' && componentTagger(),
     ].filter(Boolean),
     resolve: {
       alias: {
@@ -66,12 +72,8 @@ export default defineConfig(({ mode }) => {
       // Ensure environment variables are available in the client
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || env.SUPABASE_URL),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY),
-      'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
-      'process.env.SUPABASE_ANON_KEY': JSON.stringify(env.SUPABASE_ANON_KEY),
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || env.SUPABASE_URL),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY),
-      'import.meta.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
-      'import.meta.env.SUPABASE_ANON_KEY': JSON.stringify(env.SUPABASE_ANON_KEY),
     },
   };
 });

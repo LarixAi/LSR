@@ -97,7 +97,7 @@ const UserProfileDropdown = () => {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/settings" className="flex items-center">
+          <Link to={profile?.role === 'driver' ? '/driver/settings' : '/settings'} className="flex items-center">
             <Settings className="w-4 h-4 mr-2" />
             Settings
           </Link>

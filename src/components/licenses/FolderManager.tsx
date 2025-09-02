@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Folder, Plus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLicenseFolders, LicenseFolder } from '@/hooks/useLicenseFolders';
 
@@ -49,9 +49,12 @@ const FolderManager: React.FC<FolderManagerProps> = ({
               New Folder
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent aria-describedby="create-folder-desc">
             <DialogHeader>
               <DialogTitle>Create New Folder</DialogTitle>
+              <DialogDescription id="create-folder-desc">
+                Create a new folder to organize your documents
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <Input

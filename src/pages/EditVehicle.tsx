@@ -935,10 +935,10 @@ export default function EditVehicle() {
 
       {/* Add Daily Cost Modal */}
       <Dialog open={showAddCostModal} onOpenChange={setShowAddCostModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="add-cost-desc">
           <DialogHeader>
             <DialogTitle>Add Daily Running Cost</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="add-cost-desc">
               Add a new daily cost record for this vehicle
             </DialogDescription>
           </DialogHeader>
@@ -1070,10 +1070,10 @@ export default function EditVehicle() {
 
       {/* Add Tyre Modal */}
       <Dialog open={showAddTyreModal} onOpenChange={setShowAddTyreModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="add-tyre-desc">
           <DialogHeader>
             <DialogTitle>Add New Tyre</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="add-tyre-desc">
               Add a new tyre to the vehicle inventory
             </DialogDescription>
           </DialogHeader>

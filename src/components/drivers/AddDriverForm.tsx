@@ -271,12 +271,12 @@ const AddDriverForm: React.FC<AddDriverFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="add-driver-desc">
         {!createdDriverInfo ? (
           <>
             <DialogHeader>
               <DialogTitle>Add New Driver</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="add-driver-desc">
                 Fill out the form below to add a new driver to the system. Required fields are marked with *.
               </DialogDescription>
             </DialogHeader>

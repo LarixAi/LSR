@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { 
   Mail, 
   Send, 
@@ -400,9 +400,12 @@ export const EmailManagement: React.FC = () => {
 
       {/* Dialogs */}
       <Dialog open={showNewTemplate} onOpenChange={setShowNewTemplate}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="create-email-template-desc">
           <DialogHeader>
             <DialogTitle>Create Email Template</DialogTitle>
+            <DialogDescription id="create-email-template-desc">
+              Create a new email template for your communications
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -459,9 +462,12 @@ export const EmailManagement: React.FC = () => {
       </Dialog>
 
       <Dialog open={showCompose} onOpenChange={setShowCompose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="compose-email-desc">
           <DialogHeader>
             <DialogTitle>Compose Email</DialogTitle>
+            <DialogDescription id="compose-email-desc">
+              Compose and send emails to your team members
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">

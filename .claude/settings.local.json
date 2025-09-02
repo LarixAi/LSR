@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(openssl:*)",
+      "Bash(chmod:*)",
+      "Bash(timeout 10s npm run dev)",
+      "Bash(node:*)",
+      "Bash(pkill:*)",
+      "Bash(kill:*)",
+      "Bash(lsof:*)",
+      "Bash(sudo security add-trusted-cert:*)"
     ],
     "deny": [],
     "ask": []

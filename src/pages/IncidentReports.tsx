@@ -515,10 +515,10 @@ const IncidentReports = () => {
       )}
 
       <Dialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="resolve-incident-desc">
           <DialogHeader>
             <DialogTitle>Resolve Incident</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="resolve-incident-desc">
               Update the incident status and add resolution notes.
             </DialogDescription>
           </DialogHeader>

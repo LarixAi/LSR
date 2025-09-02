@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import DriverLayout from '@/components/layout/DriverLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, 
@@ -429,9 +430,12 @@ const DriverCompliance = () => {
                               <Eye className="w-4 h-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent>
+                          <DialogContent aria-describedby="doc-details-desc">
                             <DialogHeader>
                               <DialogTitle>{doc.name} Details</DialogTitle>
+                              <DialogDescription id="doc-details-desc">
+                                View detailed information about this compliance document.
+                              </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
@@ -718,14 +722,14 @@ const DriverCompliance = () => {
   );
 
   return (
-    <>
+    <DriverLayout title="Driver Compliance" description="Track your compliance status and certifications">
       {isMobile ? (
         <MobileOptimizedLayout>
           {content}
         </MobileOptimizedLayout>
       ) : content}
       <ComplianceDebugPanel />
-    </>
+    </DriverLayout>
   );
 };
 

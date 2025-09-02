@@ -42,13 +42,13 @@ const LicenseDetailsDialog: React.FC<LicenseDetailsDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" aria-describedby="license-details-desc">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Shield className="w-5 h-5" />
             <span>License Details</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="license-details-desc">
             Complete information for driver license
           </DialogDescription>
         </DialogHeader>

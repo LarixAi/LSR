@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
   Calendar, 
   Plus, 
@@ -399,9 +399,12 @@ export default function Schedule() {
 
       {/* Create Schedule Item Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="create-schedule-item-desc">
           <DialogHeader>
             <DialogTitle>Add Schedule Item</DialogTitle>
+            <DialogDescription id="create-schedule-item-desc">
+              Create a new schedule item for your team
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-gray-600">Schedule item creation form will be implemented here.</p>

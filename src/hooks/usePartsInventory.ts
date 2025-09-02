@@ -88,9 +88,10 @@ export interface PartsRequest {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: 'pending' | 'approved' | 'rejected' | 'fulfilled';
   requested_by: string;
-  approved_by?: string;
-  requested_date: string;
-  approved_date?: string;
+  requested_at: string;
+  ordered_at?: string;
+  received_at?: string;
+  installed_at?: string;
   notes?: string;
   part?: {
     part_number: string;
@@ -248,10 +249,7 @@ export const usePartsInventory = (organizationId?: string) => {
       try {
         const { data: movementsData, error } = await supabase
           .from('stock_movements')
-          .select(`
-            *,
-            part:parts_inventory(part_number, name)
-          `)
+          .select('*')
           .eq('organization_id', organizationId)
           .order('movement_date', { ascending: false })
           .limit(50);
@@ -279,12 +277,9 @@ export const usePartsInventory = (organizationId?: string) => {
       try {
         const { data: requestsData, error } = await supabase
           .from('parts_requests')
-          .select(`
-            *,
-            part:parts_inventory(part_number, name)
-          `)
+          .select('*')
           .eq('organization_id', organizationId)
-          .order('requested_date', { ascending: false });
+          .order('requested_at', { ascending: false });
 
         if (error) {
           console.error('Error fetching parts requests:', error);
@@ -417,7 +412,7 @@ export const usePartsInventory = (organizationId?: string) => {
           organization_id: organizationId,
           requested_by: profile?.id,
           status: 'pending',
-          requested_date: new Date().toISOString()
+          requested_at: new Date().toISOString()
         }])
         .select()
         .single();
@@ -443,7 +438,7 @@ export const usePartsInventory = (organizationId?: string) => {
         .update({
           status,
           approved_by: profile?.id,
-          approved_date: new Date().toISOString(),
+          approved_at: new Date().toISOString(),
           notes: notes || ''
         })
         .eq('id', id)

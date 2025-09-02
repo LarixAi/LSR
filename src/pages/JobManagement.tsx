@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import StandardPageLayout, { MetricCard, NavigationTab, ActionButton, FilterOption, TableColumn } from '@/components/layout/StandardPageLayout';
+import { useSendNotification } from '@/hooks/useAdvancedNotifications';
 import { useJobs, useJobStats, useCreateJob, useUpdateJob, useDeleteJob } from '@/hooks/useJobs';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useVehicles } from '@/hooks/useVehicles';
@@ -28,8 +29,12 @@ import {
 
 const JobManagement: React.FC = () => {
   const { user, profile, loading } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isCreateJobDialogOpen, setIsCreateJobDialogOpen] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const sendNotification = useSendNotification();
   const [newJobData, setNewJobData] = useState({
     title: '',
     description: '',
@@ -127,244 +132,242 @@ const JobManagement: React.FC = () => {
     );
   };
 
-  const filteredJobs = jobs.filter(job => 
-    job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.job_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredJobs = jobs
+    .filter(job =>
+      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.job_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(job => (statusFilter === 'all' ? true : (job.status || 'pending') === statusFilter));
 
   // Use real job statistics from the hook
 
+  // Layout mappings
+  const navigationTabs: NavigationTab[] = [
+    { value: 'all', label: 'All' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'assigned', label: 'Assigned' },
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'bidding', label: 'Bidding' }
+  ];
+
+  const metricsCards: MetricCard[] = [
+    { title: 'Total Jobs', value: jobStats.total, icon: <FileText className="w-5 h-5" /> },
+    { title: 'In Progress', value: jobStats.in_progress, icon: <CheckCircle className="w-5 h-5" /> },
+    { title: 'Pending', value: jobStats.pending, icon: <Clock className="w-5 h-5" /> },
+    { title: 'Completed', value: jobStats.completed, icon: <DollarSign className="w-5 h-5" /> }
+  ];
+
+  const searchConfig = {
+    placeholder: 'Search jobs...',
+    value: searchTerm,
+    onChange: setSearchTerm,
+    showSearch: true
+  };
+
+  const filters: FilterOption[] = [
+    {
+      label: 'Status',
+      value: statusFilter,
+      options: [
+        { value: 'all', label: 'All' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'assigned', label: 'Assigned' },
+        { value: 'in_progress', label: 'In Progress' },
+        { value: 'completed', label: 'Completed' },
+        { value: 'cancelled', label: 'Cancelled' }
+      ],
+      placeholder: 'Filter by status'
+    }
+  ];
+
+  const handleFilterChange = (filterKey: string, value: string) => {
+    if (filterKey === 'Status') setStatusFilter(value);
+  };
+
+  const tableColumns: TableColumn[] = [
+    { key: 'job_number', label: 'Job Number', render: (item: any) => item.job_number || item.id?.slice(0, 8) },
+    { key: 'title', label: 'Title' },
+    { key: 'customer_name', label: 'Customer' },
+    { key: 'priority', label: 'Priority', render: (item: any) => getPriorityBadge(item.priority || 'medium') },
+    { key: 'status', label: 'Status', render: (item: any) => getStatusBadge(item.status || 'pending') },
+    { key: 'created_at', label: 'Created', render: (item: any) => new Date(item.created_at).toLocaleDateString() },
+    { key: 'actions', label: 'Actions', render: () => (
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm">
+          <Eye className="w-4 h-4" />
+        </Button>
+        <Button variant="outline" size="sm">
+          <Edit className="w-4 h-4" />
+        </Button>
+      </div>
+    ) }
+  ];
+
+  const openJobForBids = async (job: any) => {
+    try {
+      await updateJobMutation.mutateAsync({ id: job.id, updates: { status: 'open_for_bidding', bidding_enabled: true } as any });
+      await sendNotification.mutateAsync({
+        recipientType: 'role',
+        recipientRole: 'driver',
+        title: 'New Job Available for Bidding',
+        body: `${job.title} – From ${job.pickup_location || '-'} to ${job.delivery_location || '-'}. Submit your bid in the app.`,
+        type: 'info',
+        priority: 'normal',
+        category: 'schedule',
+        channels: ['in_app'],
+        isScheduled: false,
+      });
+    } catch (e) {
+      console.error('Failed to open job for bidding:', e);
+    }
+  };
+
+  const primaryAction: ActionButton = {
+    label: 'Create Job',
+    onClick: () => navigate('/jobs/create'),
+    icon: <Plus className="w-4 h-4" />
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-blue-600" />
-            Job Management
-          </h1>
-          <p className="text-gray-600 mt-1">Create, assign, and track transport jobs</p>
-        </div>
-        <Dialog open={isCreateJobDialogOpen} onOpenChange={setIsCreateJobDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Job
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Job</DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="job-title">Job Title *</Label>
-                <Input 
-                  id="job-title" 
-                  placeholder="Enter job title" 
-                  value={newJobData.title}
-                  onChange={(e) => setNewJobData({...newJobData, title: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="customer">Customer Name *</Label>
-                <Input 
-                  id="customer" 
-                  placeholder="Customer name" 
-                  value={newJobData.customer_name}
-                  onChange={(e) => setNewJobData({...newJobData, customer_name: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="pickup">Pickup Location</Label>
-                <Input 
-                  id="pickup" 
-                  placeholder="Pickup address" 
-                  value={newJobData.pickup_location}
-                  onChange={(e) => setNewJobData({...newJobData, pickup_location: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="delivery">Delivery Location</Label>
-                <Input 
-                  id="delivery" 
-                  placeholder="Delivery address" 
-                  value={newJobData.delivery_location}
-                  onChange={(e) => setNewJobData({...newJobData, delivery_location: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="start-date">Start Date</Label>
-                <Input 
-                  id="start-date" 
-                  type="date" 
-                  value={newJobData.start_date}
-                  onChange={(e) => setNewJobData({...newJobData, start_date: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="priority">Priority</Label>
-                <Select 
-                  value={newJobData.priority} 
-                  onValueChange={(value) => setNewJobData({...newJobData, priority: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Input 
-                  id="description" 
-                  placeholder="Job description" 
-                  value={newJobData.description}
-                  onChange={(e) => setNewJobData({...newJobData, description: e.target.value})}
-                />
-              </div>
-              <div className="col-span-2">
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700" 
-                  onClick={handleCreateJob}
-                  disabled={createJobMutation.isPending || !newJobData.title || !newJobData.customer_name}
-                >
-                  {createJobMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Job'
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <StandardPageLayout
+      title="Job Management"
+      description="Create, assign, and track transport jobs"
+      primaryAction={primaryAction}
+      metricsCards={metricsCards}
+      showMetricsDashboard={true}
+      navigationTabs={navigationTabs}
+      activeTab={activeTab}
+      onTabChange={(val: string) => {
+        setActiveTab(val);
+        setStatusFilter(val === 'all' ? 'all' : val);
+      }}
+      searchConfig={searchConfig}
+      filters={filters}
+      onFilterChange={handleFilterChange}
+      showTable={true}
+      tableData={activeTab === 'bidding' ? filteredJobs.filter(j => j.status === 'open_for_bidding' || j.bidding_enabled) : filteredJobs}
+      tableColumns={tableColumns}
+    >
+      {activeTab === 'bidding' && (
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <FileText className="w-8 h-8 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-600">Total Jobs</p>
-                <p className="text-2xl font-bold">{jobStats.total}</p>
-              </div>
+          <CardContent className="p-4">
+            <div className="text-sm text-gray-700 mb-3">Open jobs for bidding and broadcast to all drivers. Offered pay (optional) helps drivers decide.</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {jobs.filter((j: any) => j.status !== 'open_for_bidding').slice(0,6).map((job: any) => (
+                <div key={job.id} className="flex items-center justify-between p-3 border rounded">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{job.title || job.id.slice(0,8)}</div>
+                    <div className="text-xs text-gray-500 truncate">{job.pickup_location || '-'} → {job.delivery_location || '-'}</div>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => openJobForBids(job)}>Open for Bids</Button>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-600">In Progress</p>
-                <p className="text-2xl font-bold text-green-600">{jobStats.in_progress}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <Clock className="w-8 h-8 text-yellow-600" />
-              <div>
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{jobStats.pending}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-green-600">{jobStats.completed}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Job List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Job List
-          </CardTitle>
-          <div className="flex gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search jobs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+      )}
+      <Dialog open={isCreateJobDialogOpen} onOpenChange={setIsCreateJobDialogOpen}>
+        <DialogContent className="max-w-2xl" aria-describedby="create-job-desc">
+          <DialogHeader>
+            <DialogTitle>Create New Job</DialogTitle>
+            <p id="create-job-desc" className="sr-only">Fill out the fields below to create a new job.</p>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="job-title">Job Title *</Label>
+              <Input 
+                id="job-title" 
+                placeholder="Enter job title" 
+                value={newJobData.title}
+                onChange={(e) => setNewJobData({...newJobData, title: e.target.value})}
               />
             </div>
+            <div>
+              <Label htmlFor="customer">Customer Name *</Label>
+              <Input 
+                id="customer" 
+                placeholder="Customer name" 
+                value={newJobData.customer_name}
+                onChange={(e) => setNewJobData({...newJobData, customer_name: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="pickup">Pickup Location</Label>
+              <Input 
+                id="pickup" 
+                placeholder="Pickup address" 
+                value={newJobData.pickup_location}
+                onChange={(e) => setNewJobData({...newJobData, pickup_location: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="delivery">Delivery Location</Label>
+              <Input 
+                id="delivery" 
+                placeholder="Delivery address" 
+                value={newJobData.delivery_location}
+                onChange={(e) => setNewJobData({...newJobData, delivery_location: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="start-date">Start Date</Label>
+              <Input 
+                id="start-date" 
+                type="date" 
+                value={newJobData.start_date}
+                onChange={(e) => setNewJobData({...newJobData, start_date: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="priority">Priority</Label>
+              <Select 
+                value={newJobData.priority} 
+                onValueChange={(value) => setNewJobData({...newJobData, priority: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="description">Description</Label>
+              <Input 
+                id="description" 
+                placeholder="Job description" 
+                value={newJobData.description}
+                onChange={(e) => setNewJobData({...newJobData, description: e.target.value})}
+              />
+            </div>
+            <div className="col-span-2">
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700" 
+                onClick={handleCreateJob}
+                disabled={createJobMutation.isPending || !newJobData.title || !newJobData.customer_name}
+              >
+                {createJobMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Job'
+                )}
+              </Button>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Job Number</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredJobs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                    {jobs.length === 0 ? 'No jobs found. Create your first job to get started.' : 'No jobs match your search criteria.'}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredJobs.map((job) => (
-                  <TableRow key={job.id}>
-                    <TableCell className="font-medium">{job.job_number || job.id.slice(0, 8)}</TableCell>
-                    <TableCell>{job.title || 'Untitled Job'}</TableCell>
-                    <TableCell>{job.customer_name || 'No customer'}</TableCell>
-                    <TableCell>{getPriorityBadge(job.priority || 'medium')}</TableCell>
-                    <TableCell>{getStatusBadge(job.status || 'pending')}</TableCell>
-                    <TableCell>{new Date(job.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+        </DialogContent>
+      </Dialog>
+      <div></div>
+    </StandardPageLayout>
   );
 };
 

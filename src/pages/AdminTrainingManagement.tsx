@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +58,7 @@ const AdminTrainingManagement = () => {
     overdue: 0,
     notStarted: 0
   });
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'assignments' | 'courses'>('assignments');
   const [modules, setModules] = useState<any[]>([]);
   const [modulesLoading, setModulesLoading] = useState(true);
@@ -70,6 +71,15 @@ const AdminTrainingManagement = () => {
       fetchModules();
     }
   }, [profile?.organization_id]);
+
+  // Initialize tab from query param (?tab=courses)
+  useEffect(() => {
+    const qp = new URLSearchParams(location.search);
+    const tab = qp.get('tab');
+    if (tab === 'courses' || tab === 'assignments') {
+      setActiveTab(tab as 'assignments' | 'courses');
+    }
+  }, [location.search]);
 
   const fetchTrainingRecords = async () => {
     setLoading(true);

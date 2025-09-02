@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import StandardPageLayout, { NavigationTab, ActionButton } from '@/components/layout/StandardPageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,6 +79,13 @@ const DriverDashboard: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+
+  const navigationTabs: NavigationTab[] = [
+    { value: 'overview', label: 'Overview' },
+    { value: 'schedule', label: 'Schedule' },
+    { value: 'vehicle', label: 'Vehicle' },
+    { value: 'activity', label: 'Activity' }
+  ];
 
   // SECURITY CHECK: Verify user is a driver
   if (profile?.role !== 'driver') {
@@ -469,28 +477,21 @@ const DriverDashboard: React.FC = () => {
     }
   };
 
+  const primaryAction: ActionButton = {
+    label: currentTimeEntry?.clock_in && !currentTimeEntry?.clock_out ? 'Clock Out' : 'Clock In',
+    onClick: () => {},
+  };
+
   return (
-    <div className="space-y-4 p-4">
-      {/* Header - Mobile Optimized */}
-      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Driver Dashboard</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            Welcome back, {profile.first_name}! Here's your day at a glance.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" className="text-xs sm:text-sm">
-            <Bell className="w-4 h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Notifications</span>
-            <span className="sm:hidden">Alerts</span>
-          </Button>
-          <Button size="sm" className="text-xs sm:text-sm">
-            <Clock className="w-4 h-4 mr-1 sm:mr-2" />
-            {currentTimeEntry?.clock_in && !currentTimeEntry?.clock_out ? 'Clock Out' : 'Clock In'}
-          </Button>
-        </div>
-      </div>
+    <StandardPageLayout
+      title="Driver Dashboard"
+      description={`Welcome back, ${profile.first_name}! Here's your day at a glance.`}
+      primaryAction={primaryAction}
+      showMetricsDashboard={true}
+      navigationTabs={navigationTabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
 
       {/* Error Alert */}
       {hasErrors && (
@@ -610,17 +611,8 @@ const DriverDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Main Content - Mobile Optimized */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 mobile-tabs">
-        <TabsList className="grid w-full grid-cols-4 gap-1">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Overview</TabsTrigger>
-          <TabsTrigger value="schedule" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Schedule</TabsTrigger>
-          <TabsTrigger value="vehicle" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Vehicle</TabsTrigger>
-          <TabsTrigger value="activity" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Activity</TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab - Mobile Optimized */}
-        <TabsContent value="overview" className="space-y-4">
+      {activeTab === 'overview' && (
+        <div className="space-y-4">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             {/* Today's Schedule Summary */}
             <Card className="mobile-card">
@@ -743,10 +735,11 @@ const DriverDashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* Today's Schedule Tab - Mobile Optimized */}
-        <TabsContent value="schedule" className="space-y-4">
+      {activeTab === 'schedule' && (
+        <div className="space-y-4">
           <Card className="mobile-card">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -784,10 +777,11 @@ const DriverDashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* Vehicle Info Tab */}
-        <TabsContent value="vehicle" className="space-y-4">
+      {activeTab === 'vehicle' && (
+        <div className="space-y-4">
           {vehicleLoading ? (
             <Card>
               <CardContent className="pt-6">
@@ -898,10 +892,11 @@ const DriverDashboard: React.FC = () => {
               </Card>
             </div>
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        {/* Recent Activity Tab */}
-        <TabsContent value="activity" className="space-y-4">
+      {activeTab === 'activity' && (
+        <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -929,9 +924,9 @@ const DriverDashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+        </div>
+      )}
+    </StandardPageLayout>
   );
 };
 

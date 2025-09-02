@@ -415,10 +415,10 @@ const VehicleInspectionsPage = () => {
 
       {/* View Inspection Dialog */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="inspection-details-desc">
           <DialogHeader>
             <DialogTitle>Inspection Details</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="inspection-details-desc">
               View complete inspection information
             </DialogDescription>
           </DialogHeader>

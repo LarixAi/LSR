@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, BookOpen, Clock, CheckCircle, Info } from 'lucide-react';
+// Import training courses markdown as raw text (Vite supports ?raw)
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - Vite raw import typing
+import trainingCoursesMd from '@/../docs/DRIVER_TRAINING_COURSES.md?raw';
 
 interface ModuleRow {
   id: string;
@@ -37,6 +41,19 @@ interface QuestionRow {
   explanation?: string;
 }
 
+const extractMarkdownSection = (markdown: string, title: string): string | null => {
+  if (!markdown || !title) return null;
+  const lines = markdown.split(/\r?\n/);
+  const startIdx = lines.findIndex((l) => l.trim().toLowerCase() === `## ${title}`.toLowerCase());
+  if (startIdx === -1) return null;
+  let endIdx = lines.length;
+  for (let i = startIdx + 1; i < lines.length; i++) {
+    if (lines[i].startsWith('## ')) { endIdx = i; break; }
+  }
+  const section = lines.slice(startIdx, endIdx).join('\n').trim();
+  return section || null;
+};
+
 const TrainingModuleDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -45,6 +62,7 @@ const TrainingModuleDetail: React.FC = () => {
   const [module, setModule] = useState<ModuleRow | null>(null);
   const [content, setContent] = useState<ModuleContentRow | null>(null);
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
+  const [fallbackMd, setFallbackMd] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -75,6 +93,12 @@ const TrainingModuleDetail: React.FC = () => {
             .eq('organization_id', profile.organization_id)
             .order('created_at', { ascending: true });
           setQuestions((questionRows || []) as QuestionRow[]);
+
+          // If DB content is missing, try to load fallback from Markdown
+          if (!contentRow?.content_md && data.name) {
+            const section = extractMarkdownSection(trainingCoursesMd as string, data.name);
+            setFallbackMd(section);
+          }
         }
       } finally {
         setLoading(false);
@@ -130,9 +154,14 @@ const TrainingModuleDetail: React.FC = () => {
             {module?.description && (
               <div className="mt-4 text-sm text-gray-700">{module.description}</div>
             )}
-            {content?.content_md && (
-              <div className="mt-4 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: content.content_md }} />
-            )}
+            {content?.content_md ? (
+              <div className="mt-4 prose prose-sm max-w-none whitespace-pre-wrap">{content.content_md}</div>
+            ) : fallbackMd ? (
+              <div className="mt-4">
+                <div className="text-xs text-gray-500 mb-2">Loaded from docs/DRIVER_TRAINING_COURSES.md</div>
+                <pre className="whitespace-pre-wrap text-sm text-gray-800">{fallbackMd}</pre>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

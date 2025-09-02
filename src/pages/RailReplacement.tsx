@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
   Train, 
   Plus, 
@@ -412,9 +412,12 @@ export default function RailReplacement() {
 
       {/* Create Service Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="create-rail-service-desc">
           <DialogHeader>
             <DialogTitle>Create New Rail Replacement Service</DialogTitle>
+            <DialogDescription id="create-rail-service-desc">
+              Create a new rail replacement service with all necessary details and configuration.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-gray-600">Rail replacement service creation form will be implemented here.</p>

@@ -4,11 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MechanicsList from './MechanicsList';
 import MaintenanceRequestsList from './MaintenanceRequestsList';
-import AddMechanicDialog from './AddMechanicDialog';
 import CreateMaintenanceRequestDialog from './CreateMaintenanceRequestDialog';
 
 const MechanicsManagement = () => {
-  const [showAddMechanic, setShowAddMechanic] = useState(false);
   const [showCreateRequest, setShowCreateRequest] = useState(false);
 
   return (
@@ -28,7 +26,7 @@ const MechanicsManagement = () => {
             </TabsList>
 
             <TabsContent value="mechanics">
-              <MechanicsList onAddMechanic={() => setShowAddMechanic(true)} />
+              <MechanicsList />
             </TabsContent>
 
             <TabsContent value="maintenance">
@@ -37,11 +35,6 @@ const MechanicsManagement = () => {
           </Tabs>
         </CardContent>
       </Card>
-
-      <AddMechanicDialog 
-        open={showAddMechanic} 
-        onOpenChange={setShowAddMechanic} 
-      />
 
       <CreateMaintenanceRequestDialog 
         open={showCreateRequest} 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DriverLayout from '@/components/layout/DriverLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -243,6 +244,7 @@ const DriverFuelSystem: React.FC = () => {
   };
 
   return (
+    <DriverLayout title="Fuel System" description="Record fuel purchases and track consumption">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -630,10 +632,10 @@ const DriverFuelSystem: React.FC = () => {
 
       {/* Add Purchase Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="add-fuel-desc">
           <DialogHeader>
             <DialogTitle>{editingPurchase ? 'Edit Fuel Purchase' : 'Add Fuel Purchase'}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="add-fuel-desc">
               Record a new fuel purchase for your vehicle
             </DialogDescription>
           </DialogHeader>
@@ -760,10 +762,10 @@ const DriverFuelSystem: React.FC = () => {
 
       {/* View Purchase Dialog */}
       <Dialog open={!!viewingPurchase} onOpenChange={(open) => !open && setViewingPurchase(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="view-fuel-desc">
           <DialogHeader>
             <DialogTitle>View Fuel Purchase</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="view-fuel-desc">
               Details of a specific fuel purchase
             </DialogDescription>
           </DialogHeader>
@@ -834,6 +836,7 @@ const DriverFuelSystem: React.FC = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </DriverLayout>
   );
 };
 

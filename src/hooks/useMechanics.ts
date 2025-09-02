@@ -76,7 +76,7 @@ export const useMechanics = () => {
       console.log('Fetching mechanics from database...');
       
       try {
-        // First, get mechanics data
+        // First, get mechanics data from the mechanics table
         const { data: mechanicsData, error: mechanicsError } = await supabase
           .from('mechanics')
           .select('*')

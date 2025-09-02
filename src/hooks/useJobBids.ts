@@ -1,6 +1,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 type JobBid = {
   id: string;
@@ -14,18 +16,28 @@ type JobBid = {
 };
 
 export const useJobBids = (jobId?: string) => {
+  const { profile } = useAuth();
   return useQuery({
     queryKey: ['job-bids', jobId],
     queryFn: async () => {
-      return [];
+      if (!jobId || !profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('job_bids')
+        .select('*, driver_profile:first_name, driver_profile:last_name')
+        .eq('job_id', jobId)
+        .eq('organization_id', profile.organization_id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any as JobBid[];
     },
-    enabled: !!jobId,
+    enabled: !!jobId && !!profile?.organization_id,
   });
 };
 
 export const useCreateJobBid = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { profile } = useAuth();
   
   return useMutation({
     mutationFn: async (bidData: {
@@ -33,7 +45,20 @@ export const useCreateJobBid = () => {
       bid_amount: number;
       message?: string;
     }) => {
-      throw new Error('Job bid creation not available');
+      if (!profile?.id || !profile.organization_id) throw new Error('Not authenticated');
+      const { data, error } = await supabase
+        .from('job_bids')
+        .insert({
+          job_id: bidData.job_id,
+          driver_id: profile.id,
+          organization_id: profile.organization_id,
+          bid_amount: bidData.bid_amount,
+          message: bidData.message || null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as unknown as JobBid;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['job-bids', variables.job_id] });
@@ -49,6 +74,7 @@ export const useCreateJobBid = () => {
 export const useUpdateJobBid = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { profile } = useAuth();
   
   return useMutation({
     mutationFn: async ({ 
@@ -60,7 +86,15 @@ export const useUpdateJobBid = () => {
       jobId: string; 
       status?: 'pending' | 'accepted' | 'rejected';
     }) => {
-      throw new Error('Job bid update not available');
+      if (!profile?.organization_id) throw new Error('Not authenticated');
+      const { data, error } = await supabase
+        .from('job_bids')
+        .update(bidData)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as unknown as JobBid;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['job-bids', variables.jobId] });

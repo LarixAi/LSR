@@ -39,7 +39,8 @@ import {
   Moon,
   Sun,
   Volume2,
-  VolumeX
+  VolumeX,
+  Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -51,9 +52,12 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import AvatarUpload from '@/components/AvatarUpload';
+import { useProfile } from '@/hooks/useProfile';
 
 const MobileSettings: React.FC = () => {
   const { user, profile, loading: authLoading, signOut } = useAuth();
+  const { updateProfile } = useProfile();
 
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -302,23 +306,28 @@ const MobileSettings: React.FC = () => {
         <TouchFriendlyCard variant="interactive">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={profile.avatar_url} />
-                <AvatarFallback>
-                  {profile.first_name?.[0]}{profile.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
+              {user && (
+                <AvatarUpload
+                  currentAvatarUrl={profile.avatar_url}
+                  userId={user.id}
+                  initials={`${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`}
+                  onAvatarUpdate={async (newAvatarUrl) => {
+                    await updateProfile({ avatar_url: newAvatarUrl });
+                  }}
+                />
+              )}
               <div className="flex-1 min-w-0">
-                <CardTitle className="text-lg">
+                <CardTitle className="text-lg truncate">
                   {profile.first_name} {profile.last_name}
                 </CardTitle>
-                <CardDescription className="text-sm">
-                  {profile.email} • {profile.role}
-                </CardDescription>
+                <div className="mt-0.5 flex items-center text-sm text-muted-foreground">
+                  <Mail className="w-4 h-4 mr-2" />
+                  <span className="truncate">{profile.email}</span>
+                </div>
+                <div className="mt-1">
+                  <Badge variant="secondary" className="capitalize">{profile.role}</Badge>
+                </div>
               </div>
-              <Badge variant="outline" className="capitalize">
-                {profile.role}
-              </Badge>
             </div>
           </CardHeader>
         </TouchFriendlyCard>

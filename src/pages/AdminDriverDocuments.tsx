@@ -609,10 +609,10 @@ const AdminDriverDocuments = () => {
 
       {/* Request Document Dialog */}
       <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="request-doc-desc">
           <DialogHeader>
             <DialogTitle>Request Document from Driver</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="request-doc-desc">
               Create a new document request for a driver.
             </DialogDescription>
           </DialogHeader>
@@ -721,10 +721,10 @@ const AdminDriverDocuments = () => {
 
       {/* Review Document Dialog */}
       <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="review-doc-desc">
           <DialogHeader>
             <DialogTitle>Review Document</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="review-doc-desc">
               Review and approve or reject the uploaded document.
             </DialogDescription>
           </DialogHeader>
@@ -782,9 +782,12 @@ const AdminDriverDocuments = () => {
 
       {/* View Document Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="view-doc-desc">
           <DialogHeader>
             <DialogTitle>Document Details</DialogTitle>
+            <DialogDescription id="view-doc-desc">
+              View detailed information about the selected document.
+            </DialogDescription>
           </DialogHeader>
           
           {selectedDocument && (

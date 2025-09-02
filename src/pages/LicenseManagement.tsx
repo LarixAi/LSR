@@ -441,10 +441,10 @@ const LicenseManagement = () => {
 
       {/* View License Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="license-details-desc">
           <DialogHeader>
             <DialogTitle>License Details</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="license-details-desc">
               Complete information about the selected license
             </DialogDescription>
           </DialogHeader>

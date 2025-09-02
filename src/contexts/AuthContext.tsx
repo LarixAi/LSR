@@ -110,17 +110,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const validateProfileRole = (profile: any, userId: string): boolean => {
+    // Validate that profile has expected structure and user ID matches
+    if (!profile || typeof profile !== 'object') return false;
+    if (profile.id !== userId) {
+      console.warn('⚠️ Profile user ID mismatch - potential cached data from different user');
+      return false;
+    }
+    if (!profile.role || typeof profile.role !== 'string') {
+      console.warn('⚠️ Profile missing or invalid role');
+      return false;
+    }
+    return true;
+  };
+
   const fetchProfile = async (userId: string) => {
     try {
-      // First, check for emergency profile in localStorage
-      const emergencyProfile = localStorage.getItem('emergency_user_profile');
-      if (emergencyProfile) {
-        console.log('🚨 Using emergency profile from localStorage');
-        const profile = JSON.parse(emergencyProfile);
-        setProfile(profile);
-        return;
-      }
-
+      console.log('🔍 Fetching fresh profile for user:', userId);
+      
+      // NEVER use cached data - always fetch fresh to prevent role mixing
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -129,61 +137,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Profile fetch error:', error);
-        
-        // If we get an access control error, try to use emergency profile
-        if (error.message.includes('Load failed') || error.message.includes('access control') || error.message.includes('CORS') || error.message.includes('TypeError')) {
-          console.log('🚨 Access control/CORS error detected, checking for emergency profile');
-          const emergencyProfile = sessionStorage.getItem('user_profile');
-          if (emergencyProfile) {
-            console.log('✅ Using emergency profile from sessionStorage');
-            const profile = JSON.parse(emergencyProfile);
-            setProfile(profile);
-            return;
-          }
-        }
-        
-        // Don't throw error, just log it and continue
         setProfile(null);
         return;
       }
 
       if (data) {
+        // Validate the profile data before using it
+        if (!validateProfileRole(data, userId)) {
+          console.error('❌ Invalid profile data received, clearing and retrying...');
+          setProfile(null);
+          return;
+        }
+
+        console.log('✅ Valid profile loaded:', { id: data.id, role: data.role, email: data.email });
         setProfile(data);
-        // Store profile in sessionStorage as backup
+        
+        // Only cache AFTER validation and only for current session
         sessionStorage.setItem('user_profile', JSON.stringify(data));
       } else {
-        // If no profile data, create a minimal profile to unblock the user
-        console.log('No profile found, user can proceed with limited access');
+        console.log('No profile found for user:', userId);
         setProfile(null);
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
       setProfile(null);
-      // Don't throw error, just log it and continue
     }
   };
 
   const refreshProfile = async () => {
     if (user?.id) {
+      console.log('🔄 Refreshing profile for user:', user.email);
       // Clear any cached profile data first
-      localStorage.removeItem('emergency_user_profile');
-      sessionStorage.removeItem('user_profile');
+      clearAllCachedData();
       await fetchProfile(user.id);
     }
   };
 
   const forceRefreshProfile = async () => {
     if (user?.id) {
+      console.log('🔄 Force refreshing profile for user:', user.email);
       // Clear all cached data
-      localStorage.removeItem('emergency_user_profile');
-      sessionStorage.removeItem('user_profile');
+      clearAllCachedData();
       // Force a fresh fetch
       await fetchProfile(user.id);
     }
   };
 
+  const clearAllCachedData = () => {
+    // Clear all possible cached profile data
+    localStorage.removeItem('emergency_user_profile');
+    sessionStorage.removeItem('user_profile');
+    // Clear any other profile-related cache
+    localStorage.removeItem('user_profile');
+    sessionStorage.removeItem('emergency_user_profile');
+    sessionStorage.removeItem('cached_profile_data');
+    localStorage.removeItem('cached_profile_data');
+    
+    console.log('🧹 All cached profile data cleared');
+  };
+
   const signOut = async () => {
     try {
+      // Clear all cached data BEFORE signing out
+      clearAllCachedData();
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
@@ -198,6 +215,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
     } catch (error) {
+      // Even if sign out fails, clear cached data to prevent role mixing
+      clearAllCachedData();
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      
       toast({
         title: "Sign out failed",
         description: "There was an error signing out. Please try again.",
@@ -213,18 +236,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up auth state listener FIRST to catch all events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (authEvent, session) => {
         if (!mounted) return;
 
         // Clear any pending timeout since we got an auth event
         clearTimeout(initTimeout);
         clearTimeout(profileTimeout);
 
+        // Log auth state changes for debugging
+        console.log('🔐 Auth state change:', authEvent, session?.user?.email || 'No user');
+
         if (session?.user) {
-          // Only log if user actually changed to reduce noise
-          if (user?.email !== session.user.email) {
-            console.log('Auth state change - session found for user:', session.user.email);
+          // Check if this is a different user than currently loaded
+          const isDifferentUser = user?.email !== session.user.email;
+          
+          if (isDifferentUser) {
+            console.log('👤 Different user detected, clearing all cached data');
+            // Clear ALL cached data when switching users
+            clearAllCachedData();
+            // Clear current state immediately
+            setProfile(null);
           }
+
           setSession(session);
           setUser(session.user);
           // Keep loading true until profile is fetched
@@ -235,13 +268,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             const handleProfileSetup = async () => {
               try {
+                // If different user, ensure we start fresh
+                if (isDifferentUser) {
+                  console.log('🆕 Setting up profile for new user:', session.user.email);
+                }
+
                 // First ensure profile exists
                 await ensureProfileExists(session.user, session);
                 
                 // Then validate organization sync
                 await validateOrganizationSync(session.user.id, session);
                 
-                // Finally fetch the profile
+                // Finally fetch the profile (always fresh, never cached)
                 await fetchProfile(session.user.id);
                 
                 if (mounted) {
@@ -250,19 +288,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               } catch (error) {
                 console.error('Profile setup failed:', error);
                 
+                // Clear any potentially bad cached data
+                clearAllCachedData();
+                setProfile(null);
+                
                 // Set timeout for profile loading - if it fails, still allow user through
                 profileTimeout = setTimeout(() => {
                   if (mounted) {
                     console.log('Profile timeout reached - allowing user through with limited profile');
                     setLoading(false);
                   }
-                }, 3000); // Reduced timeout to 3 seconds
+                }, 2000); // Reduced timeout to 2 seconds for faster response
               }
             };
             
             handleProfileSetup();
           }, 0);
         } else {
+          // User logged out or no session
+          console.log('🚪 User logged out or no session');
+          clearAllCachedData();
           setSession(null);
           setUser(null);
           setProfile(null);

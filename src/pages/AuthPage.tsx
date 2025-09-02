@@ -57,7 +57,7 @@ const AuthPage = () => {
       title: 'Driver',
       description: 'Professional drivers and operators',
       color: 'bg-blue-500',
-      route: '/dashboard'
+      route: '/driver-dashboard'
     },
     mechanic: {
       icon: Wrench,

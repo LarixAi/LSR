@@ -177,6 +177,24 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const gridRef = useRef<HTMLDivElement>(null);
 
+  // Role-based dashboard validation
+  useEffect(() => {
+    if (profile) {
+      console.log('📊 Dashboard accessed by:', {
+        role: profile.role,
+        userId: profile.id,
+        email: profile.email || 'No email',
+        organizationId: profile.organization_id
+      });
+
+      // Validate user has appropriate role for dashboard access
+      const allowedRoles = ['admin', 'council', 'manager', 'driver', 'mechanic'];
+      if (!allowedRoles.includes(profile.role)) {
+        console.warn('⚠️ User with role', profile.role, 'accessing dashboard - may need role validation');
+      }
+    }
+  }, [profile]);
+
   // Fetch real data from database
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles'],

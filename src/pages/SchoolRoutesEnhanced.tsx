@@ -951,13 +951,13 @@ const SchoolRoutesEnhanced: React.FC = () => {
 
       {/* Route Details Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="route-details-desc">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Bus className="w-5 h-5" />
               <span>{selectedRoute?.routeName}</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="route-details-desc">
               View and manage detailed information about this school route including stops, students, and personal assistants.
             </DialogDescription>
           </DialogHeader>
@@ -1268,10 +1268,10 @@ const SchoolRoutesEnhanced: React.FC = () => {
 
       {/* Stops Management Dialog */}
       <Dialog open={isStopsDialogOpen} onOpenChange={setIsStopsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="stops-management-desc">
           <DialogHeader>
             <DialogTitle>Manage Route Stop</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="stops-management-desc">
               Add or edit a stop for this school route. Stops can be pickup points, dropoff points, or both.
             </DialogDescription>
           </DialogHeader>
@@ -1365,10 +1365,10 @@ const SchoolRoutesEnhanced: React.FC = () => {
 
       {/* Personal Assistant Assignment Dialog */}
       <Dialog open={isPADialogOpen} onOpenChange={setIsPADialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="pa-assignment-desc">
           <DialogHeader>
             <DialogTitle>Assign Personal Assistant</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="pa-assignment-desc">
               Assign a personal assistant to this school route with specific dates, times, and responsibilities.
             </DialogDescription>
           </DialogHeader>
@@ -1462,10 +1462,10 @@ const SchoolRoutesEnhanced: React.FC = () => {
 
        {/* Student Assignment Dialog */}
        <Dialog open={isStudentDialogOpen} onOpenChange={setIsStudentDialogOpen}>
-         <DialogContent className="max-w-2xl">
+         <DialogContent className="max-w-2xl" aria-describedby="student-assignment-desc">
            <DialogHeader>
              <DialogTitle>Assign Student to Route</DialogTitle>
-             <DialogDescription>
+             <DialogDescription id="student-assignment-desc">
                Assign a student to this school route with pickup/dropoff times and days of operation.
              </DialogDescription>
            </DialogHeader>
@@ -1554,10 +1554,10 @@ const SchoolRoutesEnhanced: React.FC = () => {
 
        {/* Edit Route Dialog */}
        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-         <DialogContent className="max-w-2xl">
+         <DialogContent className="max-w-2xl" aria-describedby="edit-route-desc">
            <DialogHeader>
              <DialogTitle>Edit School Route</DialogTitle>
-             <DialogDescription>
+             <DialogDescription id="edit-route-desc">
                Update the details of this school route including basic information, contact details, and status.
              </DialogDescription>
            </DialogHeader>

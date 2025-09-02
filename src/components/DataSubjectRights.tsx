@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -165,9 +165,12 @@ const DataSubjectRights: React.FC = () => {
                 Submit Request
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md" aria-describedby="data-rights-request-desc">
               <DialogHeader>
                 <DialogTitle>Data Rights Request</DialogTitle>
+                <DialogDescription id="data-rights-request-desc">
+                  Submit a request to exercise your data protection rights under GDPR.
+                </DialogDescription>
               </DialogHeader>
               
               {submitted ? (

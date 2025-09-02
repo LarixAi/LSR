@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
+import StandardPageLayout, { NavigationTab, ActionButton, FilterOption } from '@/components/layout/StandardPageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Car, 
   CheckCircle, 
@@ -167,33 +167,42 @@ const VehicleChecks: React.FC = () => {
 
 
 
+  const navigationTabs: NavigationTab[] = [
+    { value: 'new-check', label: 'New Check' },
+    { value: 'history', label: 'History' }
+  ];
+
+  const primaryAction: ActionButton = {
+    label: 'New Check',
+    onClick: handleStartNewCheck
+  };
+
+  const secondaryActions: ActionButton[] = [
+    {
+      label: 'Refresh',
+      onClick: handleRefreshData,
+      icon: <RefreshCw className={`w-4 h-4 ${checksLoading || vehiclesLoading ? 'animate-spin' : ''}`} />,
+      variant: 'outline'
+    },
+    {
+      label: 'Export',
+      onClick: handleExportData,
+      icon: <Download className="w-4 h-4" />,
+      variant: 'outline'
+    }
+  ];
+
   return (
-    <div className="space-y-4 p-4">
-      {/* Header - Mobile Optimized */}
-      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Vehicle Checks</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            Daily vehicle inspections and safety checks
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button onClick={handleRefreshData} variant="outline" size="sm" className="text-xs sm:text-sm" disabled={checksLoading || vehiclesLoading}>
-            <RefreshCw className={`w-4 h-4 mr-1 sm:mr-2 ${(checksLoading || vehiclesLoading) ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-            <span className="sm:hidden">Sync</span>
-          </Button>
-          <Button onClick={handleExportData} variant="outline" size="sm" className="text-xs sm:text-sm">
-            <Download className="w-4 h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Export</span>
-            <span className="sm:hidden">Save</span>
-          </Button>
-          <Button onClick={handleStartNewCheck} className="text-xs sm:text-sm">
-            <Plus className="w-4 h-4 mr-1 sm:mr-2" />
-            New Check
-          </Button>
-        </div>
-      </div>
+    <StandardPageLayout
+      title="Vehicle Checks"
+      description="Daily vehicle inspections and safety checks"
+      primaryAction={primaryAction}
+      secondaryActions={secondaryActions}
+      showMetricsDashboard={true}
+      navigationTabs={navigationTabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
 
       {/* Stats Cards - Mobile Optimized */}
       <div className="grid gap-3 grid-cols-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -269,14 +278,8 @@ const VehicleChecks: React.FC = () => {
         </Card>
       </div>
 
-      {/* Main Content - Mobile Optimized */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="new-check" className="text-xs sm:text-sm">New Check</TabsTrigger>
-          <TabsTrigger value="history" className="text-xs sm:text-sm">History</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="new-check" className="space-y-4">
+      {activeTab === 'new-check' && (
+        <div className="space-y-4">
           <Card className="mobile-card">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -311,9 +314,11 @@ const VehicleChecks: React.FC = () => {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="history" className="space-y-4">
+      {activeTab === 'history' && (
+        <div className="space-y-4">
           {/* Filters */}
           <Card className="mobile-card">
             <CardHeader>
@@ -523,15 +528,10 @@ const VehicleChecks: React.FC = () => {
             </div>
           </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-
-      </Tabs>
-
-
-
-
-    </div>
+    </StandardPageLayout>
   );
 };
 

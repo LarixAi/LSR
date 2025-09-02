@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import StandardPageLayout from '@/components/layout/StandardPageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -158,27 +159,16 @@ const DriverSchedule = () => {
   };
 
   return (
+    <StandardPageLayout
+      title="My Schedule"
+      description="View your work schedule and rest periods"
+      showMetricsDashboard={false}
+      primaryAction={{
+        label: autoRecordRest.isPending ? 'Recording Rest...' : 'Record Rest Days',
+        onClick: handleAutoRecordRest
+      }}
+    >
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Schedule</h1>
-          <p className="text-muted-foreground">
-            View your work schedule and rest periods
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button 
-            onClick={handleAutoRecordRest}
-            disabled={autoRecordRest.isPending}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${autoRecordRest.isPending ? 'animate-spin' : ''}`} />
-            {autoRecordRest.isPending ? 'Recording Rest...' : 'Record Rest Days'}
-          </Button>
-        </div>
-      </div>
 
       {/* Weekly Rest Summary */}
       {weeklyRest && (
@@ -420,6 +410,7 @@ const DriverSchedule = () => {
         </CardContent>
       </Card>
     </div>
+    </StandardPageLayout>
   );
 };
 

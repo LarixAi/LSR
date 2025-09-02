@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Wrench, User, Phone, Mail } from 'lucide-react';
 import { useMechanics } from '@/hooks/useMechanics';
 
-interface MechanicsListProps {
-  onAddMechanic: () => void;
-}
-
-const MechanicsList = ({ onAddMechanic }: MechanicsListProps) => {
+const MechanicsList = () => {
+  const navigate = useNavigate();
   const { data: mechanics = [], isLoading, error } = useMechanics();
 
   if (isLoading) {
@@ -38,7 +36,7 @@ const MechanicsList = ({ onAddMechanic }: MechanicsListProps) => {
           <h3 className="text-lg font-semibold">Mechanics</h3>
           <p className="text-sm text-gray-600">Manage mechanics and their specializations</p>
         </div>
-        <Button onClick={onAddMechanic}>
+        <Button onClick={() => navigate('/mechanics/add')}>
           <Plus className="w-4 h-4 mr-2" />
           Add Mechanic
         </Button>

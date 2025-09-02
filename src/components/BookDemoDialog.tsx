@@ -94,10 +94,10 @@ const BookDemoDialog = ({ children }: BookDemoDialogProps) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" aria-describedby="book-demo-desc">
         <DialogHeader>
           <DialogTitle>Book Your Demo</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="book-demo-desc">
             Get a personalized demonstration of LSR's transport management features
           </DialogDescription>
         </DialogHeader>

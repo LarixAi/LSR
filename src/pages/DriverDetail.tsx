@@ -1557,10 +1557,10 @@ export default function DriverDetail() {
 
         {/* Document Preview Dialog */}
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl" aria-describedby="document-preview-desc">
             <DialogHeader>
               <DialogTitle>{previewDoc?.name || 'Document Preview'}</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="document-preview-desc">
                 {(previewDoc?.file_type || '').toUpperCase()} {previewDoc?.file_name ? `• ${previewDoc.file_name}` : ''}
               </DialogDescription>
             </DialogHeader>
@@ -2448,10 +2448,10 @@ export default function DriverDetail() {
 
         {/* Request Document Dialog */}
         <Dialog open={showRequestDocumentDialog} onOpenChange={setShowRequestDocumentDialog}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px]" aria-describedby="request-document-desc">
             <DialogHeader>
               <DialogTitle>Request Document</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="request-document-desc">
                 Request a document from this driver. They will be notified to upload the required document.
               </DialogDescription>
             </DialogHeader>
@@ -2542,10 +2542,10 @@ export default function DriverDetail() {
 
         {/* Upload Document Dialog */}
         <Dialog open={showUploadDocumentDialog} onOpenChange={setShowUploadDocumentDialog}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px]" aria-describedby="upload-document-desc">
             <DialogHeader>
               <DialogTitle>Upload Document</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="upload-document-desc">
                 {selectedDocumentForUpload 
                   ? `Upload document for: ${selectedDocumentForUpload.name}`
                   : 'Upload a new document for this driver'
@@ -2635,10 +2635,10 @@ export default function DriverDetail() {
 
         {/* Profile Image Upload Dialog */}
         <Dialog open={showProfileImageUpload} onOpenChange={setShowProfileImageUpload}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px]" aria-describedby="profile-image-upload-desc">
             <DialogHeader>
               <DialogTitle>Update Profile Image</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="profile-image-upload-desc">
                 Upload a new profile image for {driver?.first_name} {driver?.last_name}
               </DialogDescription>
             </DialogHeader>
@@ -2739,10 +2739,10 @@ export default function DriverDetail() {
 
       {/* Edit Driver Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="edit-driver-desc">
             <DialogHeader>
             <DialogTitle>Edit Driver</DialogTitle>
-            <DialogDescription>Update key driver information.</DialogDescription>
+            <DialogDescription id="edit-driver-desc">Update key driver information.</DialogDescription>
             </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
             <div className="space-y-2">

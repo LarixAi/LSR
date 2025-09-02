@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { 
   Circle, 
   Plus, 
@@ -462,9 +462,12 @@ export default function TireManagement() {
             {/* Edit Tire Dialog */}
       {selectedTire && (
         <Dialog open={!!selectedTire} onOpenChange={() => setSelectedTire(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" aria-describedby="edit-tire-desc">
             <DialogHeader>
               <DialogTitle>Edit Tire Information</DialogTitle>
+              <DialogDescription id="edit-tire-desc">
+                Modify the selected tire's information and specifications.
+              </DialogDescription>
             </DialogHeader>
             <EditTireForm 
               tire={selectedTire} 

@@ -1,78 +1,36 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  Fuel, 
-  Plus, 
-  Search, 
-  Download, 
-  Eye, 
-  Edit, 
-  Trash2,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Calendar,
-  MapPin,
-  Car,
-  Zap,
-  AlertTriangle,
-  RefreshCw,
-  Save,
-  X,
-  BarChart3,
-  Filter
-} from 'lucide-react';
-import PageLayout from '@/components/layout/PageLayout';
+import { Fuel, Plus, Eye, Edit, Trash2, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
+import StandardPageLayout, { NavigationTab, MetricCard, TableColumn, FilterOption } from '@/components/layout/StandardPageLayout';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { useFuelPurchases, useCreateFuelPurchase, useUpdateFuelPurchase, useDeleteFuelPurchase, useFuelStatistics, type FuelPurchaseWithDetails, type CreateFuelPurchaseData } from '@/hooks/useFuelPurchases';
-import { useVehicles } from '@/hooks/useVehicles';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useFuelPurchases, useDeleteFuelPurchase, useFuelStatistics, type FuelPurchaseWithDetails } from '@/hooks/useFuelPurchases';
 
 const FuelManagement = () => {
   const { user, profile, loading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [fuelTypeFilter, setFuelTypeFilter] = useState('all');
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingPurchase, setEditingPurchase] = useState<FuelPurchaseWithDetails | null>(null);
   const [viewingPurchase, setViewingPurchase] = useState<FuelPurchaseWithDetails | null>(null);
 
   // Fetch real data from backend
   const { data: fuelPurchases = [], isLoading: fuelLoading, error, refetch } = useFuelPurchases();
-  const { data: vehicles = [] } = useVehicles();
-  const createFuelPurchase = useCreateFuelPurchase();
-  const updateFuelPurchase = useUpdateFuelPurchase();
   const deleteFuelPurchase = useDeleteFuelPurchase();
   const { statistics } = useFuelStatistics();
 
   // For now, use the same data for all users since the admin view needs the fuel_purchases table in types
   const allFuelPurchases = fuelPurchases;
 
-  // Form state for new purchase
-  const [formData, setFormData] = useState({
-    vehicle_id: '',
-    fuel_type: 'diesel' as 'diesel' | 'petrol' | 'electric',
-    quantity: 0,
-    unit_price: 0,
-    total_cost: 0,
-    location: '',
-    odometer_reading: 0,
-    purchase_date: new Date().toISOString().split('T')[0],
-    notes: ''
-  });
+  // Add/Edit handled on dedicated page
 
   if (loading) {
     return (
@@ -110,64 +68,14 @@ const FuelManagement = () => {
     return matchesSearch && matchesFuelType;
   });
 
-  const getFuelTypeBadge = (fuelType: string) => {
-    const colors = {
-      diesel: 'bg-blue-100 text-blue-800',
-      petrol: 'bg-green-100 text-green-800',
-      electric: 'bg-purple-100 text-purple-800'
-    };
-    return (
-      <Badge className={colors[fuelType as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
-        {fuelType.charAt(0).toUpperCase() + fuelType.slice(1)}
-      </Badge>
-    );
-  };
+  const getFuelTypeBadge = (fuelType: string) => (
+    <Badge variant="outline">{fuelType.charAt(0).toUpperCase() + fuelType.slice(1)}</Badge>
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (editingPurchase) {
-        await updateFuelPurchase.mutateAsync({
-          id: editingPurchase.id,
-          updates: formData as any
-        });
-        setEditingPurchase(null);
-      } else {
-        await createFuelPurchase.mutateAsync(formData as any);
-      }
-      
-      setShowAddDialog(false);
-      setFormData({
-        vehicle_id: '',
-        fuel_type: 'diesel' as 'diesel' | 'petrol' | 'electric',
-        quantity: 0,
-        unit_price: 0,
-        total_cost: 0,
-        location: '',
-        odometer_reading: 0,
-        purchase_date: new Date().toISOString().split('T')[0],
-        notes: ''
-      });
-    } catch (error) {
-      console.error('Error saving fuel purchase:', error);
-    }
-  };
+  // no inline submit; handled in AddFuel page
 
   const handleEdit = (purchase: FuelPurchaseWithDetails) => {
-    setEditingPurchase(purchase);
-    setFormData({
-      vehicle_id: purchase.vehicle_id,
-      fuel_type: purchase.fuel_type,
-      quantity: purchase.quantity,
-      unit_price: purchase.unit_price,
-      total_cost: purchase.total_cost,
-      location: purchase.location || '',
-      odometer_reading: purchase.odometer_reading || 0,
-      purchase_date: purchase.purchase_date,
-      notes: purchase.notes || ''
-    });
-    setShowAddDialog(true);
+    navigate(`/fuel-management/add?mode=edit&id=${encodeURIComponent(purchase.id)}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -176,64 +84,66 @@ const FuelManagement = () => {
     }
   };
 
+  const navigationTabs: NavigationTab[] = [
+    { value: 'overview', label: 'Overview' },
+    { value: 'purchases', label: 'Purchase History', badge: filteredPurchases.length },
+    { value: 'analytics', label: 'Analytics' },
+  ];
+
+  const metricsCards: MetricCard[] = [
+    { title: 'Total Spent', value: `£${statistics.totalSpent.toFixed(2)}`, icon: <DollarSign className="w-5 h-5" /> },
+    { title: 'Total Fuel', value: `${statistics.totalQuantity.toFixed(1)}L`, icon: <Fuel className="w-5 h-5" /> },
+    { title: 'Avg Price/L', value: `£${statistics.averagePrice.toFixed(2)}`, icon: <TrendingUp className="w-5 h-5" /> },
+    { title: 'Purchases', value: statistics.purchaseCount, icon: <BarChart3 className="w-5 h-5" /> },
+  ];
+
+  const filters: FilterOption[] = [
+    { label: 'Fuel Type', value: fuelTypeFilter, options: [
+      { value: 'all', label: 'All Types' },
+      { value: 'diesel', label: 'Diesel' },
+      { value: 'petrol', label: 'Petrol' },
+      { value: 'electric', label: 'Electric' },
+    ], placeholder: 'Filter fuel type' }
+  ];
+
+  const tableColumns: TableColumn[] = [
+    { key: 'vehicle', label: 'Vehicle', render: (p: any) => (
+      <div>
+        <div className="font-medium">{p.vehicle_number}</div>
+        <div className="text-sm text-muted-foreground">{p.license_plate}</div>
+      </div>
+    ) },
+    ...( ['admin','council'].includes(profile.role) ? [{ key: 'driver_name', label: 'Driver' } as TableColumn] : []),
+    { key: 'purchase_date', label: 'Date', render: (p: any) => format(new Date(p.purchase_date), 'MMM dd, yyyy') },
+    { key: 'fuel_type', label: 'Fuel', render: (p: any) => getFuelTypeBadge(p.fuel_type) },
+    { key: 'quantity', label: 'Quantity', render: (p: any) => `${p.quantity}L` },
+    { key: 'total_cost', label: 'Total Cost', render: (p: any) => `£${p.total_cost.toFixed(2)}` },
+    { key: 'location', label: 'Location' },
+    { key: 'actions', label: 'Actions', render: (p: any) => (
+      <div className="flex items-center justify-end space-x-2">
+        <Button variant="ghost" size="sm" onClick={() => setViewingPurchase(p)}><Eye className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => handleEdit(p)}><Edit className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}><Trash2 className="w-4 h-4" /></Button>
+      </div>
+    ), align: 'right' },
+  ];
+
   return (
-    <PageLayout
+    <StandardPageLayout
       title="Fuel Management"
       description="Track and manage fuel consumption, costs, and efficiency"
-      actionButton={{
-        label: "Add Purchase",
-        onClick: () => setShowAddDialog(true),
-        icon: <Plus className="w-4 h-4 mr-2" />
-      }}
-      summaryCards={[
-        {
-          title: "Total Spent",
-          value: `£${statistics.totalSpent.toFixed(2)}`,
-          icon: <DollarSign className="h-4 w-4" />,
-          color: "text-green-600"
-        },
-        {
-          title: "Total Fuel",
-          value: `${statistics.totalQuantity.toFixed(1)}L`,
-          icon: <Fuel className="h-4 w-4" />,
-          color: "text-blue-600"
-        },
-        {
-          title: "Avg Price/L",
-          value: `£${statistics.averagePrice.toFixed(2)}`,
-          icon: <TrendingUp className="h-4 w-4" />,
-          color: "text-orange-600"
-        },
-        {
-          title: "Purchases",
-          value: statistics.purchaseCount,
-          icon: <BarChart3 className="h-4 w-4" />,
-          color: "text-purple-600"
-        }
-      ]}
-      searchPlaceholder="Search purchases..."
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
-      filters={[
-        {
-          label: "All Fuel Types",
-          value: fuelTypeFilter,
-          options: [
-            { value: "all", label: "All Types" },
-            { value: "diesel", label: "Diesel" },
-            { value: "petrol", label: "Petrol" },
-            { value: "electric", label: "Electric" }
-          ],
-          onChange: setFuelTypeFilter
-        }
-      ]}
-      tabs={[
-        { value: "overview", label: "Overview" },
-        { value: "purchases", label: "Purchase History" },
-        { value: "analytics", label: "Analytics" }
-      ]}
+      navigationTabs={navigationTabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
+      metricsCards={metricsCards}
+      showMetricsDashboard={true}
+      secondaryActions={[{ label: 'Add Purchase', onClick: () => navigate('/fuel-management/add'), icon: <Plus className="w-4 h-4" /> }]}
+      searchConfig={{ placeholder: 'Search purchases...', value: searchTerm, onChange: setSearchTerm, showSearch: true }}
+      filters={filters}
+      onFilterChange={(k,v)=>{ if(k==='Fuel Type') setFuelTypeFilter(v); }}
+      showTable={activeTab==='purchases'}
+      tableData={activeTab==='purchases' ? filteredPurchases : []}
+      tableColumns={activeTab==='purchases' ? tableColumns : []}
       isLoading={isLoading}
     >
       {/* Content based on active tab */}
@@ -250,7 +160,7 @@ const FuelManagement = () => {
                 <p className="text-muted-foreground mb-4">
                   Start tracking your fuel consumption by adding your first purchase.
                 </p>
-                <Button onClick={() => setShowAddDialog(true)}>
+                <Button onClick={() => navigate('/fuel-management/add')}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add First Purchase
                 </Button>
@@ -404,133 +314,14 @@ const FuelManagement = () => {
         </div>
       )}
 
-      {/* Add/Edit Purchase Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingPurchase ? 'Edit Fuel Purchase' : 'Add Fuel Purchase'}
-              </DialogTitle>
-              <DialogDescription>
-                Record a new fuel purchase for your vehicle.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="vehicle">Vehicle</Label>
-                <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({...formData, vehicle_id: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select vehicle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vehicles.map((vehicle) => (
-                      <SelectItem key={vehicle.id} value={vehicle.id}>
-                        {vehicle.vehicle_number} - {vehicle.license_plate}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fuel_type">Fuel Type</Label>
-                <Select value={formData.fuel_type} onValueChange={(value: any) => setFormData({...formData, fuel_type: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="diesel">Diesel</SelectItem>
-                    <SelectItem value="petrol">Petrol</SelectItem>
-                    <SelectItem value="electric">Electric</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantity (L)</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    step="0.01"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unit_price">Price per L</Label>
-                  <Input
-                    id="unit_price"
-                    type="number"
-                    step="0.01"
-                    value={formData.unit_price}
-                    onChange={(e) => setFormData({...formData, unit_price: parseFloat(e.target.value) || 0})}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="total_cost">Total Cost</Label>
-                <Input
-                  id="total_cost"
-                  type="number"
-                  step="0.01"
-                  value={formData.total_cost}
-                  onChange={(e) => setFormData({...formData, total_cost: parseFloat(e.target.value) || 0})}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  placeholder="Fuel station name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="purchase_date">Purchase Date</Label>
-                <Input
-                  id="purchase_date"
-                  type="date"
-                  value={formData.purchase_date}
-                  onChange={(e) => setFormData({...formData, purchase_date: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  placeholder="Any additional notes..."
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createFuelPurchase.isPending || updateFuelPurchase.isPending}>
-                  {createFuelPurchase.isPending || updateFuelPurchase.isPending ? 'Saving...' : 'Save Purchase'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+      {/* Add/Edit dialog removed; use AddFuel page */}
 
         {/* View Purchase Dialog */}
         <Dialog open={!!viewingPurchase} onOpenChange={() => setViewingPurchase(null)}>
-          <DialogContent>
+          <DialogContent aria-describedby="fuel-view-desc">
             <DialogHeader>
               <DialogTitle>Fuel Purchase Details</DialogTitle>
+              <p id="fuel-view-desc" className="sr-only">Detailed information about the selected fuel purchase.</p>
             </DialogHeader>
             {viewingPurchase && (
               <div className="space-y-4">
@@ -578,7 +369,7 @@ const FuelManagement = () => {
             )}
           </DialogContent>
         </Dialog>
-    </PageLayout>
+    </StandardPageLayout>
   );
 };
 

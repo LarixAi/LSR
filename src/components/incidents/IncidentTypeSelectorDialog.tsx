@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import * as LucideIcons from 'lucide-react';
@@ -38,9 +39,12 @@ const IncidentTypeSelectorDialog: React.FC<IncidentTypeSelectorDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" aria-describedby="incident-type-desc">
         <DialogHeader>
           <DialogTitle>Select Incident Type</DialogTitle>
+          <DialogDescription id="incident-type-desc">
+            Choose the type of incident you want to report
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 p-4">
           {types.map((type) => (

@@ -378,10 +378,10 @@ const RailReplacementEnhanced: React.FC = () => {
               <span>New Service</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" aria-describedby="create-rail-service-desc">
             <DialogHeader>
               <DialogTitle>Create Rail Replacement Service</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="create-rail-service-desc">
                 Create a new rail replacement service with all necessary details including schedule, resources, and requirements.
               </DialogDescription>
             </DialogHeader>
@@ -749,13 +749,13 @@ const RailReplacementEnhanced: React.FC = () => {
 
       {/* Service Details Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="service-details-desc">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Train className="w-5 h-5" />
               <span>{selectedService?.serviceName}</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="service-details-desc">
               View detailed information about this rail replacement service including stops, performance metrics, and resource allocation.
             </DialogDescription>
           </DialogHeader>
@@ -967,10 +967,10 @@ const RailReplacementEnhanced: React.FC = () => {
 
       {/* Stops Management Dialog */}
       <Dialog open={isStopsDialogOpen} onOpenChange={setIsStopsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="stops-management-desc">
           <DialogHeader>
             <DialogTitle>Manage Rail Replacement Stop</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="stops-management-desc">
               Add or edit stops for this rail replacement service. Configure pickup and dropoff points with timing and passenger information.
             </DialogDescription>
           </DialogHeader>

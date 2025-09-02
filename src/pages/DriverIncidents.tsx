@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import StandardPageLayout from '@/components/layout/StandardPageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertTriangle, 
@@ -30,6 +31,7 @@ const DriverIncidents = () => {
   const { user, profile, loading } = useAuth();
   const { organizationId } = useOrganizationContext();
   const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('my-incidents');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
@@ -111,28 +113,30 @@ const DriverIncidents = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const navigationTabs = [
+    { value: 'my-incidents', label: 'My Incidents' },
+    { value: 'emergency-contacts', label: 'Emergency Contacts' },
+    { value: 'safety-guidelines', label: 'Safety Guidelines' }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
-            Incident Reports
-          </h1>
-          <p className="text-gray-600 mt-1">Report and track safety incidents</p>
-        </div>
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogTrigger asChild>
-            <Button className="bg-red-600 hover:bg-red-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Report Incident
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Report New Incident</DialogTitle>
-            </DialogHeader>
+    <StandardPageLayout
+      title="Incident Reports"
+      description="Report and track safety incidents"
+      showMetricsDashboard={false}
+      primaryAction={{ label: 'Report Incident', onClick: () => setShowForm(true) }}
+      navigationTabs={navigationTabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="report-incident-desc">
+          <DialogHeader>
+            <DialogTitle>Report New Incident</DialogTitle>
+            <DialogDescription id="report-incident-desc">
+              Report a new incident or issue that occurred during your shift.
+            </DialogDescription>
+          </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -249,9 +253,8 @@ const DriverIncidents = () => {
                 Submit Incident Report
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -302,14 +305,8 @@ const DriverIncidents = () => {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="my-incidents" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="my-incidents">My Incidents</TabsTrigger>
-          <TabsTrigger value="emergency-contacts">Emergency Contacts</TabsTrigger>
-          <TabsTrigger value="safety-guidelines">Safety Guidelines</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="my-incidents" className="space-y-4">
+      {activeTab === 'my-incidents' && (
+        <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -387,9 +384,12 @@ const DriverIncidents = () => {
                             View Details
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent className="max-w-2xl" aria-describedby="incident-details-desc">
                           <DialogHeader>
                             <DialogTitle>Incident Details - {incident.title}</DialogTitle>
+                            <DialogDescription id="incident-details-desc">
+                              View detailed information about this incident report.
+                            </DialogDescription>
                           </DialogHeader>
                           {incident && (
                             <div className="space-y-4">
@@ -477,9 +477,11 @@ const DriverIncidents = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="emergency-contacts" className="space-y-4">
+      {activeTab === 'emergency-contacts' && (
+        <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -523,9 +525,11 @@ const DriverIncidents = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="safety-guidelines" className="space-y-4">
+      {activeTab === 'safety-guidelines' && (
+        <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -551,9 +555,9 @@ const DriverIncidents = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+        </div>
+      )}
+    </StandardPageLayout>
   );
 };
 

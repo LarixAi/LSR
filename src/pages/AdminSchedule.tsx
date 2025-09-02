@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,12 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+// removed duplicate Dialog imports
 import { useSchedules, useScheduleStats, useCreateSchedule } from '@/hooks/useSchedules';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useVehicles } from '@/hooks/useVehicles';
 import { useRoutes } from '@/hooks/useRoutes';
-import PageLayout from '@/components/layout/PageLayout';
+import StandardPageLayout, { MetricCard, NavigationTab, ActionButton, FilterOption } from '@/components/layout/StandardPageLayout';
 
 import { 
   CalendarDays, 
@@ -27,14 +29,17 @@ import {
   Eye
 } from 'lucide-react';
 
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, addMonths, subMonths, isSameMonth, isSameDay, parseISO } from 'date-fns';
+import { useCalendarEvents } from '@/hooks/useCalendarEvents';
 
 const AdminSchedule = () => {
   // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL - NO CONDITIONAL HOOKS
   const { user, profile, loading } = useAuth();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedView, setSelectedView] = useState('week');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [viewingDate, setViewingDate] = useState<Date | null>(null);
   const [newScheduleData, setNewScheduleData] = useState({
     driver_id: '',
     vehicle_id: '',
@@ -56,6 +61,17 @@ const AdminSchedule = () => {
   const { data: vehicles = [] } = useVehicles();
   const { data: routes = [] } = useRoutes();
   const createScheduleMutation = useCreateSchedule();
+  const { data: calendarEvents = [] } = useCalendarEvents();
+  const getUnifiedEventsForDate = (date: Date) => {
+    const scheduleEvents = (schedules || []).filter((s: any) => {
+      const dt = typeof s.start_time === 'string' ? parseISO(s.start_time) : new Date(s.start_time);
+      return isSameDay(dt, date);
+    }).map((s: any) => ({ id: `sch-${s.id}`, job_type: s.job_type, start_time: s.start_time, title: s.job_type || 'Schedule' }));
+    const others = calendarEvents.filter((e) => e.date && isSameDay(new Date(e.date), date))
+      .map((e) => ({ id: e.id, job_type: e.type, start_time: e.time, title: e.title }));
+    return [...scheduleEvents, ...others];
+  };
+
 
   // Handle creation of new schedule
   const handleCreateSchedule = async () => {
@@ -151,97 +167,71 @@ const AdminSchedule = () => {
     return <Navigate to="/unauthorized" replace />;
   }
 
+  const metricsCards: MetricCard[] = [
+    { title: 'Total Routes', value: todayStats.totalRoutes, icon: <MapPin className="h-4 w-4" /> },
+    { title: 'Completed', value: todayStats.completedRoutes, icon: <CheckCircle className="h-4 w-4" /> },
+    { title: 'Active', value: todayStats.activeRoutes, icon: <Clock className="h-4 w-4" /> },
+    { title: 'Maintenance', value: todayStats.scheduledMaintenance, icon: <Truck className="h-4 w-4" /> },
+    { title: 'Available Drivers', value: todayStats.availableDrivers, icon: <Users className="h-4 w-4" /> },
+    { title: 'Available Vehicles', value: todayStats.availableVehicles, icon: <Truck className="h-4 w-4" /> },
+  ];
+
+  const navigationTabs: NavigationTab[] = [
+    { value: 'timeline', label: 'Timeline View' },
+    { value: 'calendar', label: 'Calendar View' },
+    { value: 'resources', label: 'Resource Planning' },
+    { value: 'conflicts', label: 'Conflict Resolution' },
+  ];
+
+  const primaryAction: ActionButton = {
+    label: 'Schedule Event',
+    onClick: () => navigate('/schedule/create'),
+    icon: <Plus className="w-4 h-4 mr-2" />,
+  };
+
+  const filters: FilterOption[] = [
+    {
+      label: 'View',
+      value: selectedView,
+      options: [
+        { value: 'day', label: 'Day View' },
+        { value: 'week', label: 'Week View' },
+        { value: 'month', label: 'Month View' },
+      ],
+      placeholder: 'Select view',
+    },
+    {
+      label: 'Type',
+      value: viewFilter,
+      options: [
+        { value: 'all', label: 'All Events' },
+        { value: 'route', label: 'Routes Only' },
+        { value: 'maintenance', label: 'Maintenance Only' },
+        { value: 'training', label: 'Training Only' },
+      ],
+      placeholder: 'Filter by type',
+    },
+  ];
+
+  const handleFilterChange = (filterKey: string, value: string) => {
+    if (filterKey === 'View') setSelectedView(value);
+    if (filterKey === 'Type') setViewFilter(value);
+  };
+
   return (
-    <PageLayout
+    <StandardPageLayout
       title="Resource Scheduling"
       description="Manage driver schedules, vehicle assignments, and maintenance"
-      actionButton={{
-        label: "Schedule Event",
-        onClick: () => setIsCreateDialogOpen(true),
-        icon: <Plus className="w-4 h-4 mr-2" />
-      }}
-      summaryCards={[
-        {
-          title: "Total Routes",
-          value: todayStats.totalRoutes,
-          icon: <MapPin className="h-4 w-4" />,
-          color: "text-blue-600"
-        },
-        {
-          title: "Completed",
-          value: todayStats.completedRoutes,
-          icon: <CheckCircle className="h-4 w-4" />,
-          color: "text-green-600"
-        },
-        {
-          title: "Active",
-          value: todayStats.activeRoutes,
-          icon: <Clock className="h-4 w-4" />,
-          color: "text-yellow-600"
-        },
-        {
-          title: "Maintenance",
-          value: todayStats.scheduledMaintenance,
-          icon: <Truck className="h-4 w-4" />,
-          color: "text-orange-600"
-        },
-        {
-          title: "Available Drivers",
-          value: todayStats.availableDrivers,
-          icon: <Users className="h-4 w-4" />,
-          color: "text-purple-600"
-        },
-        {
-          title: "Available Vehicles",
-          value: todayStats.availableVehicles,
-          icon: <Truck className="h-4 w-4" />,
-          color: "text-blue-600"
-        }
-      ]}
-      searchPlaceholder="Search schedules..."
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
-      filters={[
-        {
-          label: "View",
-          value: selectedView,
-          options: [
-            { value: "day", label: "Day View" },
-            { value: "week", label: "Week View" },
-            { value: "month", label: "Month View" }
-          ],
-          onChange: setSelectedView
-        },
-        {
-          label: "Filter by type",
-          value: viewFilter,
-          options: [
-            { value: "all", label: "All Events" },
-            { value: "route", label: "Routes Only" },
-            { value: "maintenance", label: "Maintenance Only" },
-            { value: "training", label: "Training Only" }
-          ],
-          onChange: setViewFilter
-        }
-      ]}
-      tabs={[
-        { value: "timeline", label: "Timeline View" },
-        { value: "calendar", label: "Calendar View" },
-        { value: "resources", label: "Resource Planning" },
-        { value: "conflicts", label: "Conflict Resolution" }
-      ]}
+      primaryAction={primaryAction}
+      metricsCards={metricsCards}
+      showMetricsDashboard={true}
+      navigationTabs={navigationTabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
+      searchConfig={{ placeholder: 'Search schedules...', value: searchTerm, onChange: setSearchTerm, showSearch: true }}
+      filters={filters}
+      onFilterChange={handleFilterChange}
       isLoading={schedulesLoading}
-      emptyState={{
-        icon: <CalendarDays className="w-16 h-16 text-gray-400 mx-auto mb-4" />,
-        title: "No Schedules Found",
-        description: "No scheduled events for today. Create your first schedule to get started.",
-        action: {
-          label: "Create Schedule",
-          onClick: () => setIsCreateDialogOpen(true)
-        }
-      }}
     >
       {/* Timeline View */}
       {activeTab === "timeline" && (
@@ -315,21 +305,116 @@ const AdminSchedule = () => {
               <CalendarDays className="w-5 h-5" />
               Calendar View
             </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setSelectedDate(prev => subMonths(prev, 1))}>Prev</Button>
+              <div className="text-sm font-medium w-40 text-center">{format(selectedDate, 'MMMM yyyy')}</div>
+              <Button variant="outline" size="sm" onClick={() => setSelectedDate(prev => addMonths(prev, 1))}>Next</Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <CalendarDays className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Full Calendar Integration</h3>
-              <p className="text-gray-600 mb-6">
-                Interactive calendar view with drag-and-drop scheduling capabilities.
-              </p>
-              <Button className="bg-red-600 hover:bg-red-700">
-                Open Full Calendar
-              </Button>
-            </div>
+            {(() => {
+              const monthStart = startOfMonth(selectedDate);
+              const monthEnd = endOfMonth(selectedDate);
+              const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+              const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+              const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+              const weekdays = eachDayOfInterval({ start: calendarStart, end: addMonths(calendarStart, 0) }).slice(0,7);
+
+              const getDayEvents = (date: Date) => {
+                const scheduleEvents = (schedules || []).filter((s: any) => {
+                  const dt = typeof s.start_time === 'string' ? parseISO(s.start_time) : new Date(s.start_time);
+                  return isSameDay(dt, date);
+                }).map((s: any) => ({ id: `sch-${s.id}`, job_type: s.job_type, start_time: s.start_time }));
+                const unified = [
+                  ...scheduleEvents,
+                  ...calendarEvents.filter((e) => e.date && isSameDay(typeof e.date === 'string' ? new Date(e.date) : e.date, date)).map(e => ({ id: e.id, job_type: e.type, start_time: e.time }))
+                ];
+                return unified.slice(0, 6);
+              };
+
+              return (
+                <div className="h-[70vh] min-h-[560px]">
+                  {/* Weekday headers */}
+                  <div className="grid grid-cols-7 border-b text-xs font-medium text-gray-500">
+                    {[0,1,2,3,4,5,6].map((i) => (
+                      <div key={i} className="px-2 py-2 uppercase tracking-wide">{format(addMonths(calendarStart, 0).setDate(calendarStart.getDate()+i), 'EEE')}</div>
+                    ))}
+                  </div>
+                  {/* Calendar grid */}
+                  <div className="grid grid-cols-7 grid-rows-6 h-[calc(100%-2rem)]">
+                    {days.map((day, idx) => (
+                      <div key={idx} className={`border p-2 overflow-auto ${isSameMonth(day, monthStart) ? 'bg-white' : 'bg-gray-50'} cursor-pointer`} onClick={() => setViewingDate(day)}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-sm font-semibold ${isSameMonth(day, monthStart) ? 'text-gray-900' : 'text-gray-400'}`}>{format(day, 'd')}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {getDayEvents(day).map((ev: any) => (
+                            <div key={ev.id} className="flex items-center gap-2 text-xs px-2 py-1 rounded bg-gray-100">
+                              <span className={`inline-block w-2 h-2 rounded-full ${getTypeColor(ev.job_type || 'route')}`}></span>
+                              <span className="truncate capitalize">{String(ev.job_type || 'event').replace('_',' ')}</span>
+                              {ev.start_time && (
+                                <span className="text-gray-500 truncate">{ev.start_time}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
       )}
+
+      {/* Day Events Dialog */}
+      <Dialog open={!!viewingDate} onOpenChange={(o) => !o && setViewingDate(null)}>
+        <DialogContent aria-describedby="day-events-desc">
+          <DialogHeader>
+            <DialogTitle>Events - {viewingDate ? format(viewingDate, 'EEEE, MMM d, yyyy') : ''}</DialogTitle>
+            <DialogDescription id="day-events-desc">All events scheduled for the selected day.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-auto">
+            {viewingDate && getUnifiedEventsForDate(viewingDate).length === 0 && (
+              <div className="text-sm text-gray-600">No events for this day.</div>
+            )}
+            {viewingDate && getUnifiedEventsForDate(viewingDate).map((ev: any) => (
+              <div
+                key={ev.id}
+                className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-gray-50"
+                onClick={() => {
+                  // Navigate based on event type
+                  if (ev.id?.toString().startsWith('sch-')) {
+                    // schedules may not have a dedicated detail page yet
+                    setViewingDate(null);
+                  } else if (ev.jobId) {
+                    navigate('/jobs');
+                    setViewingDate(null);
+                  } else if (ev.workOrderId) {
+                    navigate(`/work-orders/${ev.workOrderId}`);
+                    setViewingDate(null);
+                  } else if (ev.vehicleId) {
+                    navigate(`/vehicles/${ev.vehicleId}`);
+                    setViewingDate(null);
+                  } else if (ev.driverId) {
+                    navigate(`/drivers/${ev.driverId}`);
+                    setViewingDate(null);
+                  }
+                }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`inline-block w-2 h-2 rounded-full ${getTypeColor(ev.job_type || 'route')}`}></span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate capitalize">{ev.title || ev.job_type || 'Event'}</div>
+                    {ev.start_time && <div className="text-xs text-gray-500">{ev.start_time}</div>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Resource Planning */}
       {activeTab === "resources" && (
@@ -451,7 +536,7 @@ const AdminSchedule = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </PageLayout>
+    </StandardPageLayout>
   );
 };
 

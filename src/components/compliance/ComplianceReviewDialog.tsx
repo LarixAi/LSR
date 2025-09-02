@@ -100,10 +100,10 @@ const ComplianceReviewDialog: React.FC<ComplianceReviewDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="compliance-review-desc">
         <DialogHeader>
           <DialogTitle>Compliance Review - Vehicle Check</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="compliance-review-desc">
             Review and approve or reject this vehicle compliance check
           </DialogDescription>
         </DialogHeader>
