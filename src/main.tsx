@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import ErrorBoundaryDev from '@/components/ErrorBoundaryDev';
+import { registerServiceWorker } from '@/utils/pushNotifications';
 
 import './index.css';
 
@@ -22,3 +23,6 @@ root.render(
     </ErrorBoundaryDev>
   </StrictMode>
 );
+
+// Register service worker (non-blocking)
+registerServiceWorker();

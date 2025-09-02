@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import StandardPageLayout, { NavigationTab, ActionButton, MetricCard } from '@/components/layout/StandardPageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,13 +26,11 @@ import {
   Ticket
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import SupportTicketForm from '@/components/support/SupportTicketForm';
 
 export default function SupportTicket() {
   const { profile } = useAuth();
-  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('help');
 
@@ -188,31 +187,30 @@ export default function SupportTicket() {
     }
   ];
 
-  return (
-    <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center space-x-2 mb-2">
-          <HelpCircle className="w-8 h-8 text-red-600" />
-          <h1 className="text-2xl font-bold">Help & Support</h1>
-        </div>
-        <p className="text-muted-foreground">
-          Get assistance with the LSR mobile app
-        </p>
-      </div>
+  const tabs: NavigationTab[] = [
+    { value: 'help', label: 'Help Center' },
+    { value: 'ticket', label: 'Submit Ticket' },
+  ];
 
-      {/* Tabs */}
+  const actions: ActionButton[] = [
+    { label: 'Help Center', onClick: () => setActiveTab('help'), icon: <HelpCircle className="w-4 h-4" />, variant: 'outline', size: 'sm' },
+  ];
+
+  const metrics: MetricCard[] = [
+    { title: 'Status', value: 'Online', icon: <CheckCircle className="w-4 h-4 text-green-600" />, bgColor: 'bg-green-50', color: 'text-green-600' },
+  ];
+
+  return (
+    <StandardPageLayout
+      title="Help & Support"
+      description="Get assistance with the LSR mobile app"
+      secondaryActions={actions}
+      metricsCards={metrics}
+      navigationTabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="help" className="flex items-center space-x-2">
-            <HelpCircle className="w-4 h-4" />
-            <span>Help Center</span>
-          </TabsTrigger>
-          <TabsTrigger value="ticket" className="flex items-center space-x-2">
-            <Ticket className="w-4 h-4" />
-            <span>Submit Ticket</span>
-          </TabsTrigger>
-        </TabsList>
 
         <TabsContent value="help" className="space-y-6">
           {/* Quick Actions */}
@@ -344,6 +342,6 @@ export default function SupportTicket() {
           <SupportTicketForm />
         </TabsContent>
       </Tabs>
-    </div>
+    </StandardPageLayout>
   );
 }

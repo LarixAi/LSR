@@ -354,12 +354,12 @@ const StandardPageLayout: React.FC<StandardPageLayoutProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-3xl font-bold">{title}</h1>
-          {description && <p className="text-gray-600">{description}</p>}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">{title}</h1>
+          {description && <p className="text-sm sm:text-base text-gray-600">{description}</p>}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap gap-2 sm:justify-end">
           {secondaryActions.map((action, index) => (
             <Button 
               key={index}
@@ -425,23 +425,26 @@ const StandardPageLayout: React.FC<StandardPageLayoutProps> = ({
 
       {/* Navigation Tabs */}
       {navigationTabs.length > 0 && (
-        <div className="flex items-center space-x-4 border-b">
-          {navigationTabs.map((tab) => (
-            <Button 
-              key={tab.value}
-              variant="ghost" 
-              className={activeTab === tab.value ? 'border-b-2 border-blue-600' : ''} 
-              onClick={() => onTabChange?.(tab.value)}
-              disabled={tab.disabled}
-            >
-              {tab.label}
-              {tab.badge && tab.badge > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {tab.badge}
-                </Badge>
-              )}
-            </Button>
-          ))}
+        <div className="border-b">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap py-1">
+            {navigationTabs.map((tab) => (
+              <Button 
+                key={tab.value}
+                variant="ghost" 
+                size="sm"
+                className={`px-3 py-2 text-sm shrink-0 ${activeTab === tab.value ? 'border-b-2 border-blue-600' : ''}`}
+                onClick={() => onTabChange?.(tab.value)}
+                disabled={tab.disabled}
+              >
+                {tab.label}
+                {tab.badge && tab.badge > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {tab.badge}
+                  </Badge>
+                )}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
 

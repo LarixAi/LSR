@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import StandardPageLayout, { NavigationTab, MetricCard, ActionButton } from '@/components/layout/StandardPageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,12 +25,10 @@ import {
   Plus
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 
 export default function HelpSupport() {
   const { profile } = useAuth();
-  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('faq');
 
@@ -182,18 +181,32 @@ export default function HelpSupport() {
     }
   ];
 
+  const metrics: MetricCard[] = [
+    { title: 'Pending Tickets', value: 0, icon: <AlertTriangle className="w-4 h-4 text-red-600" />, bgColor: 'bg-red-50', color: 'text-red-600' },
+    { title: 'Avg. Response', value: '2h', icon: <Clock className="w-4 h-4" />, bgColor: 'bg-gray-100' },
+  ];
+
+  const tabs: NavigationTab[] = [
+    { value: 'quick', label: 'Quick Actions' },
+    { value: 'contact', label: 'Contact' },
+    { value: 'faq', label: 'FAQ' },
+    { value: 'about', label: 'About' },
+  ];
+
+  const actions: ActionButton[] = [
+    { label: 'Submit Ticket', onClick: () => navigate('/support'), icon: <AlertTriangle className="w-4 h-4" />, variant: 'outline', size: 'sm' },
+  ];
+
   return (
-    <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center space-x-2 mb-2">
-          <HelpCircle className="w-8 h-8 text-red-600" />
-          <h1 className="text-2xl font-bold">Help & Support</h1>
-        </div>
-        <p className="text-muted-foreground">
-          Get assistance with the LSR mobile app
-        </p>
-      </div>
+    <StandardPageLayout
+      title="Help & Support"
+      description="Get assistance with the LSR mobile app"
+      secondaryActions={actions}
+      metricsCards={metrics}
+      navigationTabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
 
       {/* Quick Actions */}
       <Card>
@@ -318,7 +331,7 @@ export default function HelpSupport() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </StandardPageLayout>
   );
 }
 

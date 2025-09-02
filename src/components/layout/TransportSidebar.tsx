@@ -133,6 +133,7 @@ const TransportSidebar = () => {
         { title: 'Incidents', icon: AlertTriangle, url: '/driver-incidents' },
         { title: 'Compliance', icon: Shield, url: '/driver-compliance' },
         { title: 'Fuel', icon: Fuel, url: '/driver/fuel' },
+        { title: 'Time', icon: Clock, url: '/driver/time' },
         { title: 'Documents', icon: FileText, url: '/driver/documents' },
         { title: 'More', icon: MoreHorizontal, url: '/driver/more' },
       ];
@@ -246,8 +247,7 @@ const TransportSidebar = () => {
           { title: 'Help & Documentation', url: '/help-documentation', icon: BookOpen },
           { title: 'Staff Directory', url: '/staff-directory', icon: Users },
           { title: 'API Management', url: '/api-management', icon: Code },
-          { title: 'Documents', url: '/documents', icon: FileText },
-          { title: 'Admin Driver Documents', url: '/admin-driver-documents', icon: FileText },
+          { title: 'Documents', url: '/documents', icon: FileText }
         ]
       },
     ];

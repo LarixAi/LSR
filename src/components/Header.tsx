@@ -9,7 +9,7 @@ import SubscriptionStatus from './header/SubscriptionStatus';
 
 
 const Header = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const location = useLocation();
   const isMobile = useIsMobile();
 
@@ -85,7 +85,7 @@ const Header = () => {
           {/* Right Section - Notifications, Subscription, and Profile */}
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             <HeaderNotificationSystem />
-            <SubscriptionStatus />
+            {profile?.role !== 'driver' && <SubscriptionStatus />}
             <UserProfileDropdown />
           </div>
         </div>

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import DriverLayout from '@/components/layout/DriverLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,9 +24,9 @@ import {
 import { useDriverCompliance } from '@/hooks/useDriverCompliance';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
-import MobileOptimizedLayout from '@/components/mobile/MobileOptimizedLayout';
 import { toast } from 'sonner';
-import ComplianceDebugPanel from '@/components/compliance/ComplianceDebugPanel';
+// import ComplianceDebugPanel from '@/components/compliance/ComplianceDebugPanel';
+import StandardPageLayout, { MetricCard, ActionButton, NavigationTab } from '@/components/layout/StandardPageLayout';
 
 const DriverCompliance = () => {
   const { user, profile, session, loading: authLoading } = useAuth();
@@ -43,6 +42,9 @@ const DriverCompliance = () => {
     error, 
     refreshData 
   } = useDriverCompliance();
+
+  // Control visible tab across header nav and content
+  const [activeTab, setActiveTab] = useState<string>('documents');
 
   const updateTrainingProgress = async (trainingId: string, progress: number) => {
     try {
@@ -225,36 +227,6 @@ const DriverCompliance = () => {
 
   const content = (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className={`${isMobile ? 'space-y-3' : 'flex justify-between items-center'}`}>
-        <div>
-          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 flex items-center gap-2 sm:gap-3`}>
-            <Shield className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
-            Driver Compliance
-          </h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Track your compliance status and certifications</p>
-        </div>
-        <div className={`flex items-center gap-2 ${isMobile ? 'w-full' : 'space-x-2'}`}>
-          <Button 
-            onClick={refreshData} 
-            variant="outline" 
-            disabled={complianceLoading}
-            size={isMobile ? "sm" : "default"}
-            className={isMobile ? 'flex-1' : ''}
-          >
-            <RefreshCw className={`w-4 h-4 ${isMobile ? 'mr-1' : 'mr-2'} ${complianceLoading ? 'animate-spin' : ''}`} />
-            {isMobile ? 'Refresh' : 'Refresh Data'}
-          </Button>
-          <Button 
-            className={`bg-green-600 hover:bg-green-700 ${isMobile ? 'flex-1' : ''}`}
-            size={isMobile ? "sm" : "default"}
-          >
-            <Upload className={`w-4 h-4 ${isMobile ? 'mr-1' : 'mr-2'}`} />
-            {isMobile ? 'Update' : 'Update Documents'}
-          </Button>
-        </div>
-      </div>
-
       {/* Empty State */}
       {!hasAnyData && !complianceLoading && (
         <Card className="bg-gradient-to-r from-blue-50 to-green-50">
@@ -279,111 +251,10 @@ const DriverCompliance = () => {
         </Card>
       )}
 
-      {/* Compliance Score */}
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50">
-        <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
-          <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex items-center justify-between'}`}>
-            <div className={isMobile ? 'text-center' : ''}>
-              <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold mb-2`}>Overall Compliance Score</h2>
-              <div className={`${isMobile ? 'text-3xl' : 'text-4xl'} font-bold ${getComplianceColor(complianceData.overallScore)}`}>
-                {complianceData.overallScore}%
-              </div>
-              <p className={`text-gray-600 mt-2 ${isMobile ? 'text-sm' : ''}`}>
-                {complianceData.overallScore >= 90 ? 'Excellent compliance status' :
-                 complianceData.overallScore >= 75 ? 'Good compliance status' :
-                 'Compliance attention needed'}
-              </p>
-            </div>
-            <div className={`${isMobile ? 'flex justify-center' : 'text-right'}`}>
-              <div className={`${isMobile ? 'w-24 h-24' : 'w-32 h-32'} relative`}>
-                <svg className={`${isMobile ? 'w-24 h-24' : 'w-32 h-32'} transform -rotate-90`} viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="2"
-                    strokeDasharray={`${complianceData.overallScore}, 100`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <CheckCircle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats Cards */}
-      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-6'}`}>
-        <Card>
-          <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-            <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
-              <CheckCircle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
-              <div>
-                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Valid Documents</p>
-                <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-green-600`}>{validDocuments.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-            <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
-              <AlertTriangle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-yellow-600`} />
-              <div>
-                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Due Soon</p>
-                <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-yellow-600`}>{dueSoonDocuments.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-            <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
-              <AlertTriangle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-red-600`} />
-              <div>
-                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Expired</p>
-                <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-red-600`}>{expiredDocuments.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-            <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
-              <Award className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-blue-600`} />
-              <div>
-                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>Active Violations</p>
-                <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{violations.filter(v => v.status === 'active' || v.status === 'pending').length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Main content continues below (tabs) */}
 
       {/* Main Content */}
-      <Tabs defaultValue="documents" className={`${isMobile ? 'space-y-4' : 'space-y-6'}`}>
-        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'}`}>
-          <TabsTrigger value="documents" className={isMobile ? 'text-xs px-2' : ''}>
-            {isMobile ? 'Docs' : 'Documents'}
-          </TabsTrigger>
-          <TabsTrigger value="training" className={isMobile ? 'text-xs px-2' : ''}>
-            Training
-          </TabsTrigger>
-          <TabsTrigger value="driving-record" className={isMobile ? 'text-xs px-2' : ''}>
-            {isMobile ? 'Record' : 'Driving Record'}
-          </TabsTrigger>
-          <TabsTrigger value="reminders" className={isMobile ? 'text-xs px-2' : ''}>
-            Reminders
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className={`${isMobile ? 'space-y-4' : 'space-y-6'}`}>
 
         <TabsContent value="documents" className="space-y-4">
           <Card>
@@ -721,15 +592,77 @@ const DriverCompliance = () => {
     </div>
   );
 
+  const metricsCards: MetricCard[] = [
+    {
+      title: 'Valid Documents',
+      value: validDocuments.length,
+      subtitle: 'Currently valid',
+      icon: <CheckCircle className="w-5 h-5 text-green-600" />,
+      bgColor: 'bg-green-100',
+      color: 'text-green-600'
+    },
+    {
+      title: 'Due Soon',
+      value: dueSoonDocuments.length,
+      subtitle: 'Expiring within 30 days',
+      icon: <AlertTriangle className="w-5 h-5 text-yellow-600" />,
+      bgColor: 'bg-yellow-100',
+      color: 'text-yellow-600'
+    },
+    {
+      title: 'Expired',
+      value: expiredDocuments.length,
+      subtitle: 'Need immediate action',
+      icon: <XCircle className="w-5 h-5 text-red-600" />,
+      bgColor: 'bg-red-100',
+      color: 'text-red-600'
+    },
+    {
+      title: 'Active Violations',
+      value: violations.filter(v => v.status === 'active' || v.status === 'pending').length,
+      subtitle: 'Open issues',
+      icon: <Award className="w-5 h-5 text-blue-600" />,
+      bgColor: 'bg-blue-100',
+      color: 'text-blue-600'
+    }
+  ];
+
+  const primaryAction: ActionButton = {
+    label: 'Update Documents',
+    onClick: () => {},
+    icon: <Upload className="w-4 h-4" />,
+  };
+
+  const secondaryActions: ActionButton[] = [
+    {
+      label: 'Refresh',
+      onClick: refreshData,
+      icon: <RefreshCw className={`w-4 h-4 ${complianceLoading ? 'animate-spin' : ''}`} />,
+      variant: 'outline'
+    }
+  ];
+
+  const navigationTabs: NavigationTab[] = [
+    { value: 'documents', label: 'Documents' },
+    { value: 'training', label: 'Training' },
+    { value: 'driving-record', label: 'Driving Record' },
+    { value: 'reminders', label: 'Reminders' },
+  ];
+
   return (
-    <DriverLayout title="Driver Compliance" description="Track your compliance status and certifications">
-      {isMobile ? (
-        <MobileOptimizedLayout>
-          {content}
-        </MobileOptimizedLayout>
-      ) : content}
-      <ComplianceDebugPanel />
-    </DriverLayout>
+    <StandardPageLayout
+      title="Driver Compliance"
+      description="Track your compliance status and certifications"
+      primaryAction={primaryAction}
+      secondaryActions={secondaryActions}
+      metricsCards={metricsCards}
+      showMetricsDashboard={!isMobile}
+      navigationTabs={navigationTabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      {content}
+    </StandardPageLayout>
   );
 };
 

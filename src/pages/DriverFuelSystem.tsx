@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import DriverLayout from '@/components/layout/DriverLayout';
+import StandardPageLayout, { MetricCard, ActionButton, NavigationTab } from '@/components/layout/StandardPageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,12 +35,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { format } from 'date-fns';
 import { useFuelPurchases, useCreateFuelPurchase, useUpdateFuelPurchase, useDeleteFuelPurchase, useFuelStatistics, type FuelPurchaseWithDetails, type CreateFuelPurchaseData } from '@/hooks/useFuelPurchases';
 import { useVehicles } from '@/hooks/useVehicles';
-import { useIsMobile } from '@/hooks/use-mobile';
-import MobileFuelSystem from '@/components/driver/MobileFuelSystem';
+// Removed mobile-specific component; StandardPageLayout is responsive
 
 const DriverFuelSystem: React.FC = () => {
   // ALL HOOKS MUST BE DECLARED FIRST - before any conditional returns
-  const isMobile = useIsMobile();
   const { profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('new-purchase');
@@ -71,10 +69,7 @@ const DriverFuelSystem: React.FC = () => {
     notes: ''
   });
   
-  // NOW we can have conditional returns after all hooks are declared
-  if (isMobile) {
-    return <MobileFuelSystem />;
-  }
+  // Render a single responsive layout for all devices
 
   if (authLoading || fuelLoading) {
     return (
@@ -243,97 +238,84 @@ const DriverFuelSystem: React.FC = () => {
     });
   };
 
-  return (
-    <DriverLayout title="Fuel System" description="Record fuel purchases and track consumption">
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fuel System</h1>
-          <p className="text-muted-foreground">
-            Record fuel purchases and track consumption
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button onClick={() => refetch()} variant="outline" size="sm" disabled={fuelLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${fuelLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button onClick={handleExportData} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={handleAddPurchase}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Purchase
-          </Button>
-        </div>
-      </div>
+  const metrics: MetricCard[] = [
+    {
+      title: 'Total Spent',
+      value: `£${statistics.totalSpent.toFixed(2)}`,
+      subtitle: 'This month',
+      icon: <DollarSign className="h-4 w-4 text-muted-foreground" />,
+      bgColor: 'bg-gray-100'
+    },
+    {
+      title: 'Total Fuel',
+      value: `${statistics.totalQuantity.toFixed(1)}L`,
+      subtitle: 'Liters purchased',
+      icon: <Fuel className="h-4 w-4 text-blue-600" />,
+      bgColor: 'bg-blue-100',
+      color: 'text-blue-600'
+    },
+    {
+      title: 'Avg Price',
+      value: `£${statistics.averagePrice.toFixed(2)}`,
+      subtitle: 'Per liter',
+      icon: <TrendingUp className="h-4 w-4 text-green-600" />,
+      bgColor: 'bg-green-100',
+      color: 'text-green-600'
+    },
+    {
+      title: 'Purchases',
+      value: `${fuelPurchases.length}`,
+      subtitle: 'This month',
+      icon: <Calendar className="h-4 w-4 text-muted-foreground" />,
+      bgColor: 'bg-gray-100'
+    }
+  ];
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">£{statistics.totalSpent.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Fuel</CardTitle>
-            <Fuel className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {statistics.totalQuantity.toFixed(1)}L
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Liters purchased
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Price</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              £{statistics.averagePrice.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Per liter
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Purchases</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {fuelPurchases.length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+  const actions: ActionButton[] = [
+    {
+      label: 'Refresh',
+      onClick: () => refetch(),
+      icon: <RefreshCw className={`w-4 h-4 ${fuelLoading ? 'animate-spin' : ''}`} />,
+      variant: 'outline',
+      size: 'sm',
+      disabled: fuelLoading
+    },
+    {
+      label: 'Export',
+      onClick: handleExportData,
+      icon: <Download className="w-4 h-4" />,
+      variant: 'outline',
+      size: 'sm'
+    }
+  ];
+
+  const primary: ActionButton = {
+    label: 'Add Purchase',
+    onClick: handleAddPurchase,
+    icon: <Plus className="w-4 h-4" />
+  };
+
+  const navTabs: NavigationTab[] = [
+    { value: 'new-purchase', label: 'New Purchase' },
+    { value: 'history', label: 'Purchase History' }
+  ];
+
+  return (
+    <StandardPageLayout
+      title="Fuel System"
+      description="Record fuel purchases and track consumption"
+      primaryAction={primary}
+      secondaryActions={actions}
+      metricsCards={metrics}
+      navigationTabs={navTabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+
+      {/* Stats now provided by StandardPageLayout metrics */}
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="new-purchase">New Purchase</TabsTrigger>
-          <TabsTrigger value="history">Purchase History</TabsTrigger>
-        </TabsList>
 
         <TabsContent value="new-purchase" className="space-y-4">
           <Card>
@@ -835,8 +817,7 @@ const DriverFuelSystem: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
-    </DriverLayout>
+    </StandardPageLayout>
   );
 };
 

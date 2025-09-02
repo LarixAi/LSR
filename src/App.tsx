@@ -35,6 +35,7 @@ const LicenseManagement = lazy(() => import("./pages/LicenseManagement"));
 const DriverManagement = lazy(() => import("./pages/DriverManagement"));
 const DriverDetail = lazy(() => import("./pages/DriverDetail"));
 const DriverDocumentPreview = lazy(() => import("./pages/DriverDocumentPreview"));
+const DriverDocuments = lazy(() => import("./pages/DriverDocuments"));
 const Documents = lazy(() => import("./pages/DocumentsEnhanced")); // Use enhanced version
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const IncidentReports = lazy(() => import("./pages/IncidentReports"));
@@ -119,6 +120,7 @@ const DriverCompliance = lazy(() => import("./pages/DriverCompliance"));
 const VehicleChecks = lazy(() => import("./pages/VehicleChecks"));
 const EnhancedVehicleCheckPage = lazy(() => import("./pages/EnhancedVehicleCheckPage"));
 const DriverFuelSystem = lazy(() => import("./pages/DriverFuelSystem"));
+const DriverTimeManagement = lazy(() => import("./pages/DriverTimeManagement"));
 const DriverSettings = lazy(() => import("./pages/DriverSettings"));
 const DriverMore = lazy(() => import("./pages/DriverMore"));
 const VehicleCheckTemplates = lazy(() => import("./pages/admin/VehicleCheckTemplates"));
@@ -199,6 +201,15 @@ const UserProfileSettingsRedirect = () => {
       </VehicleManagementSettingsProvider>
     </DashboardSettingsProvider>
   );
+};
+
+// Route switcher: drivers -> /driver/time; others -> Admin TimeManagement
+const TimeManagementRedirect = () => {
+  const { profile } = useAuth();
+  if (profile?.role === 'driver') {
+    return <Navigate to="/driver/time" replace />;
+  }
+  return <TimeManagement />;
 };
 
 const App = () => {
@@ -488,6 +499,11 @@ const App = () => {
                             <DriverFuelSystem />
                           </ProtectedRoute>
                         } />
+                        <Route path="/driver/time" element={
+                          <ProtectedRoute allowedRoles={['driver']}>
+                            <DriverTimeManagement />
+                          </ProtectedRoute>
+                        } />
                         <Route path="/driver/settings" element={
                           <ProtectedRoute allowedRoles={['driver']}>
                             <DriverSettings />
@@ -500,7 +516,7 @@ const App = () => {
                         } />
                         <Route path="/driver/documents" element={
                           <ProtectedRoute allowedRoles={['driver']}>
-                            <MobileDriverDocuments />
+                            {isMobile() ? <MobileDriverDocuments /> : <DriverDocuments />}
                           </ProtectedRoute>
                         } />
                         <Route path="/driver/dashboard" element={
@@ -722,8 +738,8 @@ const App = () => {
 
                         {/* Time Management */}
                         <Route path="/time-management" element={
-                          <ProtectedRoute allowedRoles={['admin', 'council']}>
-                            <TimeManagement />
+                          <ProtectedRoute allowedRoles={['admin', 'council', 'driver']}>
+                            <TimeManagementRedirect />
                           </ProtectedRoute>
                         } />
 

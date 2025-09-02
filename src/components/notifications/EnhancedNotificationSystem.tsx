@@ -478,6 +478,27 @@ const EnhancedNotificationSystem: React.FC = () => {
     };
 
     sendNotificationMutation.mutate(notificationData);
+
+    // Also trigger push delivery via Edge Function when selected
+    try {
+      if (composeForm.channels.includes('push')) {
+        const payload: any = {
+          title: composeForm.title,
+          body: composeForm.body,
+          url: '/notifications',
+          data: { category: composeForm.category, priority: composeForm.priority }
+        };
+        if (composeForm.recipientType === 'specific' && composeForm.recipientId) {
+          await supabase.functions.invoke('send-web-push', { body: { userIds: [composeForm.recipientId], ...payload } });
+        } else if (composeForm.recipientType === 'role' && composeForm.recipientRole && profile?.organization_id) {
+          await supabase.functions.invoke('send-web-push', { body: { role: composeForm.recipientRole, organization_id: profile.organization_id, ...payload } });
+        } else if (composeForm.recipientType === 'all' && profile?.organization_id) {
+          await supabase.functions.invoke('send-web-push', { body: { role: 'all', organization_id: profile.organization_id, ...payload } });
+        }
+      }
+    } catch (err: any) {
+      console.warn('Push delivery invocation failed', err?.message || err);
+    }
   };
 
   const handleTemplateSelect = (template: NotificationTemplate) => {

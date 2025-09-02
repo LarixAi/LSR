@@ -54,6 +54,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import AvatarUpload from '@/components/AvatarUpload';
 import { useProfile } from '@/hooks/useProfile';
+import { registerServiceWorker, requestNotificationPermission, subscribeToPush, unsubscribeFromPush } from '@/utils/pushNotifications';
 
 const MobileSettings: React.FC = () => {
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -147,7 +148,34 @@ const MobileSettings: React.FC = () => {
   };
 
   const handleSaveNotifications = () => {
-    toast.success('Notification settings saved!');
+    (async () => {
+      try {
+        if (settings.pushNotifications) {
+          const registration = await registerServiceWorker();
+          if (registration && user) {
+            const permission = await requestNotificationPermission();
+            if (permission === 'granted') {
+              const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
+              if (!publicKey) {
+                toast.warning('Push enabled, but VAPID key missing');
+              } else {
+                await subscribeToPush(registration, publicKey, user.id);
+              }
+            } else {
+              toast.warning('Push permission denied');
+            }
+          }
+        } else {
+          const registration = await registerServiceWorker();
+          if (registration && user) {
+            await unsubscribeFromPush(registration, user.id);
+          }
+        }
+        toast.success('Notification settings saved!');
+      } catch (e) {
+        toast.error('Failed to update notification settings');
+      }
+    })();
   };
 
   const handleSavePrivacy = () => {

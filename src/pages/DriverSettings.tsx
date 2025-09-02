@@ -31,6 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileSettings from '@/components/mobile/MobileSettings';
 import { Badge } from '@/components/ui/badge';
+import { registerServiceWorker, requestNotificationPermission, subscribeToPush, unsubscribeFromPush } from '@/utils/pushNotifications';
 
 const DriverSettings: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
@@ -119,10 +120,37 @@ const DriverSettings: React.FC = () => {
   };
 
   const handleSaveNotifications = () => {
-    toast({
-      title: "Notifications Updated",
-      description: "Your notification preferences have been saved.",
-    });
+    (async () => {
+      try {
+        if (settings.pushNotifications) {
+          const registration = await registerServiceWorker();
+          if (registration && user) {
+            const permission = await requestNotificationPermission();
+            if (permission === 'granted') {
+              const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
+              if (!publicKey) {
+                toast({ title: 'Missing VAPID key', description: 'Push enabled, but VAPID key missing', variant: 'destructive' });
+              } else {
+                await subscribeToPush(registration, publicKey, user.id);
+              }
+            } else {
+              toast({ title: 'Permission denied', description: 'Push permission was not granted', variant: 'destructive' });
+            }
+          }
+        } else {
+          const registration = await registerServiceWorker();
+          if (registration && user) {
+            await unsubscribeFromPush(registration, user.id);
+          }
+        }
+        toast({
+          title: "Notifications Updated",
+          description: "Your notification preferences have been saved.",
+        });
+      } catch (e) {
+        toast({ title: 'Update failed', description: 'Failed to update notification settings', variant: 'destructive' });
+      }
+    })();
   };
 
   const handleSavePrivacy = () => {
